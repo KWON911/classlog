@@ -86,14 +86,22 @@ export function AttendancePage() {
 
       <div className="mb-4 flex items-center gap-3">
         <button
-          onClick={() => setYearMonth((prev) => shiftMonth(prev, -1))}
+          onClick={() => {
+            const next = shiftMonth(yearMonth, -1)
+            setYearMonth(next)
+            setSelectedDate(`${next}-01`)
+          }}
           className="rounded border border-gray-300 px-2 py-1"
         >
           ◀
         </button>
         <span className="font-medium">{yearMonth}</span>
         <button
-          onClick={() => setYearMonth((prev) => shiftMonth(prev, 1))}
+          onClick={() => {
+            const next = shiftMonth(yearMonth, 1)
+            setYearMonth(next)
+            setSelectedDate(`${next}-01`)
+          }}
           className="rounded border border-gray-300 px-2 py-1"
         >
           ▶
