@@ -53,6 +53,32 @@ export function useStudents() {
     return { data }
   }, [])
 
+  const addStudents = useCallback(async (rows: NewStudent[]) => {
+    if (rows.length === 0) {
+      return { inserted: [] }
+    }
+
+    const { data: userData } = await supabase.auth.getUser()
+    const teacherId = userData.user?.id
+    if (!teacherId) {
+      setError('로그인이 필요합니다.')
+      return { error: '로그인이 필요합니다.' }
+    }
+
+    const { data, error } = await supabase
+      .from('students')
+      .insert(rows.map((row) => ({ ...row, teacher_id: teacherId })))
+      .select()
+
+    if (error) {
+      setError(error.message)
+      return { error: error.message }
+    }
+
+    setStudents((prev) => [...prev, ...(data ?? [])].sort((a, b) => a.number - b.number))
+    return { inserted: data ?? [] }
+  }, [])
+
   const updateStudent = useCallback(async (id: string, input: StudentUpdate) => {
     const { data, error } = await supabase
       .from('students')
@@ -84,5 +110,14 @@ export function useStudents() {
     return {}
   }, [])
 
-  return { students, loading, error, addStudent, updateStudent, deleteStudent, refetch: fetchStudents }
+  return {
+    students,
+    loading,
+    error,
+    addStudent,
+    addStudents,
+    updateStudent,
+    deleteStudent,
+    refetch: fetchStudents,
+  }
 }

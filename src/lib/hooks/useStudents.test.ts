@@ -97,4 +97,72 @@ describe('useStudents', () => {
 
     expect(result.current.students.map((s) => s.id)).toEqual(['1'])
   })
+
+  it('adds multiple students in one request and keeps the list sorted', async () => {
+    const existingHigh = {
+      id: '9',
+      teacher_id: 't1',
+      number: 9,
+      name: '최지우',
+      gender: null,
+      student_phone: null,
+      parent_phone: null,
+      created_at: '2026-01-01',
+    }
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [existingHigh], error: null }))
+    const { result } = renderHook(() => useStudents())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
+    const inserted = [
+      {
+        id: '7',
+        teacher_id: 't1',
+        number: 1,
+        name: '김민준',
+        gender: null,
+        student_phone: null,
+        parent_phone: null,
+        created_at: '2026-01-01',
+      },
+      {
+        id: '8',
+        teacher_id: 't1',
+        number: 3,
+        name: '박지후',
+        gender: null,
+        student_phone: null,
+        parent_phone: null,
+        created_at: '2026-01-01',
+      },
+    ]
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: inserted, error: null }))
+
+    await act(async () => {
+      await result.current.addStudents([
+        { number: 1, name: '김민준', gender: null, student_phone: null, parent_phone: null },
+        { number: 3, name: '박지후', gender: null, student_phone: null, parent_phone: null },
+      ])
+    })
+
+    expect(result.current.students.map((s) => s.id)).toEqual(['7', '8', '9'])
+  })
+
+  it('surfaces the error message when the bulk insert fails', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [], error: null }))
+    const { result } = renderHook(() => useStudents())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: null, error: { message: '네트워크 오류' } }))
+
+    await act(async () => {
+      const outcome = await result.current.addStudents([
+        { number: 1, name: '김민준', gender: null, student_phone: null, parent_phone: null },
+      ])
+      expect(outcome.error).toBe('네트워크 오류')
+    })
+
+    expect(result.current.students).toEqual([])
+  })
 })
