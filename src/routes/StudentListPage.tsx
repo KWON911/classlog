@@ -6,7 +6,7 @@ import { StudentListItem } from '../components/StudentListItem'
 import { ImportStudentsPanel } from '../components/ImportStudentsPanel'
 
 export function StudentListPage() {
-  const { students, loading, error, addStudent, addStudents } = useStudents()
+  const { students, loading, error, addStudent, addStudents, deleteAllStudents } = useStudents()
   const { signOut } = useAuth()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -39,6 +39,18 @@ export function StudentListPage() {
     }
   }
 
+  const handleDeleteAll = async () => {
+    if (students.length === 0) return
+    if (
+      !window.confirm(
+        `정말 전체 학생 ${students.length}명을 삭제하시겠어요? 연결된 모든 생활기록도 함께 삭제되며 되돌릴 수 없습니다.`,
+      )
+    ) {
+      return
+    }
+    await deleteAllStudents()
+  }
+
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -61,6 +73,12 @@ export function StudentListPage() {
             className="rounded border border-gray-300 px-3 py-2"
           >
             {showImport ? '닫기' : 'CSV 가져오기'}
+          </button>
+          <button
+            onClick={handleDeleteAll}
+            className="rounded border border-red-300 px-3 py-2 text-sm text-red-600"
+          >
+            전체 삭제
           </button>
           <button
             onClick={() => signOut()}

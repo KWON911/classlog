@@ -110,6 +110,18 @@ export function useStudents() {
     return {}
   }, [])
 
+  const deleteAllStudents = useCallback(async () => {
+    const { error } = await supabase.from('students').delete().not('id', 'is', null)
+
+    if (error) {
+      setError(error.message)
+      return { error: error.message }
+    }
+
+    setStudents([])
+    return {}
+  }, [])
+
   return {
     students,
     loading,
@@ -118,6 +130,7 @@ export function useStudents() {
     addStudents,
     updateStudent,
     deleteStudent,
+    deleteAllStudents,
     refetch: fetchStudents,
   }
 }
