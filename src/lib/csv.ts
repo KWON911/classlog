@@ -58,11 +58,16 @@ export function parseStudentsCsv(
 ): { valid: ParsedStudentRow[]; skipped: SkippedRow[] } {
   const lines = text.split(/\r\n|\r|\n/).filter((line) => line.trim() !== '')
   const rows = lines.map(parseCsvLine)
-  const dataRows = rows.length > 1 && Number.isNaN(Number(rows[0][0])) ? rows.slice(1) : rows
 
   const valid: ParsedStudentRow[] = []
   const skipped: SkippedRow[] = []
   const seenNumbers = new Set<number>()
+
+  let dataRows = rows
+  if (rows.length > 1 && Number.isNaN(Number(rows[0][0]))) {
+    skipped.push({ raw: rows[0], reason: '헤더로 판단해 제외' })
+    dataRows = rows.slice(1)
+  }
 
   for (const raw of dataRows) {
     const [numberRaw, name, gender, studentPhone, parentPhone] = raw

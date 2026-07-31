@@ -14,13 +14,12 @@ describe('decodeCsvBytes', () => {
   })
 
   it('falls back to EUC-KR decoding when bytes are not valid UTF-8', () => {
-    // 0xff and 0xfe are never valid UTF-8 lead bytes, so the strict UTF-8
-    // decode is guaranteed to throw and the function must fall back rather
-    // than propagate the error.
-    const bytes = new Uint8Array([0xff, 0xfe, 0xb1, 0xe6]).buffer
+    // 0xb1 0xe6 is the CP949/EUC-KR encoding of '길'; 0xb1 is not a valid
+    // UTF-8 continuation byte in that position, so the strict UTF-8 decode
+    // is guaranteed to throw and the function must fall back.
+    const bytes = new Uint8Array([0xb1, 0xe6]).buffer
 
-    expect(() => decodeCsvBytes(bytes)).not.toThrow()
-    expect(typeof decodeCsvBytes(bytes)).toBe('string')
+    expect(decodeCsvBytes(bytes)).toBe('길')
   })
 })
 
@@ -51,6 +50,15 @@ describe('parseStudentsCsv', () => {
     expect(valid).toEqual([
       { number: 1, name: '김민준', gender: null, student_phone: null, parent_phone: null },
     ])
+  })
+
+  it('reports the stripped header row in skipped rather than discarding it silently', () => {
+    const header = ['출석번호', '이름', '성별', '본인연락처', '학부모연락처']
+    const csv = [csvRow(header), csvRow(['1', '김민준', '', '', ''])].join('\n')
+
+    const { skipped } = parseStudentsCsv(csv, new Set())
+
+    expect(skipped).toEqual([{ raw: header, reason: '헤더로 판단해 제외' }])
   })
 
   it('does not treat the first row as a header when its first column is numeric', () => {
