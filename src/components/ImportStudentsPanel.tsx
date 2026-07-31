@@ -55,7 +55,16 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
 
   return (
     <div className="flex flex-col gap-3">
-      <input type="file" accept=".csv" onChange={handleFileChange} />
+      <div className="flex items-center gap-3">
+        <input type="file" accept=".csv" onChange={handleFileChange} />
+        <a
+          href="/sample-students.csv"
+          download
+          className="text-sm text-blue-600 underline whitespace-nowrap"
+        >
+          샘플 파일 다운로드
+        </a>
+      </div>
 
       {fileError && <p className="text-sm text-red-600">{fileError}</p>}
 
