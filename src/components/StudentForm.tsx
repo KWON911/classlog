@@ -4,8 +4,15 @@ export type StudentFormValues = {
   number: number
   name: string
   gender: string
+  birthdate: string
   student_phone: string
-  parent_phone: string
+  address: string
+  father_name: string
+  father_phone: string
+  mother_name: string
+  mother_phone: string
+  emergency_contact: string
+  note: string
 }
 
 type StudentFormProps = {
@@ -19,8 +26,15 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
   const [number, setNumber] = useState(String(initialValues?.number ?? ''))
   const [name, setName] = useState(initialValues?.name ?? '')
   const [gender, setGender] = useState(initialValues?.gender ?? '')
+  const [birthdate, setBirthdate] = useState(initialValues?.birthdate ?? '')
   const [studentPhone, setStudentPhone] = useState(initialValues?.student_phone ?? '')
-  const [parentPhone, setParentPhone] = useState(initialValues?.parent_phone ?? '')
+  const [address, setAddress] = useState(initialValues?.address ?? '')
+  const [fatherName, setFatherName] = useState(initialValues?.father_name ?? '')
+  const [fatherPhone, setFatherPhone] = useState(initialValues?.father_phone ?? '')
+  const [motherName, setMotherName] = useState(initialValues?.mother_name ?? '')
+  const [motherPhone, setMotherPhone] = useState(initialValues?.mother_phone ?? '')
+  const [emergencyContact, setEmergencyContact] = useState(initialValues?.emergency_contact ?? '')
+  const [note, setNote] = useState(initialValues?.note ?? '')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -36,8 +50,15 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
       number: Number(number),
       name: name.trim(),
       gender,
+      birthdate,
       student_phone: studentPhone,
-      parent_phone: parentPhone,
+      address,
+      father_name: fatherName,
+      father_phone: fatherPhone,
+      mother_name: motherName,
+      mother_phone: motherPhone,
+      emergency_contact: emergencyContact,
+      note,
     })
     setSubmitting(false)
   }
@@ -74,7 +95,17 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        본인 연락처
+        생년월일
+        <input
+          type="text"
+          placeholder="예: 240304"
+          value={birthdate}
+          onChange={(e) => setBirthdate(e.target.value)}
+          className="rounded border border-gray-300 px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        학생 전화
         <input
           type="text"
           value={studentPhone}
@@ -83,11 +114,65 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        학부모 연락처
+        주소
         <input
           type="text"
-          value={parentPhone}
-          onChange={(e) => setParentPhone(e.target.value)}
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          className="rounded border border-gray-300 px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        부 성명
+        <input
+          type="text"
+          value={fatherName}
+          onChange={(e) => setFatherName(e.target.value)}
+          className="rounded border border-gray-300 px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        부 전화
+        <input
+          type="text"
+          value={fatherPhone}
+          onChange={(e) => setFatherPhone(e.target.value)}
+          className="rounded border border-gray-300 px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        모 성명
+        <input
+          type="text"
+          value={motherName}
+          onChange={(e) => setMotherName(e.target.value)}
+          className="rounded border border-gray-300 px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        모 전화
+        <input
+          type="text"
+          value={motherPhone}
+          onChange={(e) => setMotherPhone(e.target.value)}
+          className="rounded border border-gray-300 px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        비상연락처
+        <input
+          type="text"
+          value={emergencyContact}
+          onChange={(e) => setEmergencyContact(e.target.value)}
+          className="rounded border border-gray-300 px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        비고
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
           className="rounded border border-gray-300 px-3 py-2"
         />
       </label>

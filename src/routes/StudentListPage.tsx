@@ -24,8 +24,15 @@ export function StudentListPage() {
       number: values.number,
       name: values.name,
       gender: values.gender || null,
+      birthdate: values.birthdate || null,
       student_phone: values.student_phone || null,
-      parent_phone: values.parent_phone || null,
+      address: values.address || null,
+      father_name: values.father_name || null,
+      father_phone: values.father_phone || null,
+      mother_name: values.mother_name || null,
+      mother_phone: values.mother_phone || null,
+      emergency_contact: values.emergency_contact || null,
+      note: values.note || null,
     })
     if (!result.error) {
       setShowForm(false)

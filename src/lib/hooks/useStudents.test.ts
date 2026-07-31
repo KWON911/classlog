@@ -76,8 +76,15 @@ describe('useStudents', () => {
         number: 1,
         name: '이서연',
         gender: null,
+        birthdate: null,
         student_phone: null,
-        parent_phone: null,
+        address: null,
+        father_name: null,
+        father_phone: null,
+        mother_name: null,
+        mother_phone: null,
+        emergency_contact: null,
+        note: null,
       })
     })
 
@@ -140,8 +147,34 @@ describe('useStudents', () => {
 
     await act(async () => {
       await result.current.addStudents([
-        { number: 1, name: '김민준', gender: null, student_phone: null, parent_phone: null },
-        { number: 3, name: '박지후', gender: null, student_phone: null, parent_phone: null },
+        {
+          number: 1,
+          name: '김민준',
+          gender: null,
+          birthdate: null,
+          student_phone: null,
+          address: null,
+          father_name: null,
+          father_phone: null,
+          mother_name: null,
+          mother_phone: null,
+          emergency_contact: null,
+          note: null,
+        },
+        {
+          number: 3,
+          name: '박지후',
+          gender: null,
+          birthdate: null,
+          student_phone: null,
+          address: null,
+          father_name: null,
+          father_phone: null,
+          mother_name: null,
+          mother_phone: null,
+          emergency_contact: null,
+          note: null,
+        },
       ])
     })
 
@@ -158,7 +191,20 @@ describe('useStudents', () => {
 
     await act(async () => {
       const outcome = await result.current.addStudents([
-        { number: 1, name: '김민준', gender: null, student_phone: null, parent_phone: null },
+        {
+          number: 1,
+          name: '김민준',
+          gender: null,
+          birthdate: null,
+          student_phone: null,
+          address: null,
+          father_name: null,
+          father_phone: null,
+          mother_name: null,
+          mother_phone: null,
+          emergency_contact: null,
+          note: null,
+        },
       ])
       expect(outcome.error).toBe('네트워크 오류')
     })

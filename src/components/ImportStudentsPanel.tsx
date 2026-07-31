@@ -78,8 +78,8 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
             <ul className="flex flex-col gap-1 text-sm">
               {valid.map((row) => (
                 <li key={row.number}>
-                  {row.number}. {row.name} · {row.gender ?? '-'} · 본인 {row.student_phone ?? '-'} · 학부모{' '}
-                  {row.parent_phone ?? '-'}
+                  {row.number}. {row.name} · {row.gender ?? '-'} · 부 {row.father_phone ?? '-'} · 모{' '}
+                  {row.mother_phone ?? '-'}
                 </li>
               ))}
             </ul>

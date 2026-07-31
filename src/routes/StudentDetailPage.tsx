@@ -42,8 +42,15 @@ export function StudentDetailPage() {
       number: values.number,
       name: values.name,
       gender: values.gender || null,
+      birthdate: values.birthdate || null,
       student_phone: values.student_phone || null,
-      parent_phone: values.parent_phone || null,
+      address: values.address || null,
+      father_name: values.father_name || null,
+      father_phone: values.father_phone || null,
+      mother_name: values.mother_name || null,
+      mother_phone: values.mother_phone || null,
+      emergency_contact: values.emergency_contact || null,
+      note: values.note || null,
     })
     if (!result.error) {
       setEditingStudent(false)
@@ -87,7 +94,8 @@ export function StudentDetailPage() {
             {student.number}. {student.name}
           </h1>
           <p className="text-sm text-gray-500">
-            본인 {student.student_phone ?? '-'} · 학부모 {student.parent_phone ?? '-'}
+            본인 {student.student_phone ?? '-'} · 부 {student.father_phone ?? '-'} · 모{' '}
+            {student.mother_phone ?? '-'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -116,8 +124,15 @@ export function StudentDetailPage() {
               number: student.number,
               name: student.name,
               gender: student.gender ?? '',
+              birthdate: student.birthdate ?? '',
               student_phone: student.student_phone ?? '',
-              parent_phone: student.parent_phone ?? '',
+              address: student.address ?? '',
+              father_name: student.father_name ?? '',
+              father_phone: student.father_phone ?? '',
+              mother_name: student.mother_name ?? '',
+              mother_phone: student.mother_phone ?? '',
+              emergency_contact: student.emergency_contact ?? '',
+              note: student.note ?? '',
             }}
             onSubmit={handleUpdateStudent}
             onCancel={() => setEditingStudent(false)}

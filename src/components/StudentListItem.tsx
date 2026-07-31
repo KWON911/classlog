@@ -10,7 +10,9 @@ export function StudentListItem({ student }: { student: Student }) {
       <span className="font-medium">
         {student.number}. {student.name}
       </span>
-      <span className="text-sm text-gray-500">{student.parent_phone ?? ''}</span>
+      <span className="text-sm text-gray-500">
+        부 {student.father_phone ?? '-'} · 모 {student.mother_phone ?? '-'}
+      </span>
     </Link>
   )
 }
