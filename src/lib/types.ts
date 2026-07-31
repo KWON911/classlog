@@ -4,8 +4,15 @@ export type Student = {
   number: number
   name: string
   gender: string | null
+  birthdate: string | null
   student_phone: string | null
-  parent_phone: string | null
+  address: string | null
+  father_name: string | null
+  father_phone: string | null
+  mother_name: string | null
+  mother_phone: string | null
+  emergency_contact: string | null
+  note: string | null
   created_at: string
 }
 

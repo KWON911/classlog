@@ -43,8 +43,15 @@ export type ParsedStudentRow = {
   number: number
   name: string
   gender: string | null
+  birthdate: string | null
   student_phone: string | null
-  parent_phone: string | null
+  address: string | null
+  father_name: string | null
+  father_phone: string | null
+  mother_name: string | null
+  mother_phone: string | null
+  emergency_contact: string | null
+  note: string | null
 }
 
 export type SkippedRow = {
@@ -70,7 +77,20 @@ export function parseStudentsCsv(
   }
 
   for (const raw of dataRows) {
-    const [numberRaw, name, gender, studentPhone, parentPhone] = raw
+    const [
+      numberRaw,
+      name,
+      gender,
+      birthdate,
+      studentPhone,
+      address,
+      fatherName,
+      fatherPhone,
+      motherName,
+      motherPhone,
+      emergencyContact,
+      note,
+    ] = raw
 
     if (!name) {
       skipped.push({ raw, reason: '이름 없음' })
@@ -99,8 +119,15 @@ export function parseStudentsCsv(
       number,
       name,
       gender: gender || null,
+      birthdate: birthdate || null,
       student_phone: studentPhone || null,
-      parent_phone: parentPhone || null,
+      address: address || null,
+      father_name: fatherName || null,
+      father_phone: fatherPhone || null,
+      mother_name: motherName || null,
+      mother_phone: motherPhone || null,
+      emergency_contact: emergencyContact || null,
+      note: note || null,
     })
   }
 

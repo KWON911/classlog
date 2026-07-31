@@ -6,8 +6,15 @@ create table if not exists students (
   number integer not null,
   name text not null,
   gender text,
+  birthdate text,
   student_phone text,
-  parent_phone text,
+  address text,
+  father_name text,
+  father_phone text,
+  mother_name text,
+  mother_phone text,
+  emergency_contact text,
+  note text,
   created_at timestamptz not null default now()
 );
 
