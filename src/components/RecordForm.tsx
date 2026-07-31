@@ -20,7 +20,7 @@ export function RecordForm({ initialValues, onSubmit, onCancel, submitLabel }: R
   const [category, setCategory] = useState<RecordCategory>(initialValues?.category ?? '생활지도')
   const [content, setContent] = useState(initialValues?.content ?? '')
   const [recordDate, setRecordDate] = useState(
-    initialValues?.record_date ?? new Date().toISOString().slice(0, 10),
+    initialValues?.record_date ?? new Date().toLocaleDateString('sv-SE'),
   )
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)

@@ -10,7 +10,13 @@ import type { StudentRecord } from '../lib/types'
 export function StudentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { students, error: studentsError, updateStudent, deleteStudent } = useStudents()
+  const {
+    students,
+    loading: studentsLoading,
+    error: studentsError,
+    updateStudent,
+    deleteStudent,
+  } = useStudents()
   const { records, loading, error, addRecord, updateRecord, deleteRecord } = useStudentRecords(id ?? '')
 
   const [editingStudent, setEditingStudent] = useState(false)
@@ -20,7 +26,15 @@ export function StudentDetailPage() {
   const student = students.find((s) => s.id === id)
 
   if (!student) {
-    return <p className="p-6">학생 정보를 불러오는 중이거나 존재하지 않습니다.</p>
+    if (studentsLoading) {
+      return <p className="p-6">불러오는 중...</p>
+    }
+    return (
+      <div className="p-6">
+        {studentsError && <p className="text-red-600">{studentsError}</p>}
+        <p>{studentsError ? '학생 정보를 불러오지 못했습니다.' : '존재하지 않는 학생입니다.'}</p>
+      </div>
+    )
   }
 
   const handleUpdateStudent = async (values: StudentFormValues) => {
@@ -37,6 +51,9 @@ export function StudentDetailPage() {
   }
 
   const handleDeleteStudent = async () => {
+    if (!window.confirm('정말 이 학생을 삭제하시겠어요? 연결된 모든 생활기록도 함께 삭제됩니다.')) {
+      return
+    }
     const result = await deleteStudent(student.id)
     if (!result.error) {
       navigate('/students')
@@ -130,6 +147,7 @@ export function StudentDetailPage() {
       {editingRecord && (
         <div className="mb-4 rounded border border-gray-200 p-4">
           <RecordForm
+            key={editingRecord.id}
             submitLabel="저장"
             initialValues={editingRecord}
             onSubmit={handleUpdateRecord}

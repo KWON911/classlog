@@ -9,22 +9,10 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/students"
-          element={
-            <ProtectedRoute>
-              <StudentListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/students/:id"
-          element={
-            <ProtectedRoute>
-              <StudentDetailPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/students" element={<StudentListPage />} />
+          <Route path="/students/:id" element={<StudentDetailPage />} />
+        </Route>
         <Route path="*" element={<Navigate to="/students" replace />} />
       </Routes>
     </BrowserRouter>

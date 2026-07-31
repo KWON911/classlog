@@ -48,7 +48,14 @@ export function RecordTimeline({ records, onEdit, onDelete }: RecordTimelineProp
                 <button onClick={() => onEdit(record)} className="underline">
                   수정
                 </button>
-                <button onClick={() => onDelete(record.id)} className="underline">
+                <button
+                  onClick={() => {
+                    if (window.confirm('이 기록을 삭제하시겠어요?')) {
+                      onDelete(record.id)
+                    }
+                  }}
+                  className="underline"
+                >
                   삭제
                 </button>
               </div>

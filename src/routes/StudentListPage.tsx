@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
+import { useAuth } from '../lib/hooks/useAuth'
 import { StudentForm, type StudentFormValues } from '../components/StudentForm'
 import { StudentListItem } from '../components/StudentListItem'
 
 export function StudentListPage() {
   const { students, loading, error, addStudent } = useStudents()
+  const { signOut } = useAuth()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
 
@@ -30,12 +32,20 @@ export function StudentListPage() {
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">학생 명부</h1>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded bg-blue-600 px-3 py-2 text-white"
-        >
-          {showForm ? '닫기' : '학생 추가'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="rounded bg-blue-600 px-3 py-2 text-white"
+          >
+            {showForm ? '닫기' : '학생 추가'}
+          </button>
+          <button
+            onClick={() => signOut()}
+            className="rounded border border-gray-300 px-3 py-2 text-sm"
+          >
+            로그아웃
+          </button>
+        </div>
       </div>
 
       {showForm && (

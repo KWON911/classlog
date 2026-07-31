@@ -56,7 +56,10 @@ export function useStudentRecords(studentId: string) {
       }
 
       setRecords((prev) =>
-        [...prev, data].sort((a, b) => (a.record_date < b.record_date ? 1 : -1)),
+        [...prev, data].sort(
+          (a, b) =>
+            b.record_date.localeCompare(a.record_date) || b.created_at.localeCompare(a.created_at),
+        ),
       )
       return { data }
     },
@@ -79,7 +82,10 @@ export function useStudentRecords(studentId: string) {
     setRecords((prev) =>
       prev
         .map((r) => (r.id === id ? data : r))
-        .sort((a, b) => (a.record_date < b.record_date ? 1 : -1)),
+        .sort(
+          (a, b) =>
+            b.record_date.localeCompare(a.record_date) || b.created_at.localeCompare(a.created_at),
+        ),
     )
     return { data }
   }, [])

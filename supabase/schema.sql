@@ -32,4 +32,11 @@ create policy "teachers manage own students" on students
 create policy "teachers manage own records" on records
   for all
   using (teacher_id = auth.uid())
-  with check (teacher_id = auth.uid());
+  with check (
+    teacher_id = auth.uid()
+    and exists (
+      select 1 from students s
+      where s.id = student_id
+        and s.teacher_id = auth.uid()
+    )
+  );
