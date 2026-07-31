@@ -27,3 +27,17 @@ export type StudentRecord = {
   record_date: string
   created_at: string
 }
+
+export type AttendanceStatus = '결석' | '지각' | '조퇴' | '결과'
+export type AttendanceReasonCategory = '질병' | '미인정' | '인정' | '기타'
+
+export type AttendanceEntry = {
+  id: string
+  student_id: string
+  teacher_id: string
+  date: string
+  status: AttendanceStatus
+  reason_category: AttendanceReasonCategory
+  note: string | null
+  created_at: string
+}

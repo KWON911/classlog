@@ -47,3 +47,29 @@ create policy "teachers manage own records" on records
         and s.teacher_id = auth.uid()
     )
   );
+
+create table if not exists attendance (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  teacher_id uuid not null references auth.users(id) default auth.uid(),
+  date date not null,
+  status text not null check (status in ('결석', '지각', '조퇴', '결과')),
+  reason_category text not null check (reason_category in ('질병', '미인정', '인정', '기타')),
+  note text,
+  created_at timestamptz not null default now(),
+  unique (student_id, date)
+);
+
+alter table attendance enable row level security;
+
+create policy "teachers manage own attendance" on attendance
+  for all
+  using (teacher_id = auth.uid())
+  with check (
+    teacher_id = auth.uid()
+    and exists (
+      select 1 from students s
+      where s.id = student_id
+        and s.teacher_id = auth.uid()
+    )
+  );
