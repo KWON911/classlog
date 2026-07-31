@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useAttendance } from '../lib/hooks/useAttendance'
 import { AttendanceEditRow } from '../components/AttendanceEditRow'
@@ -27,10 +27,16 @@ function daysInMonth(yearMonth: string) {
   return new Date(year, month, 0).getDate()
 }
 
+function formatMonthDay(date: string) {
+  const [, month, day] = date.split('-')
+  return `${Number(month)}/${Number(day)}`
+}
+
 export function AttendancePage() {
   const [yearMonth, setYearMonth] = useState(todayYearMonth())
   const [selectedDate, setSelectedDate] = useState(todayDate())
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
+  const [expandedStudentIds, setExpandedStudentIds] = useState<Set<string>>(new Set())
 
   const { students, error: studentsError } = useStudents()
   const { entries, loading, error, upsertEntry, clearEntry } = useAttendance(yearMonth)
@@ -57,6 +63,19 @@ export function AttendancePage() {
     return table
   }, [students, entries])
 
+  const entriesByStudent = useMemo(() => {
+    const map = new Map<string, typeof entries>()
+    for (const entry of entries) {
+      const list = map.get(entry.student_id) ?? []
+      list.push(entry)
+      map.set(entry.student_id, list)
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => a.date.localeCompare(b.date))
+    }
+    return map
+  }, [entries])
+
   const handleSave = async (
     studentId: string,
     status: AttendanceStatus,
@@ -76,6 +95,18 @@ export function AttendancePage() {
   const handleClear = async (studentId: string) => {
     await clearEntry(studentId, selectedDate)
     setEditingStudentId(null)
+  }
+
+  const toggleExpanded = (studentId: string) => {
+    setExpandedStudentIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(studentId)) {
+        next.delete(studentId)
+      } else {
+        next.add(studentId)
+      }
+      return next
+    })
   }
 
   const days = Array.from({ length: daysInMonth(yearMonth) }, (_, i) => i + 1)
@@ -181,17 +212,45 @@ export function AttendancePage() {
         <tbody>
           {students.map((student) => {
             const row = summaryByStudent.get(student.id)
+            const isExpanded = expandedStudentIds.has(student.id)
+            const studentEntries = entriesByStudent.get(student.id) ?? []
             return (
-              <tr key={student.id} className="border-b border-gray-100">
-                <td className="py-1">
-                  {student.number}. {student.name}
-                </td>
-                {STATUSES.map((status) => (
-                  <td key={status} className="py-1 text-center">
-                    {row?.[status] ?? 0}
+              <Fragment key={student.id}>
+                <tr className="border-b border-gray-100">
+                  <td className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(student.id)}
+                      className="text-left hover:underline"
+                    >
+                      {isExpanded ? '▾' : '▸'} {student.number}. {student.name}
+                    </button>
                   </td>
-                ))}
-              </tr>
+                  {STATUSES.map((status) => (
+                    <td key={status} className="py-1 text-center">
+                      {row?.[status] ?? 0}
+                    </td>
+                  ))}
+                </tr>
+                {isExpanded && (
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <td colSpan={STATUSES.length + 1} className="py-2 pl-6 text-sm text-gray-600">
+                      {studentEntries.length === 0 ? (
+                        '이번 달 기록 없음'
+                      ) : (
+                        <ul className="flex flex-col gap-1">
+                          {studentEntries.map((entry) => (
+                            <li key={entry.id}>
+                              {formatMonthDay(entry.date)} {entry.status}({entry.reason_category})
+                              {entry.note ? ` - ${entry.note}` : ''}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             )
           })}
         </tbody>
