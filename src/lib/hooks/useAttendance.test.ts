@@ -25,6 +25,32 @@ const entryA = {
   created_at: '2026-08-05',
 }
 
+// Same student (s1) as entryA, but a different date — must survive a
+// student-only match predicate being (wrongly) sufficient.
+const entryBSameStudentDifferentDate = {
+  id: 'a2',
+  student_id: 's1',
+  teacher_id: 't1',
+  date: '2026-08-10',
+  status: '지각' as const,
+  reason_category: '기타' as const,
+  note: null,
+  created_at: '2026-08-10',
+}
+
+// Different student (s2), same date as entryA — must survive a
+// date-only match predicate being (wrongly) sufficient.
+const entryCDifferentStudentSameDate = {
+  id: 'a3',
+  student_id: 's2',
+  teacher_id: 't1',
+  date: '2026-08-05',
+  status: '조퇴' as const,
+  reason_category: '기타' as const,
+  note: null,
+  created_at: '2026-08-05',
+}
+
 beforeEach(() => {
   mockFrom.mockReset()
   mockGetUser.mockReset()
@@ -67,31 +93,48 @@ describe('useAttendance', () => {
   })
 
   it('upserts an entry with onConflict on student_id,date', async () => {
-    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [], error: null }))
+    mockFrom.mockReturnValueOnce(
+      createQueryBuilder({
+        data: [entryA, entryBSameStudentDifferentDate, entryCDifferentStudentSameDate],
+        error: null,
+      }),
+    )
     const { result } = renderHook(() => useAttendance('2026-08'))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
-    const upsertBuilder = createQueryBuilder({ data: entryA, error: null })
+    const updatedEntryA = { ...entryA, status: '지각' as const, reason_category: '인정' as const }
+    const upsertBuilder = createQueryBuilder({ data: updatedEntryA, error: null })
     mockFrom.mockReturnValueOnce(upsertBuilder)
 
     await act(async () => {
       await result.current.upsertEntry('s1', '2026-08-05', {
-        status: '결석',
-        reason_category: '질병',
+        status: '지각',
+        reason_category: '인정',
         note: null,
       })
     })
 
     expect(upsertBuilder.upsert).toHaveBeenCalledWith(
-      { student_id: 's1', teacher_id: 't1', date: '2026-08-05', status: '결석', reason_category: '질병', note: null },
+      { student_id: 's1', teacher_id: 't1', date: '2026-08-05', status: '지각', reason_category: '인정', note: null },
       { onConflict: 'student_id,date' },
     )
-    expect(result.current.entries).toEqual([entryA])
+    // The near-miss rows (same student/different date, different student/same date)
+    // must survive untouched, and entryA must be replaced (not duplicated).
+    expect(result.current.entries).toEqual([
+      entryBSameStudentDifferentDate,
+      entryCDifferentStudentSameDate,
+      updatedEntryA,
+    ])
   })
 
   it('clears an entry by student and date', async () => {
-    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [entryA], error: null }))
+    mockFrom.mockReturnValueOnce(
+      createQueryBuilder({
+        data: [entryA, entryBSameStudentDifferentDate, entryCDifferentStudentSameDate],
+        error: null,
+      }),
+    )
     const { result } = renderHook(() => useAttendance('2026-08'))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
@@ -104,6 +147,8 @@ describe('useAttendance', () => {
 
     expect(deleteBuilder.eq).toHaveBeenCalledWith('student_id', 's1')
     expect(deleteBuilder.eq).toHaveBeenCalledWith('date', '2026-08-05')
-    expect(result.current.entries).toEqual([])
+    // Only entryA (matching both student_id AND date) should be removed;
+    // the near-miss rows must remain.
+    expect(result.current.entries).toEqual([entryBSameStudentDifferentDate, entryCDifferentStudentSameDate])
   })
 })

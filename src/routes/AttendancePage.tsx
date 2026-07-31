@@ -32,7 +32,7 @@ export function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(todayDate())
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
 
-  const { students } = useStudents()
+  const { students, error: studentsError } = useStudents()
   const { entries, loading, error, upsertEntry, clearEntry } = useAttendance(yearMonth)
 
   const entryByStudentAndDate = useMemo(() => {
@@ -90,6 +90,7 @@ export function AttendancePage() {
             const next = shiftMonth(yearMonth, -1)
             setYearMonth(next)
             setSelectedDate(`${next}-01`)
+            setEditingStudentId(null)
           }}
           className="rounded border border-gray-300 px-2 py-1"
         >
@@ -101,6 +102,7 @@ export function AttendancePage() {
             const next = shiftMonth(yearMonth, 1)
             setYearMonth(next)
             setSelectedDate(`${next}-01`)
+            setEditingStudentId(null)
           }}
           className="rounded border border-gray-300 px-2 py-1"
         >
@@ -108,7 +110,10 @@ export function AttendancePage() {
         </button>
         <select
           value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
+          onChange={(e) => {
+            setSelectedDate(e.target.value)
+            setEditingStudentId(null)
+          }}
           className="rounded border border-gray-300 px-2 py-1"
         >
           {days.map((day) => {
@@ -124,6 +129,7 @@ export function AttendancePage() {
 
       {loading && <p>불러오는 중...</p>}
       {error && <p className="text-red-600">{error}</p>}
+      {studentsError && <p className="text-red-600">{studentsError}</p>}
 
       <ul className="mb-8 flex flex-col gap-2">
         {students.map((student) => {

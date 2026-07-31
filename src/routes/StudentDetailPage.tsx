@@ -19,7 +19,7 @@ export function StudentDetailPage() {
     deleteStudent,
   } = useStudents()
   const { records, loading, error, addRecord, updateRecord, deleteRecord } = useStudentRecords(id ?? '')
-  const { summary: attendanceSummary } = useAttendanceSummary(id ?? '')
+  const { summary: attendanceSummary, error: attendanceError } = useAttendanceSummary(id ?? '')
 
   const [editingStudent, setEditingStudent] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
@@ -123,6 +123,7 @@ export function StudentDetailPage() {
       </p>
 
       {studentsError && <p className="text-red-600">{studentsError}</p>}
+      {attendanceError && <p className="text-red-600">{attendanceError}</p>}
 
       {showDetails && (
         <dl className="mb-6 grid grid-cols-2 gap-x-4 gap-y-2 rounded border border-gray-200 p-4 text-sm">
