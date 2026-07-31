@@ -98,7 +98,7 @@ export function StudentListPage() {
       {loading && <p>불러오는 중...</p>}
       {error && <p className="text-red-600">{error}</p>}
 
-      <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {filtered.map((student) => (
           <StudentListItem key={student.id} student={student} />
         ))}

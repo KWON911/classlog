@@ -20,6 +20,7 @@ export function StudentDetailPage() {
   const { records, loading, error, addRecord, updateRecord, deleteRecord } = useStudentRecords(id ?? '')
 
   const [editingStudent, setEditingStudent] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
   const [showRecordForm, setShowRecordForm] = useState(false)
   const [editingRecord, setEditingRecord] = useState<StudentRecord | null>(null)
 
@@ -89,16 +90,16 @@ export function StudentDetailPage() {
       </Link>
 
       <div className="mt-3 mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">
-            {student.number}. {student.name}
-          </h1>
-          <p className="text-sm text-gray-500">
-            본인 {student.student_phone ?? '-'} · 부 {student.father_phone ?? '-'} · 모{' '}
-            {student.mother_phone ?? '-'}
-          </p>
-        </div>
+        <h1 className="text-2xl font-semibold">
+          {student.number}. {student.name}
+        </h1>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowDetails((v) => !v)}
+            className="rounded border border-gray-300 px-3 py-1 text-sm"
+          >
+            {showDetails ? '닫기' : '상세정보 보기'}
+          </button>
           <button
             onClick={() => setEditingStudent((v) => !v)}
             className="rounded border border-gray-300 px-3 py-1 text-sm"
@@ -115,6 +116,35 @@ export function StudentDetailPage() {
       </div>
 
       {studentsError && <p className="text-red-600">{studentsError}</p>}
+
+      {showDetails && (
+        <dl className="mb-6 grid grid-cols-2 gap-x-4 gap-y-2 rounded border border-gray-200 p-4 text-sm">
+          <dt className="text-gray-500">출석번호</dt>
+          <dd>{student.number}</dd>
+          <dt className="text-gray-500">이름</dt>
+          <dd>{student.name}</dd>
+          <dt className="text-gray-500">성별</dt>
+          <dd>{student.gender ?? '-'}</dd>
+          <dt className="text-gray-500">생년월일</dt>
+          <dd>{student.birthdate ?? '-'}</dd>
+          <dt className="text-gray-500">본인 연락처</dt>
+          <dd>{student.student_phone ?? '-'}</dd>
+          <dt className="text-gray-500">주소</dt>
+          <dd>{student.address ?? '-'}</dd>
+          <dt className="text-gray-500">부 성명</dt>
+          <dd>{student.father_name ?? '-'}</dd>
+          <dt className="text-gray-500">부 연락처</dt>
+          <dd>{student.father_phone ?? '-'}</dd>
+          <dt className="text-gray-500">모 성명</dt>
+          <dd>{student.mother_name ?? '-'}</dd>
+          <dt className="text-gray-500">모 연락처</dt>
+          <dd>{student.mother_phone ?? '-'}</dd>
+          <dt className="text-gray-500">비상연락처</dt>
+          <dd>{student.emergency_contact ?? '-'}</dd>
+          <dt className="text-gray-500">비고</dt>
+          <dd>{student.note ?? '-'}</dd>
+        </dl>
+      )}
 
       {editingStudent && (
         <div className="mb-6 rounded border border-gray-200 p-4">
