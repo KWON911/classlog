@@ -1,7 +1,7 @@
 function App() {
   return (
     <div>
-      <h1 className="p-6 text-2xl font-semibold">우리 반 앱</h1>
+      <h1 className="p-6 text-2xl font-semibold">학급 대시보드</h1>
     </div>
   )
 }
