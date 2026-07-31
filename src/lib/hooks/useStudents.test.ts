@@ -64,17 +64,17 @@ describe('useStudents', () => {
   })
 
   it('adds a student and keeps the list sorted by number', async () => {
-    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [studentNum1], error: null }))
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [studentNum2], error: null }))
     const { result } = renderHook(() => useStudents())
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
-    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: studentNum2, error: null }))
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: studentNum1, error: null }))
 
     await act(async () => {
       await result.current.addStudent({
-        number: 2,
-        name: '김민준',
+        number: 1,
+        name: '이서연',
         gender: null,
         student_phone: null,
         parent_phone: null,
