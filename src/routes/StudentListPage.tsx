@@ -3,17 +3,21 @@ import { useStudents } from '../lib/hooks/useStudents'
 import { useAuth } from '../lib/hooks/useAuth'
 import { StudentForm, type StudentFormValues } from '../components/StudentForm'
 import { StudentListItem } from '../components/StudentListItem'
+import { ImportStudentsPanel } from '../components/ImportStudentsPanel'
 
 export function StudentListPage() {
-  const { students, loading, error, addStudent } = useStudents()
+  const { students, loading, error, addStudent, addStudents } = useStudents()
   const { signOut } = useAuth()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   const filtered = useMemo(
     () => students.filter((s) => s.name.includes(search.trim())),
     [students, search],
   )
+
+  const existingNumbers = useMemo(() => new Set(students.map((s) => s.number)), [students])
 
   const handleAdd = async (values: StudentFormValues) => {
     const result = await addStudent({
@@ -34,10 +38,22 @@ export function StudentListPage() {
         <h1 className="text-2xl font-semibold">학생 명부</h1>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => {
+              setShowImport(false)
+              setShowForm((v) => !v)
+            }}
             className="rounded bg-blue-600 px-3 py-2 text-white"
           >
             {showForm ? '닫기' : '학생 추가'}
+          </button>
+          <button
+            onClick={() => {
+              setShowForm(false)
+              setShowImport((v) => !v)
+            }}
+            className="rounded border border-gray-300 px-3 py-2"
+          >
+            {showImport ? '닫기' : 'CSV 가져오기'}
           </button>
           <button
             onClick={() => signOut()}
@@ -51,6 +67,16 @@ export function StudentListPage() {
       {showForm && (
         <div className="mb-4 rounded border border-gray-200 p-4">
           <StudentForm submitLabel="추가" onSubmit={handleAdd} onCancel={() => setShowForm(false)} />
+        </div>
+      )}
+
+      {showImport && (
+        <div className="mb-4 rounded border border-gray-200 p-4">
+          <ImportStudentsPanel
+            existingNumbers={existingNumbers}
+            onImport={addStudents}
+            onCancel={() => setShowImport(false)}
+          />
         </div>
       )}
 
