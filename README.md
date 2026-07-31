@@ -20,6 +20,7 @@
 
 2. Supabase 프로젝트 준비
    - Supabase 프로젝트의 SQL 편집기에서 `supabase/schema.sql`을 실행합니다.
+   - **스키마가 이미 적용된 프로젝트에서 컬럼 구성이 바뀐 경우**: `create table if not exists`는 이미 존재하는 테이블에는 아무 effect가 없습니다. SQL 편집기에서 `drop table if exists records; drop table if exists students;`를 먼저 실행한 뒤, `supabase/schema.sql` 전체를 다시 실행하세요. (기존 데이터가 모두 삭제되니 주의하세요.)
    - Authentication → Users에서 로그인에 사용할 교사 계정을 하나 만듭니다.
    - `.env.example`을 `.env`로 복사하고, Supabase 프로젝트의 API 설정에서 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` 값을 채웁니다.
 

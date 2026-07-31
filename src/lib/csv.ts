@@ -77,6 +77,11 @@ export function parseStudentsCsv(
   }
 
   for (const raw of dataRows) {
+    if (raw.length < 12) {
+      skipped.push({ raw, reason: '열 개수가 맞지 않음 (12열 필요)' })
+      continue
+    }
+
     const [
       numberRaw,
       name,

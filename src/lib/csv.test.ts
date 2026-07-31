@@ -123,6 +123,16 @@ describe('parseStudentsCsv', () => {
     expect(skipped).toEqual([{ raw: row, reason: '이름 없음' }])
   })
 
+  it('skips a row that has fewer than 12 columns (e.g. a legacy 5-column CSV)', () => {
+    const row = ['1', '김민준', '남', '010-1111-2222', '010-3333-4444']
+    const csv = row.join(',')
+
+    const { valid, skipped } = parseStudentsCsv(csv, new Set())
+
+    expect(valid).toEqual([])
+    expect(skipped).toEqual([{ raw: row, reason: '열 개수가 맞지 않음 (12열 필요)' }])
+  })
+
   it('skips a row whose 출석번호 is not a number', () => {
     const row = ['abc', '김민준', '', '', '', '', '', '', '', '', '', '']
     const csv = csvRow(row)
