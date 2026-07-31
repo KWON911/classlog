@@ -10,7 +10,7 @@ import type { StudentRecord } from '../lib/types'
 export function StudentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { students, updateStudent, deleteStudent } = useStudents()
+  const { students, error: studentsError, updateStudent, deleteStudent } = useStudents()
   const { records, loading, error, addRecord, updateRecord, deleteRecord } = useStudentRecords(id ?? '')
 
   const [editingStudent, setEditingStudent] = useState(false)
@@ -37,8 +37,10 @@ export function StudentDetailPage() {
   }
 
   const handleDeleteStudent = async () => {
-    await deleteStudent(student.id)
-    navigate('/students')
+    const result = await deleteStudent(student.id)
+    if (!result.error) {
+      navigate('/students')
+    }
   }
 
   const handleAddRecord = async (values: RecordFormValues) => {
@@ -86,6 +88,8 @@ export function StudentDetailPage() {
           </button>
         </div>
       </div>
+
+      {studentsError && <p className="text-red-600">{studentsError}</p>}
 
       {editingStudent && (
         <div className="mb-6 rounded border border-gray-200 p-4">
