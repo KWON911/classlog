@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 
 type QueryResult<T> = { data: T; error: { message: string } | null }
 
-const CHAIN_METHODS = ['select', 'order', 'eq', 'insert', 'update', 'delete'] as const
+const CHAIN_METHODS = ['select', 'order', 'eq', 'gte', 'lt', 'insert', 'update', 'upsert', 'delete'] as const
 
 export function createQueryBuilder<T>(result: QueryResult<T>) {
   const builder: Record<string, unknown> = {}
