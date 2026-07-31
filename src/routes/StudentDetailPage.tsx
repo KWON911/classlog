@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useStudentRecords } from '../lib/hooks/useStudentRecords'
+import { useAttendanceSummary } from '../lib/hooks/useAttendanceSummary'
 import { StudentForm, type StudentFormValues } from '../components/StudentForm'
 import { RecordForm, type RecordFormValues } from '../components/RecordForm'
 import { RecordTimeline } from '../components/RecordTimeline'
@@ -18,6 +19,7 @@ export function StudentDetailPage() {
     deleteStudent,
   } = useStudents()
   const { records, loading, error, addRecord, updateRecord, deleteRecord } = useStudentRecords(id ?? '')
+  const { summary: attendanceSummary } = useAttendanceSummary(id ?? '')
 
   const [editingStudent, setEditingStudent] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
@@ -114,6 +116,11 @@ export function StudentDetailPage() {
           </button>
         </div>
       </div>
+
+      <p className="mb-6 text-sm text-gray-600">
+        결석 {attendanceSummary.결석} · 지각 {attendanceSummary.지각} · 조퇴 {attendanceSummary.조퇴} · 결과{' '}
+        {attendanceSummary.결과}
+      </p>
 
       {studentsError && <p className="text-red-600">{studentsError}</p>}
 
