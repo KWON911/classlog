@@ -12,11 +12,6 @@ function todayYearMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
 
-function todayDate() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-}
-
 function shiftMonth(yearMonth: string, delta: number) {
   const [year, month] = yearMonth.split('-').map(Number)
   const date = new Date(year, month - 1 + delta, 1)
@@ -28,6 +23,22 @@ function daysInMonth(yearMonth: string) {
   return new Date(year, month, 0).getDate()
 }
 
+function isWeekday(yearMonth: string, day: number) {
+  const [year, month] = yearMonth.split('-').map(Number)
+  const dayOfWeek = new Date(year, month - 1, day).getDay()
+  return dayOfWeek >= 1 && dayOfWeek <= 5
+}
+
+function firstWeekdayOfMonth(yearMonth: string) {
+  const total = daysInMonth(yearMonth)
+  for (let day = 1; day <= total; day++) {
+    if (isWeekday(yearMonth, day)) {
+      return `${yearMonth}-${String(day).padStart(2, '0')}`
+    }
+  }
+  return `${yearMonth}-01`
+}
+
 function formatMonthDay(date: string) {
   const [, month, day] = date.split('-')
   return `${Number(month)}/${Number(day)}`
@@ -35,7 +46,7 @@ function formatMonthDay(date: string) {
 
 export function AttendancePage() {
   const [yearMonth, setYearMonth] = useState(todayYearMonth())
-  const [selectedDate, setSelectedDate] = useState(todayDate())
+  const [selectedDate, setSelectedDate] = useState(firstWeekdayOfMonth(todayYearMonth()))
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
   const [expandedStudentIds, setExpandedStudentIds] = useState<Set<string>>(new Set())
 
@@ -115,7 +126,9 @@ export function AttendancePage() {
     ? entryByStudentAndDate.get(`${editingStudentId}_${selectedDate}`)
     : undefined
 
-  const days = Array.from({ length: daysInMonth(yearMonth) }, (_, i) => i + 1)
+  const days = Array.from({ length: daysInMonth(yearMonth) }, (_, i) => i + 1).filter((day) =>
+    isWeekday(yearMonth, day),
+  )
 
   return (
     <div className="mx-auto max-w-3xl p-6">
@@ -126,7 +139,7 @@ export function AttendancePage() {
           onClick={() => {
             const next = shiftMonth(yearMonth, -1)
             setYearMonth(next)
-            setSelectedDate(`${next}-01`)
+            setSelectedDate(firstWeekdayOfMonth(next))
             setEditingStudentId(null)
           }}
           className="rounded border border-gray-300 px-2 py-1"
@@ -138,7 +151,7 @@ export function AttendancePage() {
           onClick={() => {
             const next = shiftMonth(yearMonth, 1)
             setYearMonth(next)
-            setSelectedDate(`${next}-01`)
+            setSelectedDate(firstWeekdayOfMonth(next))
             setEditingStudentId(null)
           }}
           className="rounded border border-gray-300 px-2 py-1"

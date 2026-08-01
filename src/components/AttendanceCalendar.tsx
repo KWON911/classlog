@@ -41,6 +41,7 @@ function buildWeeks(yearMonth: string): DayCell[][] {
 
 export function AttendanceCalendar({ yearMonth, entries, students }: AttendanceCalendarProps) {
   const studentNameById = new Map(students.map((s) => [s.id, s.name]))
+  const studentNumberById = new Map(students.map((s) => [s.id, s.number]))
 
   const entriesByDate = new Map<string, AttendanceEntry[]>()
   for (const entry of entries) {
@@ -48,11 +49,20 @@ export function AttendanceCalendar({ yearMonth, entries, students }: AttendanceC
     list.push(entry)
     entriesByDate.set(entry.date, list)
   }
+  for (const list of entriesByDate.values()) {
+    list.sort((a, b) => {
+      const numberA = studentNumberById.get(a.student_id) ?? 0
+      const numberB = studentNumberById.get(b.student_id) ?? 0
+      if (numberA !== numberB) return numberA - numberB
+      return a.student_id.localeCompare(b.student_id)
+    })
+  }
 
   const weeks = buildWeeks(yearMonth)
 
   return (
     <div className="mb-8">
+      <h2 className="mb-2 text-lg font-semibold">{yearMonth} 월간 출결 캘린더</h2>
       <div className="grid grid-cols-5 gap-2">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="text-center text-sm font-medium text-gray-500">
