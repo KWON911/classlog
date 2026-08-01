@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { areAdjacent, canUseSeat, createSeats, mapGender, placeStudents, shuffle } from './seating'
+import {
+  areAdjacent,
+  canUseSeat,
+  createSeats,
+  derivePastNeighborPairs,
+  generatePlacement,
+  mapGender,
+  placeStudents,
+  scorePlacement,
+  shuffle,
+} from './seating'
+import type { SeatingPlan } from './types'
 
 describe('createSeats', () => {
   it('creates a row-major grid with ids encoding row and column', () => {
@@ -152,5 +163,124 @@ describe('placeStudents', () => {
     expect(() =>
       placeStudents(students, seats, { fixed, separations: [], avoidPairs: new Set() }),
     ).toThrow('고정 조건과 성별 지정 좌석이 맞지 않습니다.')
+  })
+})
+
+describe('scorePlacement', () => {
+  const seats = createSeats(1, 2)
+  const students = [
+    { id: 's1', gender: 'male' as const },
+    { id: 's2', gender: 'male' as const },
+  ]
+
+  it('penalizes adjacent same-gender students when gender balance is on', () => {
+    const candidate = new Map([
+      ['s1', 'r1-c1'],
+      ['s2', 'r1-c2'],
+    ])
+    const score = scorePlacement(candidate, students, seats, {
+      genderBalance: true,
+      previousAssignments: new Map(),
+    })
+    expect(score).toBe(1)
+  })
+
+  it('does not penalize when gender balance is off', () => {
+    const candidate = new Map([
+      ['s1', 'r1-c1'],
+      ['s2', 'r1-c2'],
+    ])
+    const score = scorePlacement(candidate, students, seats, {
+      genderBalance: false,
+      previousAssignments: new Map(),
+    })
+    expect(score).toBe(0)
+  })
+
+  it('rewards keeping a student in their previous seat', () => {
+    const candidate = new Map([['s1', 'r1-c1']])
+    const score = scorePlacement(candidate, [students[0]], seats, {
+      genderBalance: false,
+      previousAssignments: new Map([['s1', 'r1-c1']]),
+    })
+    expect(score).toBe(8)
+  })
+})
+
+describe('generatePlacement', () => {
+  it('returns a full placement across the 60-candidate search', () => {
+    const seats = createSeats(1, 3)
+    const students = [
+      { id: 's1', gender: 'unspecified' as const },
+      { id: 's2', gender: 'unspecified' as const },
+      { id: 's3', gender: 'unspecified' as const },
+    ]
+    const result = generatePlacement(
+      students,
+      seats,
+      { fixed: new Map(), separations: [], avoidPairs: new Set() },
+      { genderBalance: false, previousAssignments: new Map() },
+    )
+    expect(result.size).toBe(3)
+  })
+})
+
+describe('derivePastNeighborPairs', () => {
+  function plan(overrides: Partial<SeatingPlan>): SeatingPlan {
+    return {
+      id: 'p1',
+      teacher_id: 't1',
+      title: '1차',
+      plan_date: '2026-08-01',
+      rows: 1,
+      columns: 3,
+      teacher_direction: 'north',
+      seats: createSeats(1, 3),
+      assignments: [],
+      separations: [],
+      gender_balance: false,
+      avoid_past_neighbors: false,
+      created_at: '2026-08-01',
+      ...overrides,
+    }
+  }
+
+  it('pairs students seated in adjacent columns, but not students two seats apart', () => {
+    const plans = [
+      plan({
+        assignments: [
+          { student_id: 's1', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' },
+          { student_id: 's2', seat_id: 'r1-c2', is_fixed: false, source: 'automatic' },
+          { student_id: 's3', seat_id: 'r1-c3', is_fixed: false, source: 'automatic' },
+        ],
+      }),
+    ]
+
+    const pairs = derivePastNeighborPairs(plans)
+
+    expect(pairs.has(['s1', 's2'].sort().join('::'))).toBe(true)
+    expect(pairs.has(['s2', 's3'].sort().join('::'))).toBe(true)
+    expect(pairs.has(['s1', 's3'].sort().join('::'))).toBe(false)
+  })
+
+  it('merges pairs across multiple plans', () => {
+    const plans = [
+      plan({
+        assignments: [
+          { student_id: 's1', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' },
+          { student_id: 's2', seat_id: 'r1-c2', is_fixed: false, source: 'automatic' },
+        ],
+      }),
+      plan({
+        id: 'p2',
+        assignments: [
+          { student_id: 's3', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' },
+          { student_id: 's4', seat_id: 'r1-c2', is_fixed: false, source: 'automatic' },
+        ],
+      }),
+    ]
+
+    const pairs = derivePastNeighborPairs(plans)
+    expect(pairs.size).toBe(2)
   })
 })

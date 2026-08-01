@@ -1,4 +1,4 @@
-import type { Seat, SeatSeparation, SeparationType } from './types'
+import type { Seat, SeatingPlan, SeatSeparation, SeparationType } from './types'
 
 export type StudentGenderBucket = 'male' | 'female' | 'unspecified'
 
@@ -131,4 +131,84 @@ export function placeStudents(
   }
 
   return placed
+}
+
+export function scorePlacement(
+  candidate: Map<string, string>,
+  students: { id: string; gender: StudentGenderBucket }[],
+  seats: Seat[],
+  options: { genderBalance: boolean; previousAssignments: Map<string, string> },
+): number {
+  let total = 0
+  const seatById = new Map(seats.map((seat) => [seat.id, seat]))
+  const genderById = new Map(students.map((student) => [student.id, student.gender]))
+  const entries = [...candidate.entries()]
+
+  if (options.genderBalance) {
+    for (let i = 0; i < entries.length; i++) {
+      for (let j = i + 1; j < entries.length; j++) {
+        const [studentA, seatIdA] = entries[i]
+        const [studentB, seatIdB] = entries[j]
+        const genderA = genderById.get(studentA)
+        const genderB = genderById.get(studentB)
+        if (
+          genderA &&
+          genderB &&
+          genderA !== 'unspecified' &&
+          genderA === genderB &&
+          areAdjacent(seatById.get(seatIdA)!, seatById.get(seatIdB)!, 'orthogonal')
+        ) {
+          total += 1
+        }
+      }
+    }
+  }
+
+  for (const [studentId, seatId] of candidate) {
+    if (options.previousAssignments.get(studentId) === seatId) {
+      total += 8
+    }
+  }
+
+  return total
+}
+
+export function generatePlacement(
+  students: { id: string; gender: StudentGenderBucket }[],
+  seats: Seat[],
+  constraints: PlacementConstraints,
+  options: { genderBalance: boolean; previousAssignments: Map<string, string> },
+): Map<string, string> {
+  let best: Map<string, string> | null = null
+  let bestScore = Infinity
+  for (let i = 0; i < 60; i++) {
+    const candidate = placeStudents(students, seats, constraints)
+    const candidateScore = scorePlacement(candidate, students, seats, options)
+    if (candidateScore < bestScore || (candidateScore === bestScore && Math.random() < 0.5)) {
+      best = candidate
+      bestScore = candidateScore
+    }
+  }
+  return best!
+}
+
+export function derivePastNeighborPairs(plans: SeatingPlan[]): Set<string> {
+  const pairs = new Set<string>()
+  for (const plan of plans) {
+    const studentBySeatId = new Map(
+      plan.assignments.map((assignment) => [assignment.seat_id, assignment.student_id]),
+    )
+    for (const seat of plan.seats) {
+      const studentId = studentBySeatId.get(seat.id)
+      if (!studentId) continue
+      const neighborSeat = plan.seats.find(
+        (other) => other.row === seat.row && other.column === seat.column + 1,
+      )
+      if (!neighborSeat) continue
+      const neighborStudentId = studentBySeatId.get(neighborSeat.id)
+      if (!neighborStudentId) continue
+      pairs.add(pairKey(studentId, neighborStudentId))
+    }
+  }
+  return pairs
 }
