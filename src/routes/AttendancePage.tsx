@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useAttendance } from '../lib/hooks/useAttendance'
 import { AttendanceEditRow } from '../components/AttendanceEditRow'
+import { AttendanceCalendar } from '../components/AttendanceCalendar'
 import type { AttendanceReasonCategory, AttendanceStatus } from '../lib/types'
 
 const STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
@@ -202,6 +203,8 @@ export function AttendancePage() {
           />
         </div>
       )}
+
+      <AttendanceCalendar yearMonth={yearMonth} entries={entries} students={students} />
 
       <h2 className="mb-2 text-lg font-semibold">{yearMonth} 학급 전체 요약</h2>
       <table className="w-full border-collapse text-sm">
