@@ -16,7 +16,7 @@ export function AppShell() {
   return (
     <div className="flex h-screen print:h-auto">
       <nav className="flex w-48 flex-col gap-1 border-r border-gray-200 p-4 print:hidden">
-        <img src="/login-logo.png" alt="Classlog" className="mx-auto mb-4 h-auto w-16" />
+        <img src="/login-logo.png" alt="Classlog" className="mx-auto mb-4 h-auto w-24" />
         <NavLink to="/students" className={() => linkClass(rosterActive)}>
           학급기록
         </NavLink>
