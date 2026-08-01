@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useSeatingPlans, type SeatingPlanInput } from '../lib/hooks/useSeatingPlans'
 import { SeatingGrid } from '../components/SeatingGrid'
+import { Modal } from '../components/Modal'
 import { createSeats, derivePastNeighborPairs, generatePlacement, mapGender } from '../lib/seating'
 import type { Seat, SeatGender, SeatingPlan, SeatSeparation, SeparationType, TeacherDirection } from '../lib/types'
 
@@ -49,6 +50,7 @@ export function SeatingPage() {
   const [savedPlanId, setSavedPlanId] = useState<string | null>(null)
   const [avoidPastNeighbors, setAvoidPastNeighbors] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [showSettings, setShowSettings] = useState(false)
 
   const { plans, loading: plansLoading, error: plansError, savePlan, deletePlan } = useSeatingPlans(recordMonth)
 
@@ -108,6 +110,10 @@ export function SeatingPage() {
     setSeatEditMode((prev) => (prev === null ? 'empty' : prev === 'empty' ? 'disabled' : null))
   }
 
+  function toggleViewMode() {
+    setViewMode((prev) => (prev === 'teacher' ? 'back' : 'teacher'))
+  }
+
   function startFixedTool() {
     if (!selectedFixedStudentId) {
       setConditionMessage('먼저 고정할 학생을 선택해 주세요.')
@@ -117,6 +123,7 @@ export function SeatingPage() {
     setMessage(
       `${studentNameById.get(selectedFixedStudentId) ?? '선택한 학생'}의 자리를 자리표에서 직접 클릭해 주세요.`,
     )
+    setShowSettings(false)
   }
 
   function startGenderTool(gender: SeatGender) {
@@ -128,6 +135,7 @@ export function SeatingPage() {
     setMessage(
       `${gender === 'male' ? '남학생' : '여학생'} 전용으로 할 자리를 직접 클릭해 주세요. 같은 자리를 다시 누르면 해제됩니다.`,
     )
+    setShowSettings(false)
   }
 
   function addSeparation() {
@@ -456,75 +464,39 @@ export function SeatingPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6">
-      <div className="mb-4 flex items-center justify-between print:hidden">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 print:hidden">
         <div>
-          <h1 className="text-2xl font-semibold">학급 자리 배치</h1>
+          <h1 className="text-2xl font-semibold">우리 반 자리 배치</h1>
           <p className="text-sm text-gray-600">학생 {students.length}명</p>
         </div>
-        <button onClick={() => window.print()} className="rounded border border-gray-300 px-3 py-2 text-sm">
-          인쇄
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="rounded border border-teal-600 bg-teal-50 px-3 py-2 text-sm text-teal-700"
+          >
+            설정
+          </button>
+          <button onClick={generate} className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
+            자리 배치 시작
+          </button>
+          <button onClick={generate} className="rounded border border-gray-300 px-3 py-2 text-sm">
+            재배치하기
+          </button>
+          <button onClick={clearPlacement} className="rounded border border-gray-300 px-3 py-2 text-sm">
+            초기화
+          </button>
+          <button onClick={toggleViewMode} className="rounded border border-gray-300 px-3 py-2 text-sm">
+            보기 전환
+          </button>
+          <button onClick={() => window.print()} className="rounded border border-gray-300 px-3 py-2 text-sm">
+            인쇄
+          </button>
+        </div>
       </div>
 
       <p className="mb-4 hidden text-lg font-semibold print:block">
         {title || '자리표'} · {planDate}
       </p>
-
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded border border-gray-200 p-4 print:hidden">
-        <label className="flex flex-col gap-1 text-sm">
-          행
-          <input
-            type="number"
-            min={1}
-            max={12}
-            value={rowsInput}
-            onChange={(e) => setRowsInput(Number(e.target.value))}
-            className="w-20 rounded border border-gray-300 px-2 py-1"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          열
-          <input
-            type="number"
-            min={1}
-            max={12}
-            value={columnsInput}
-            onChange={(e) => setColumnsInput(Number(e.target.value))}
-            className="w-20 rounded border border-gray-300 px-2 py-1"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          칠판 방향
-          <select
-            value={teacherDirection}
-            onChange={(e) => setTeacherDirection(e.target.value as TeacherDirection)}
-            className="rounded border border-gray-300 px-2 py-1"
-          >
-            <option value="north">위쪽</option>
-            <option value="south">아래쪽</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          보기 방향
-          <select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value as 'teacher' | 'back')}
-            className="rounded border border-gray-300 px-2 py-1"
-          >
-            <option value="teacher">앞에서 볼 때(교사 시점)</option>
-            <option value="back">뒤에서 볼 때</option>
-          </select>
-        </label>
-        <button onClick={applyLayout} className="rounded border border-gray-300 px-3 py-2 text-sm">
-          좌석 구조 적용
-        </button>
-        <button
-          onClick={toggleSeatEditMode}
-          className={`rounded border px-3 py-2 text-sm ${seatEditMode ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
-        >
-          {seatEditMode === 'disabled' ? '사용 안 함 지정 중' : seatEditMode === 'empty' ? '빈자리 지정 중' : '빈자리 지정'}
-        </button>
-      </div>
 
       {errorMessage && <p className="mb-4 text-red-600 print:hidden">{errorMessage}</p>}
 
@@ -542,210 +514,277 @@ export function SeatingPage() {
 
       <p className="mb-6 text-sm text-gray-600 print:hidden">{message}</p>
 
-      <div className="mb-8 flex flex-wrap gap-2 print:hidden">
-        <button onClick={generate} className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
-          자리 배치 시작
-        </button>
-        <button onClick={generate} className="rounded border border-gray-300 px-3 py-2 text-sm">
-          재배치하기
-        </button>
-        <button onClick={clearPlacement} className="rounded border border-gray-300 px-3 py-2 text-sm">
-          초기화
-        </button>
-      </div>
-
-      <div className="mb-8 rounded border border-gray-200 p-4 print:hidden">
-        <h2 className="mb-2 text-lg font-semibold">조건 설정</h2>
-        <p className="mb-3 text-sm text-gray-600">
-          버튼을 누른 뒤 자리표에서 직접 좌석을 선택하세요. 배치된 학생 두 명을 차례로 클릭하면 바로 자리가 바뀝니다.
-        </p>
-
-        <div className="mb-3 flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 text-sm">
-            고정할 학생
-            <select
-              value={selectedFixedStudentId}
-              onChange={(e) => setSelectedFixedStudentId(e.target.value)}
-              className="rounded border border-gray-300 px-2 py-1"
-            >
-              <option value="">학생 선택</option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.number}. {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button onClick={startFixedTool} className="rounded border border-gray-300 px-3 py-2 text-sm">
-            학생 자리 직접 지정
-          </button>
-          <button onClick={() => startGenderTool('male')} className="rounded border border-gray-300 px-3 py-2 text-sm">
-            남학생 자리 지정
-          </button>
-          <button onClick={() => startGenderTool('female')} className="rounded border border-gray-300 px-3 py-2 text-sm">
-            여학생 자리 지정
-          </button>
-        </div>
-
-        <label className="mb-3 flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={genderBalance}
-            disabled={!hasGenderInfo}
-            onChange={(e) => setGenderBalance(e.target.checked)}
-          />
-          성별을 고려해 가능한 고르게 배치
-        </label>
-
-        <label className="mb-3 flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={avoidPastNeighbors}
-            onChange={(e) => setAvoidPastNeighbors(e.target.checked)}
-          />
-          지난 짝 피하기 (아래 기록 월에 저장된 자리표 기준)
-        </label>
-
-        <div className="mb-3 flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1 text-sm">
-            학생 A
-            <select
-              value={separationStudentA}
-              onChange={(e) => setSeparationStudentA(e.target.value)}
-              className="rounded border border-gray-300 px-2 py-1"
-            >
-              <option value="">학생 선택</option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.number}. {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            학생 B
-            <select
-              value={separationStudentB}
-              onChange={(e) => setSeparationStudentB(e.target.value)}
-              className="rounded border border-gray-300 px-2 py-1"
-            >
-              <option value="">학생 선택</option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.number}. {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            분리 수준
-            <select
-              value={separationType}
-              onChange={(e) => setSeparationType(e.target.value as SeparationType)}
-              className="rounded border border-gray-300 px-2 py-1"
-            >
-              <option value="orthogonal">앞뒤·좌우 인접 금지</option>
-              <option value="diagonal">대각선 포함 인접 금지</option>
-            </select>
-          </label>
-          <button onClick={addSeparation} className="rounded border border-gray-300 px-3 py-2 text-sm">
-            분리 설정 추가
-          </button>
-        </div>
-
-        {conditionMessage && <p className="mb-3 text-sm text-gray-600">{conditionMessage}</p>}
-
-        <div className="flex flex-col gap-2">
-          {conditionRows.map((row) => (
-            <div
-              key={row.key}
-              className="flex items-center justify-between rounded border border-gray-100 p-2 text-sm"
-            >
-              <div>
-                <strong>{row.title}</strong>
-                <p className="text-gray-500">{row.detail}</p>
-              </div>
-              <button onClick={row.onRemove} className="rounded border border-gray-300 px-2 py-1 text-xs">
-                삭제
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-8 rounded border border-gray-200 p-4 print:hidden">
-        <h2 className="mb-2 text-lg font-semibold">저장 & 기록</h2>
-        <div className="mb-3 flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-sm">
-            제목
-            <input
-              type="text"
-              maxLength={80}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="예: 2026년 8월 1차 자리표"
-              className="rounded border border-gray-300 px-2 py-1"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            날짜
-            <input
-              type="date"
-              value={planDate}
-              onChange={(e) => setPlanDate(e.target.value)}
-              className="rounded border border-gray-300 px-2 py-1"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            기록 월
-            <input
-              type="month"
-              value={recordMonth}
-              onChange={(e) => setRecordMonth(e.target.value)}
-              className="rounded border border-gray-300 px-2 py-1"
-            />
-          </label>
-          <button onClick={handleSave} className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
-            현재 자리표 저장
-          </button>
-        </div>
-
-        {saveMessage && <p className="mb-3 text-sm text-gray-600">{saveMessage}</p>}
-        {plansError && <p className="mb-3 text-red-600">{plansError}</p>}
-
-        <h3 className="mb-2 text-sm font-semibold">자리바꾸기 목록</h3>
-        {plansLoading && <p className="text-sm text-gray-500">불러오는 중...</p>}
-        {!plansLoading && plans.length === 0 && (
-          <p className="text-sm text-gray-500">선택한 달에 저장된 자리표가 없습니다.</p>
-        )}
-        <ul className="flex flex-col gap-2">
-          {plans.map((plan) => (
-            <li key={plan.id} className="flex items-center justify-between rounded border border-gray-100 p-2 text-sm">
-              <div>
-                <p className="font-medium">{plan.title}</p>
-                <p className="text-gray-500">{plan.plan_date}</p>
-              </div>
-              <div className="flex gap-1">
-                <button onClick={() => handleLoad(plan)} className="rounded border border-gray-300 px-2 py-1 text-xs">
-                  불러오기
+      {showSettings && (
+        <Modal
+          title="자리바꾸기 설정"
+          description="필요한 항목을 설정한 뒤 닫으면 자리표 화면으로 돌아갑니다."
+          onClose={() => setShowSettings(false)}
+        >
+          <div className="flex flex-col gap-6">
+            <section>
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-blue-700">Layout</h3>
+              <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 p-4">
+                <label className="flex flex-col gap-1 text-sm">
+                  행
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={rowsInput}
+                    onChange={(e) => setRowsInput(Number(e.target.value))}
+                    className="w-20 rounded border border-gray-300 px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  열
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={columnsInput}
+                    onChange={(e) => setColumnsInput(Number(e.target.value))}
+                    className="w-20 rounded border border-gray-300 px-2 py-1"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  칠판 방향
+                  <select
+                    value={teacherDirection}
+                    onChange={(e) => setTeacherDirection(e.target.value as TeacherDirection)}
+                    className="rounded border border-gray-300 px-2 py-1"
+                  >
+                    <option value="north">위쪽</option>
+                    <option value="south">아래쪽</option>
+                  </select>
+                </label>
+                <button onClick={applyLayout} className="rounded border border-gray-300 px-3 py-2 text-sm">
+                  좌석 구조 적용
                 </button>
                 <button
-                  onClick={() => handleLoad(plan, true)}
-                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                  onClick={toggleSeatEditMode}
+                  className={`rounded border px-3 py-2 text-sm ${seatEditMode ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
                 >
-                  복제
-                </button>
-                <button
-                  onClick={() => handleDelete(plan.id)}
-                  className="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
-                >
-                  삭제
+                  {seatEditMode === 'disabled'
+                    ? '사용 안 함 지정 중'
+                    : seatEditMode === 'empty'
+                      ? '빈자리 지정 중'
+                      : '빈자리 지정'}
                 </button>
               </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+            </section>
+
+            <section>
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-blue-700">Rules</h3>
+              <div className="rounded border border-gray-200 p-4">
+                <p className="mb-3 text-sm text-gray-600">
+                  버튼을 누른 뒤 자리표에서 직접 좌석을 선택하세요. 배치된 학생 두 명을 차례로 클릭하면 바로 자리가
+                  바뀝니다.
+                </p>
+
+                <div className="mb-3 flex flex-wrap items-end gap-2">
+                  <label className="flex flex-col gap-1 text-sm">
+                    고정할 학생
+                    <select
+                      value={selectedFixedStudentId}
+                      onChange={(e) => setSelectedFixedStudentId(e.target.value)}
+                      className="rounded border border-gray-300 px-2 py-1"
+                    >
+                      <option value="">학생 선택</option>
+                      {students.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.number}. {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button onClick={startFixedTool} className="rounded border border-gray-300 px-3 py-2 text-sm">
+                    학생 자리 직접 지정
+                  </button>
+                  <button
+                    onClick={() => startGenderTool('male')}
+                    className="rounded border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    남학생 자리 지정
+                  </button>
+                  <button
+                    onClick={() => startGenderTool('female')}
+                    className="rounded border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    여학생 자리 지정
+                  </button>
+                </div>
+
+                <label className="mb-3 flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={genderBalance}
+                    disabled={!hasGenderInfo}
+                    onChange={(e) => setGenderBalance(e.target.checked)}
+                  />
+                  성별을 고려해 가능한 고르게 배치
+                </label>
+
+                <label className="mb-3 flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={avoidPastNeighbors}
+                    onChange={(e) => setAvoidPastNeighbors(e.target.checked)}
+                  />
+                  지난 짝 피하기 (아래 기록 월에 저장된 자리표 기준)
+                </label>
+
+                <div className="mb-3 flex flex-wrap items-end gap-2">
+                  <label className="flex flex-col gap-1 text-sm">
+                    학생 A
+                    <select
+                      value={separationStudentA}
+                      onChange={(e) => setSeparationStudentA(e.target.value)}
+                      className="rounded border border-gray-300 px-2 py-1"
+                    >
+                      <option value="">학생 선택</option>
+                      {students.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.number}. {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    학생 B
+                    <select
+                      value={separationStudentB}
+                      onChange={(e) => setSeparationStudentB(e.target.value)}
+                      className="rounded border border-gray-300 px-2 py-1"
+                    >
+                      <option value="">학생 선택</option>
+                      {students.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.number}. {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    분리 수준
+                    <select
+                      value={separationType}
+                      onChange={(e) => setSeparationType(e.target.value as SeparationType)}
+                      className="rounded border border-gray-300 px-2 py-1"
+                    >
+                      <option value="orthogonal">앞뒤·좌우 인접 금지</option>
+                      <option value="diagonal">대각선 포함 인접 금지</option>
+                    </select>
+                  </label>
+                  <button onClick={addSeparation} className="rounded border border-gray-300 px-3 py-2 text-sm">
+                    분리 설정 추가
+                  </button>
+                </div>
+
+                {conditionMessage && <p className="mb-3 text-sm text-gray-600">{conditionMessage}</p>}
+
+                <div className="flex flex-col gap-2">
+                  {conditionRows.map((row) => (
+                    <div
+                      key={row.key}
+                      className="flex items-center justify-between rounded border border-gray-100 p-2 text-sm"
+                    >
+                      <div>
+                        <strong>{row.title}</strong>
+                        <p className="text-gray-500">{row.detail}</p>
+                      </div>
+                      <button onClick={row.onRemove} className="rounded border border-gray-300 px-2 py-1 text-xs">
+                        삭제
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-blue-700">Archive</h3>
+              <div className="rounded border border-gray-200 p-4">
+                <div className="mb-3 flex flex-wrap items-end gap-3">
+                  <label className="flex flex-col gap-1 text-sm">
+                    제목
+                    <input
+                      type="text"
+                      maxLength={80}
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="예: 2026년 8월 1차 자리표"
+                      className="rounded border border-gray-300 px-2 py-1"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    날짜
+                    <input
+                      type="date"
+                      value={planDate}
+                      onChange={(e) => setPlanDate(e.target.value)}
+                      className="rounded border border-gray-300 px-2 py-1"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    기록 월
+                    <input
+                      type="month"
+                      value={recordMonth}
+                      onChange={(e) => setRecordMonth(e.target.value)}
+                      className="rounded border border-gray-300 px-2 py-1"
+                    />
+                  </label>
+                  <button onClick={handleSave} className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
+                    현재 자리표 저장
+                  </button>
+                </div>
+
+                {saveMessage && <p className="mb-3 text-sm text-gray-600">{saveMessage}</p>}
+                {plansError && <p className="mb-3 text-red-600">{plansError}</p>}
+
+                <h4 className="mb-2 text-sm font-semibold">자리바꾸기 목록</h4>
+                {plansLoading && <p className="text-sm text-gray-500">불러오는 중...</p>}
+                {!plansLoading && plans.length === 0 && (
+                  <p className="text-sm text-gray-500">선택한 달에 저장된 자리표가 없습니다.</p>
+                )}
+                <ul className="flex flex-col gap-2">
+                  {plans.map((plan) => (
+                    <li
+                      key={plan.id}
+                      className="flex items-center justify-between rounded border border-gray-100 p-2 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium">{plan.title}</p>
+                        <p className="text-gray-500">{plan.plan_date}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleLoad(plan)}
+                          className="rounded border border-gray-300 px-2 py-1 text-xs"
+                        >
+                          불러오기
+                        </button>
+                        <button
+                          onClick={() => handleLoad(plan, true)}
+                          className="rounded border border-gray-300 px-2 py-1 text-xs"
+                        >
+                          복제
+                        </button>
+                        <button
+                          onClick={() => handleDelete(plan.id)}
+                          className="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
