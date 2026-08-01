@@ -1,3 +1,4 @@
+import { mapGender } from '../lib/seating'
 import type { Seat, Student, TeacherDirection } from '../lib/types'
 
 type SeatingGridProps = {
@@ -17,14 +18,18 @@ function displayPosition(seat: Seat, rows: number, columns: number, viewMode: 't
   return { row: rows + 1 - seat.row, column: columns + 1 - seat.column }
 }
 
-function seatClassName(seat: Seat, isFixed: boolean, isSelected: boolean) {
+function seatClassName(seat: Seat, occupantGender: 'male' | 'female' | 'unspecified', isFixed: boolean, isSelected: boolean) {
   const classes = ['min-h-[70px]', 'rounded', 'border', 'p-2', 'text-center', 'text-xs']
+  const effectiveGender = seat.genderSeat ?? (occupantGender !== 'unspecified' ? occupantGender : undefined)
   if (seat.status === 'disabled') classes.push('border-dashed', 'bg-gray-200', 'text-gray-500')
   else if (seat.status === 'empty') classes.push('border-yellow-400', 'bg-yellow-50')
+  else if (effectiveGender === 'male') classes.push('border-blue-400', 'bg-blue-50')
+  else if (effectiveGender === 'female') classes.push('border-pink-400', 'bg-pink-50')
   else if (isFixed) classes.push('border-green-500', 'bg-green-50')
-  else if (seat.genderSeat === 'male') classes.push('border-blue-400', 'bg-blue-50')
-  else if (seat.genderSeat === 'female') classes.push('border-pink-400', 'bg-pink-50')
   else classes.push('border-gray-300', 'bg-white')
+  if (isFixed && effectiveGender) {
+    classes.push(effectiveGender === 'male' ? 'shadow-[inset_0_0_0_2px_#4d88df]' : 'shadow-[inset_0_0_0_2px_#df76a4]')
+  }
   if (isSelected) classes.push('ring-2', 'ring-yellow-500')
   return classes.join(' ')
 }
@@ -94,13 +99,14 @@ export function SeatingGrid({
           const pos = displayPosition(seat, rows, columns, viewMode)
           const student = studentBySeatId.get(seat.id)
           const isFixed = fixedSeatIds.has(seat.id)
+          const occupantGender = student ? mapGender(student.gender) : 'unspecified'
           return (
             <button
               key={seat.id}
               type="button"
               onClick={() => onSeatClick(seat.id)}
               style={{ gridRow: pos.row, gridColumn: pos.column }}
-              className={seatClassName(seat, isFixed, seat.id === selectedSeatId)}
+              className={seatClassName(seat, occupantGender, isFixed, seat.id === selectedSeatId)}
             >
               {isFixed && <div className="text-[10px]">🔒</div>}
               <div className="mb-1 text-gray-500">
