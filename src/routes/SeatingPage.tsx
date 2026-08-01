@@ -52,6 +52,14 @@ const secondaryButtonClass =
 const dangerButtonClass =
   'rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100'
 const sectionCardClass = 'rounded-[14px] border border-gray-200 p-5 sm:p-6'
+const toolbarPrimaryButtonClass =
+  'h-11 rounded-[11px] bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700'
+const toolbarSecondaryButtonClass =
+  'h-11 rounded-[11px] border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
+const toolbarSecondaryActiveClass =
+  'h-11 rounded-[11px] border border-blue-200 bg-blue-50 px-4 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100'
+const toolbarNeutralButtonClass =
+  'h-11 rounded-[11px] border border-gray-200 bg-gray-50 px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100'
 
 export function SeatingPage() {
   const { students } = useStudents()
@@ -560,30 +568,39 @@ export function SeatingPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <h1 className="text-2xl font-semibold">우리 반 자리 배치</h1>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setShowSettings(true)}
-            className="rounded border border-teal-600 bg-teal-50 px-3 py-2 text-sm text-teal-700"
-          >
-            설정
-          </button>
-          <button onClick={generate} className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
-            자리 배치 시작
-          </button>
-          <button onClick={generate} className="rounded border border-gray-300 px-3 py-2 text-sm">
-            재배치하기
-          </button>
-          <button onClick={clearPlacement} className="rounded border border-gray-300 px-3 py-2 text-sm">
-            초기화
-          </button>
-          <button onClick={toggleViewMode} className="rounded border border-gray-300 px-3 py-2 text-sm">
-            보기 전환
-          </button>
-          <button onClick={() => window.print()} className="rounded border border-gray-300 px-3 py-2 text-sm">
-            인쇄
-          </button>
+      <div className="mb-4 flex flex-col gap-3 rounded-[14px] border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between print:hidden">
+        <h1 className="text-2xl font-semibold text-gray-900">우리 반 자리 배치</h1>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowSettings(true)} className={toolbarSecondaryButtonClass}>
+              설정
+            </button>
+            <button onClick={generate} className={toolbarPrimaryButtonClass}>
+              자리 배치 시작
+            </button>
+          </div>
+          <div className="hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
+          <div className="flex items-center gap-2">
+            <button onClick={generate} className={toolbarSecondaryButtonClass}>
+              재배치하기
+            </button>
+            <button onClick={clearPlacement} className={toolbarNeutralButtonClass}>
+              초기화
+            </button>
+          </div>
+          <div className="hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleViewMode}
+              className={viewMode === 'back' ? toolbarSecondaryActiveClass : toolbarSecondaryButtonClass}
+              aria-pressed={viewMode === 'back'}
+            >
+              보기 전환
+            </button>
+            <button onClick={() => window.print()} className={toolbarNeutralButtonClass}>
+              인쇄
+            </button>
+          </div>
         </div>
       </div>
 
