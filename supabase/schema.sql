@@ -73,3 +73,26 @@ create policy "teachers manage own attendance" on attendance
         and s.teacher_id = auth.uid()
     )
   );
+
+create table if not exists seating_plans (
+  id uuid primary key default gen_random_uuid(),
+  teacher_id uuid not null references auth.users(id) default auth.uid(),
+  title text not null,
+  plan_date date not null,
+  rows integer not null,
+  columns integer not null,
+  teacher_direction text not null default 'north' check (teacher_direction in ('north', 'south')),
+  seats jsonb not null,
+  assignments jsonb not null,
+  separations jsonb not null,
+  gender_balance boolean not null default false,
+  avoid_past_neighbors boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table seating_plans enable row level security;
+
+create policy "teachers manage own seating plans" on seating_plans
+  for all
+  using (teacher_id = auth.uid())
+  with check (teacher_id = auth.uid());

@@ -41,3 +41,45 @@ export type AttendanceEntry = {
   note: string | null
   created_at: string
 }
+
+export type SeatStatus = 'available' | 'empty' | 'disabled'
+export type TeacherDirection = 'north' | 'south'
+export type SeatGender = 'male' | 'female'
+export type SeparationType = 'orthogonal' | 'diagonal'
+
+export type Seat = {
+  id: string
+  row: number
+  column: number
+  status: SeatStatus
+  genderSeat?: SeatGender
+}
+
+export type SeatAssignment = {
+  student_id: string
+  seat_id: string
+  is_fixed: boolean
+  source: 'manual' | 'automatic'
+}
+
+export type SeatSeparation = {
+  student_a: string
+  student_b: string
+  type: SeparationType
+}
+
+export type SeatingPlan = {
+  id: string
+  teacher_id: string
+  title: string
+  plan_date: string
+  rows: number
+  columns: number
+  teacher_direction: TeacherDirection
+  seats: Seat[]
+  assignments: SeatAssignment[]
+  separations: SeatSeparation[]
+  gender_balance: boolean
+  avoid_past_neighbors: boolean
+  created_at: string
+}
