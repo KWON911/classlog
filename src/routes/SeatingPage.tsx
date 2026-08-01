@@ -207,7 +207,6 @@ export function SeatingPage() {
         setConditionMessage('사용 가능한 좌석만 지정할 수 있습니다.')
         return
       }
-      clearCurrentPlacement()
       if (activeTool.type === 'fixed') {
         const studentId = activeTool.studentId
         const conflictingStudentId = [...fixed.entries()].find(
@@ -217,10 +216,12 @@ export function SeatingPage() {
           setConditionMessage('이미 다른 학생이 고정된 좌석입니다.')
           return
         }
+        clearCurrentPlacement()
         setFixed((prev) => new Map(prev).set(studentId, seatId))
         setActiveTool(null)
         setConditionMessage('학생 고정 자리를 지정했습니다.')
       } else {
+        clearCurrentPlacement()
         const gender = activeTool.gender
         const isSameGender = seat.genderSeat === gender
         setSeats((prev) =>
