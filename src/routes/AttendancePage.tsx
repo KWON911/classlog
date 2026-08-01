@@ -109,6 +109,11 @@ export function AttendancePage() {
     })
   }
 
+  const editingStudent = students.find((s) => s.id === editingStudentId)
+  const editingEntry = editingStudentId
+    ? entryByStudentAndDate.get(`${editingStudentId}_${selectedDate}`)
+    : undefined
+
   const days = Array.from({ length: daysInMonth(yearMonth) }, (_, i) => i + 1)
 
   return (
@@ -162,40 +167,40 @@ export function AttendancePage() {
       {error && <p className="text-red-600">{error}</p>}
       {studentsError && <p className="text-red-600">{studentsError}</p>}
 
-      <ul className="mb-8 flex flex-col gap-2">
+      <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
         {students.map((student) => {
           const entry = entryByStudentAndDate.get(`${student.id}_${selectedDate}`)
-          const isEditing = editingStudentId === student.id
           return (
-            <li key={student.id} className="rounded border border-gray-200 p-3">
-              <button
-                onClick={() => setEditingStudentId(isEditing ? null : student.id)}
-                className="flex w-full items-center justify-between text-left"
-              >
-                <span>
-                  {student.number}. {student.name}
-                </span>
-                <span className={entry ? 'text-red-600' : 'text-gray-400'}>
-                  {entry ? `${entry.status} (${entry.reason_category})` : '출석'}
-                </span>
-              </button>
-
-              {isEditing && (
-                <AttendanceEditRow
-                  initialStatus={entry?.status}
-                  initialReasonCategory={entry?.reason_category}
-                  initialNote={entry?.note ?? undefined}
-                  onSave={(status, reasonCategory, note) =>
-                    handleSave(student.id, status, reasonCategory, note)
-                  }
-                  onClear={entry ? () => handleClear(student.id) : undefined}
-                  onCancel={() => setEditingStudentId(null)}
-                />
-              )}
-            </li>
+            <button
+              key={student.id}
+              onClick={() =>
+                setEditingStudentId(editingStudentId === student.id ? null : student.id)
+              }
+              className={`rounded border border-gray-200 p-2 text-sm ${entry ? 'text-red-600' : ''}`}
+            >
+              {student.number}. {student.name}
+            </button>
           )
         })}
-      </ul>
+      </div>
+
+      {editingStudent && (
+        <div className="mb-8 rounded border border-gray-200 p-4">
+          <p className="mb-2 text-sm font-medium">
+            {editingStudent.number}. {editingStudent.name} 입력:
+          </p>
+          <AttendanceEditRow
+            initialStatus={editingEntry?.status}
+            initialReasonCategory={editingEntry?.reason_category}
+            initialNote={editingEntry?.note ?? undefined}
+            onSave={(status, reasonCategory, note) =>
+              handleSave(editingStudent.id, status, reasonCategory, note)
+            }
+            onClear={editingEntry ? () => handleClear(editingStudent.id) : undefined}
+            onCancel={() => setEditingStudentId(null)}
+          />
+        </div>
+      )}
 
       <h2 className="mb-2 text-lg font-semibold">{yearMonth} 학급 전체 요약</h2>
       <table className="w-full border-collapse text-sm">
