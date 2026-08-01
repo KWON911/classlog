@@ -119,7 +119,7 @@ export type SeatingPlan = {
 - `areAdjacent(a: Seat, b: Seat, type: SeparationType): boolean` — 원본 `areTooClose`
 - `canUseSeat(studentGender, seat): boolean` — 성별 지정 좌석 검사
 - `placeStudents(students, seats, { fixed, separations, genderSeats, avoidPairs }): Map<studentId, seatId>` — 백트래킹 배치. 실패 시 원본과 동일한 한국어 에러 메시지("현재 고정·분리·성별 자리 조건을 동시에 만족하는 자리를 찾지 못했습니다..." 등)를 던진다.
-- `scorePlacement(candidate, students, options): number` — 성별 인접 페널티 + 이전 배치 유지 보너스(원본 `score`)
+- `scorePlacement(candidate, students, options): number` — 성별 인접 페널티 + 지난 짝 인접 페널티 + 이전 좌석 반복 페널티(재배치가 매번 눈에 띄게 달라지도록 유도, 원본 `score`)
 - `derivePastNeighborPairs(plans: SeatingPlan[]): Set<string>` — 여러 저장된 자리표에서 좌우 인접 학생 쌍 추출 (원본은 서버 함수 `listPastNeighborPairs`였지만, 저장된 자리표를 그대로 JSONB로 갖고 있으므로 클라이언트에서 계산)
 
 `src/lib/seating.test.ts`에 유닛 테스트 작성:

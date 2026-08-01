@@ -77,12 +77,6 @@ export function placeStudents(
         if (areAdjacent(seat, otherSeat, rule.type)) return false
       }
     }
-    for (const [otherId, otherSeatId] of placed) {
-      const otherSeat = seatById.get(otherSeatId)!
-      if (seat.row === otherSeat.row && Math.abs(seat.column - otherSeat.column) === 1) {
-        if (constraints.avoidPairs.has(pairKey(studentId, otherId))) return false
-      }
-    }
     return true
   }
 
@@ -137,7 +131,7 @@ export function scorePlacement(
   candidate: Map<string, string>,
   students: { id: string; gender: StudentGenderBucket }[],
   seats: Seat[],
-  options: { genderBalance: boolean; previousAssignments: Map<string, string> },
+  options: { genderBalance: boolean; previousAssignments: Map<string, string>; avoidPairs: Set<string> },
 ): number {
   let total = 0
   const seatById = new Map(seats.map((seat) => [seat.id, seat]))
@@ -164,6 +158,25 @@ export function scorePlacement(
     }
   }
 
+  const entriesForAvoidPairs = [...candidate.entries()]
+  for (let i = 0; i < entriesForAvoidPairs.length; i++) {
+    for (let j = i + 1; j < entriesForAvoidPairs.length; j++) {
+      const [studentA, seatIdA] = entriesForAvoidPairs[i]
+      const [studentB, seatIdB] = entriesForAvoidPairs[j]
+      const seatA = seatById.get(seatIdA)!
+      const seatB = seatById.get(seatIdB)!
+      if (seatA.row === seatB.row && Math.abs(seatA.column - seatB.column) === 1) {
+        if (options.avoidPairs.has(pairKey(studentA, studentB))) {
+          total += 4
+        }
+      }
+    }
+  }
+
+  // generatePlacement minimizes this score, so this loop discourages
+  // placing a student back in the exact seat they held in
+  // `previousAssignments` — it pushes a reshuffle toward a visibly
+  // different arrangement rather than "rewarding" staying put.
   for (const [studentId, seatId] of candidate) {
     if (options.previousAssignments.get(studentId) === seatId) {
       total += 8
@@ -183,7 +196,10 @@ export function generatePlacement(
   let bestScore = Infinity
   for (let i = 0; i < 60; i++) {
     const candidate = placeStudents(students, seats, constraints)
-    const candidateScore = scorePlacement(candidate, students, seats, options)
+    const candidateScore = scorePlacement(candidate, students, seats, {
+      ...options,
+      avoidPairs: constraints.avoidPairs,
+    })
     if (candidateScore < bestScore || (candidateScore === bestScore && Math.random() < 0.5)) {
       best = candidate
       bestScore = candidateScore

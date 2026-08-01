@@ -14,7 +14,7 @@ export function AppShell() {
     (location.pathname.startsWith('/students/') && location.pathname !== '/students/manage')
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen print:h-auto">
       <nav className="flex w-48 flex-col gap-1 border-r border-gray-200 p-4 print:hidden">
         <NavLink to="/students" className={() => linkClass(rosterActive)}>
           학급기록
@@ -36,7 +36,7 @@ export function AppShell() {
           로그아웃
         </button>
       </nav>
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto print:overflow-visible">
         <Outlet />
       </main>
     </div>

@@ -43,7 +43,6 @@ export function SeatingPage() {
   const [conditionMessage, setConditionMessage] = useState('')
 
   const [manuallyMoved, setManuallyMoved] = useState<Set<string>>(new Set())
-  const [previousAssignments, setPreviousAssignments] = useState<Map<string, string>>(new Map())
   const [title, setTitle] = useState('')
   const [planDate, setPlanDate] = useState(todayDate())
   const [recordMonth, setRecordMonth] = useState(todayYearMonth())
@@ -98,6 +97,7 @@ export function SeatingPage() {
     setAssignments(new Map())
     setFixed(new Map())
     setSeparations([])
+    setSavedPlanId(null)
     setActiveTool(null)
     setErrorMessage('')
     setMessage(`${rowsInput}행 ${columnsInput}열 좌석 구조를 만들었습니다.`)
@@ -105,7 +105,7 @@ export function SeatingPage() {
 
   function toggleSeatEditMode() {
     setActiveTool(null)
-    setSeatEditMode((prev) => (prev === 'empty' ? 'disabled' : 'empty'))
+    setSeatEditMode((prev) => (prev === null ? 'empty' : prev === 'empty' ? 'disabled' : null))
   }
 
   function startFixedTool() {
@@ -176,14 +176,14 @@ export function SeatingPage() {
 
     if (activeTool?.type === 'swap') {
       const studentId = studentIdAtSeat(seatId)
-      if (!studentId) {
-        setMessage('학생이 배치된 자리만 선택할 수 있습니다.')
-        return
-      }
       if (!activeTool.firstStudentId) {
+        if (!studentId) {
+          setMessage('학생이 배치된 자리만 선택할 수 있습니다.')
+          return
+        }
         setActiveTool({ type: 'swap', firstStudentId: studentId })
         setMessage(
-          `${studentNameById.get(studentId) ?? '첫 번째 학생'}을 선택했습니다. 바꿀 두 번째 학생 자리를 클릭해 주세요.`,
+          `${studentNameById.get(studentId) ?? '첫 번째 학생'}을 선택했습니다. 바꿀 두 번째 학생 자리 또는 빈 좌석을 클릭해 주세요.`,
         )
         return
       }
@@ -192,16 +192,40 @@ export function SeatingPage() {
         return
       }
       const firstId = activeTool.firstStudentId
-      if (fixed.has(firstId) || fixed.has(studentId)) {
+      if (fixed.has(firstId) || (studentId && fixed.has(studentId))) {
         setMessage('고정된 학생의 자리는 맞바꾸기할 수 없습니다.')
         setActiveTool(null)
         return
       }
       const firstSeatId = assignments.get(firstId)!
-      const secondSeatId = assignments.get(studentId)!
       const firstSeat = getSeat(firstSeatId)!
-      const secondSeat = getSeat(secondSeatId)!
       const firstGender = studentGenderById.get(firstId) ?? 'unspecified'
+
+      if (!studentId) {
+        if (seat.status !== 'available') {
+          setMessage('사용 가능한 좌석으로만 이동할 수 있습니다.')
+          setActiveTool(null)
+          return
+        }
+        const canUseTarget = !seat.genderSeat || firstGender === seat.genderSeat
+        if (!canUseTarget) {
+          setMessage('성별 지정 좌석 조건과 맞지 않아 이동할 수 없습니다.')
+          setActiveTool(null)
+          return
+        }
+        setAssignments((prev) => {
+          const next = new Map(prev)
+          next.set(firstId, seatId)
+          return next
+        })
+        setManuallyMoved((prev) => new Set(prev).add(firstId))
+        setActiveTool(null)
+        setMessage(`${studentNameById.get(firstId) ?? ''}을(를) 새 자리로 이동했습니다.`)
+        return
+      }
+
+      const secondSeatId = assignments.get(studentId)!
+      const secondSeat = getSeat(secondSeatId)!
       const secondGender = studentGenderById.get(studentId) ?? 'unspecified'
       const firstCanUseSecond = !secondSeat.genderSeat || firstGender === secondSeat.genderSeat
       const secondCanUseFirst = !firstSeat.genderSeat || secondGender === firstSeat.genderSeat
@@ -280,6 +304,7 @@ export function SeatingPage() {
   function generate() {
     setErrorMessage('')
     setActiveTool(null)
+    setSavedPlanId(null)
     if (!students.length) {
       setErrorMessage('먼저 학생 명단을 불러와 주세요.')
       return
@@ -290,7 +315,7 @@ export function SeatingPage() {
         students.map((s) => ({ id: s.id, gender: mapGender(s.gender) })),
         seats,
         { fixed, separations, avoidPairs },
-        { genderBalance, previousAssignments },
+        { genderBalance, previousAssignments: assignments },
       )
       setAssignments(result)
       setManuallyMoved(new Set())
@@ -305,6 +330,7 @@ export function SeatingPage() {
   }
 
   function clearPlacement() {
+    setSavedPlanId(null)
     setActiveTool(null)
     setAssignments(new Map())
     setMessage('현재 배치를 초기화했습니다.')
@@ -361,7 +387,6 @@ export function SeatingPage() {
     setAvoidPastNeighbors(plan.avoid_past_neighbors)
     setRowsInput(plan.rows)
     setColumnsInput(plan.columns)
-    setPreviousAssignments(new Map(plan.assignments.map((a) => [a.student_id, a.seat_id])))
     setActiveTool(null)
     setTitle(duplicate ? `${plan.title} 복제` : plan.title)
     setPlanDate(duplicate ? todayDate() : plan.plan_date)

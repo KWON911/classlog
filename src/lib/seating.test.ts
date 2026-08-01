@@ -181,6 +181,7 @@ describe('scorePlacement', () => {
     const score = scorePlacement(candidate, students, seats, {
       genderBalance: true,
       previousAssignments: new Map(),
+      avoidPairs: new Set(),
     })
     expect(score).toBe(1)
   })
@@ -193,17 +194,37 @@ describe('scorePlacement', () => {
     const score = scorePlacement(candidate, students, seats, {
       genderBalance: false,
       previousAssignments: new Map(),
+      avoidPairs: new Set(),
     })
     expect(score).toBe(0)
   })
 
-  it('rewards keeping a student in their previous seat', () => {
+  it('adds a penalty score when a student stays in their previous seat (discourages repeats since lower score wins)', () => {
     const candidate = new Map([['s1', 'r1-c1']])
     const score = scorePlacement(candidate, [students[0]], seats, {
       genderBalance: false,
       previousAssignments: new Map([['s1', 'r1-c1']]),
+      avoidPairs: new Set(),
     })
     expect(score).toBe(8)
+  })
+
+  it('penalizes seating an avoid-pair next to each other', () => {
+    const seats2 = createSeats(1, 2)
+    const students2 = [
+      { id: 's1', gender: 'unspecified' as const },
+      { id: 's2', gender: 'unspecified' as const },
+    ]
+    const candidate = new Map([
+      ['s1', 'r1-c1'],
+      ['s2', 'r1-c2'],
+    ])
+    const score = scorePlacement(candidate, students2, seats2, {
+      genderBalance: false,
+      previousAssignments: new Map(),
+      avoidPairs: new Set([['s1', 's2'].sort().join('::')]),
+    })
+    expect(score).toBe(4)
   })
 })
 
@@ -232,10 +253,10 @@ describe('derivePastNeighborPairs', () => {
       teacher_id: 't1',
       title: '1차',
       plan_date: '2026-08-01',
-      rows: 1,
+      rows: 2,
       columns: 3,
       teacher_direction: 'north',
-      seats: createSeats(1, 3),
+      seats: createSeats(2, 3),
       assignments: [],
       separations: [],
       gender_balance: false,
@@ -245,13 +266,14 @@ describe('derivePastNeighborPairs', () => {
     }
   }
 
-  it('pairs students seated in adjacent columns, but not students two seats apart', () => {
+  it('pairs students seated left-right, but not front-back or diagonal', () => {
     const plans = [
       plan({
         assignments: [
           { student_id: 's1', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' },
           { student_id: 's2', seat_id: 'r1-c2', is_fixed: false, source: 'automatic' },
-          { student_id: 's3', seat_id: 'r1-c3', is_fixed: false, source: 'automatic' },
+          { student_id: 's3', seat_id: 'r2-c1', is_fixed: false, source: 'automatic' },
+          { student_id: 's4', seat_id: 'r2-c2', is_fixed: false, source: 'automatic' },
         ],
       }),
     ]
@@ -259,8 +281,10 @@ describe('derivePastNeighborPairs', () => {
     const pairs = derivePastNeighborPairs(plans)
 
     expect(pairs.has(['s1', 's2'].sort().join('::'))).toBe(true)
-    expect(pairs.has(['s2', 's3'].sort().join('::'))).toBe(true)
+    expect(pairs.has(['s3', 's4'].sort().join('::'))).toBe(true)
     expect(pairs.has(['s1', 's3'].sort().join('::'))).toBe(false)
+    expect(pairs.has(['s1', 's4'].sort().join('::'))).toBe(false)
+    expect(pairs.has(['s2', 's3'].sort().join('::'))).toBe(false)
   })
 
   it('merges pairs across multiple plans', () => {
