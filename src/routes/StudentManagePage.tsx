@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { StudentForm, type StudentFormValues } from '../components/StudentForm'
 import { ImportStudentsPanel } from '../components/ImportStudentsPanel'
+import { SchoolSettingsSection } from '../components/manage/SchoolSettingsSection'
 
 export function StudentManagePage() {
   const { students, error, addStudent, addStudents, deleteAllStudents } = useStudents()
@@ -45,6 +46,10 @@ export function StudentManagePage() {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <h1 className="mb-4 text-2xl font-semibold">정보관리</h1>
+
+      <SchoolSettingsSection />
+
+      <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-blue-600">학생 명단</h2>
 
       {error && <p className="mb-4 text-red-600">{error}</p>}
 

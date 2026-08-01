@@ -12,6 +12,7 @@ export function createQueryBuilder<T>(result: QueryResult<T>) {
   }
 
   builder.single = vi.fn(() => Promise.resolve(result))
+  builder.maybeSingle = vi.fn(() => Promise.resolve(result))
   builder.then = (
     onFulfilled: (value: QueryResult<T>) => unknown,
     onRejected?: (reason: unknown) => unknown,

@@ -122,3 +122,24 @@ begin
       check (previous_seat_history_scope in ('latest1', 'latest3', 'currentSemester', 'all'));
   end if;
 end $$;
+
+-- One row per teacher: the school/class NEIS uses to look up the home
+-- page's weekly timetable and meal cards. teacher_id is the primary key
+-- (not a separate id column) since this is a 1:1 settings row, not a list.
+create table if not exists school_settings (
+  teacher_id uuid primary key references auth.users(id) default auth.uid(),
+  office_code text not null,
+  school_code text not null,
+  school_name text not null,
+  school_year text not null,
+  grade text not null,
+  class_name text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table school_settings enable row level security;
+
+create policy "teachers manage own school settings" on school_settings
+  for all
+  using (teacher_id = auth.uid())
+  with check (teacher_id = auth.uid());

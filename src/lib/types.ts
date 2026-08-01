@@ -87,3 +87,50 @@ export type SeatingPlan = {
   previous_seat_history_scope: PreviousSeatHistoryScope
   created_at: string
 }
+
+export type SchoolSettings = {
+  teacher_id: string
+  office_code: string
+  school_code: string
+  school_name: string
+  school_year: string
+  grade: string
+  class_name: string
+  updated_at: string
+}
+
+export type TimetablePeriod = {
+  period: number
+  subject: string
+}
+
+/** date는 'YYYYMMDD' */
+export type TimetableByDate = Record<string, TimetablePeriod[]>
+
+export type WeeklyTimetableDay = {
+  date: string
+  dayLabel: string
+  periods: TimetablePeriod[]
+}
+
+export type MealInfo = {
+  menus: string[]
+  calorie: string
+}
+
+/** date는 'YYYYMMDD' */
+export type MealByDate = Record<string, MealInfo>
+
+export type WeeklyMealDay = {
+  date: string
+  dayLabel: string
+  menus: string[]
+  calorie: string
+}
+
+export type NeisSchoolSearchResult = {
+  office_code: string
+  school_code: string
+  school_name: string
+  address: string
+}
