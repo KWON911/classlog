@@ -190,6 +190,7 @@ export function AttendancePage() {
             {editingStudent.number}. {editingStudent.name} 입력:
           </p>
           <AttendanceEditRow
+            key={editingStudent.id}
             initialStatus={editingEntry?.status}
             initialReasonCategory={editingEntry?.reason_category}
             initialNote={editingEntry?.note ?? undefined}
