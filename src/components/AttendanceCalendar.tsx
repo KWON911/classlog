@@ -4,6 +4,8 @@ type AttendanceCalendarProps = {
   yearMonth: string
   entries: AttendanceEntry[]
   students: Student[]
+  selectedDate: string
+  onSelectDate: (date: string) => void
 }
 
 type DayCell = { day: number; date: string } | null
@@ -39,7 +41,13 @@ function buildWeeks(yearMonth: string): DayCell[][] {
   return weeks
 }
 
-export function AttendanceCalendar({ yearMonth, entries, students }: AttendanceCalendarProps) {
+export function AttendanceCalendar({
+  yearMonth,
+  entries,
+  students,
+  selectedDate,
+  onSelectDate,
+}: AttendanceCalendarProps) {
   const studentNameById = new Map(students.map((s) => [s.id, s.name]))
   const studentNumberById = new Map(students.map((s) => [s.id, s.number]))
 
@@ -70,29 +78,38 @@ export function AttendanceCalendar({ yearMonth, entries, students }: AttendanceC
           </div>
         ))}
         {weeks.map((week, weekIndex) =>
-          week.map((cell, columnIndex) => (
-            <div
-              key={`${weekIndex}-${columnIndex}`}
-              className="min-h-20 rounded border border-gray-200 p-1 text-xs"
-            >
-              {cell && (
-                <>
-                  <div className="mb-1 text-gray-500">{cell.day}</div>
-                  <div className="flex flex-col gap-1">
-                    {(entriesByDate.get(cell.date) ?? []).map((entry) => (
-                      <div key={entry.id} className="rounded bg-red-50 p-1">
-                        <div className="font-medium text-red-600">
-                          {entry.reason_category}
-                          {entry.status}
-                        </div>
-                        <div>{studentNameById.get(entry.student_id) ?? '알 수 없음'}</div>
+          week.map((cell, columnIndex) =>
+            cell ? (
+              <button
+                type="button"
+                key={`${weekIndex}-${columnIndex}`}
+                onClick={() => onSelectDate(cell.date)}
+                className={`min-h-20 rounded border p-1 text-left text-xs ${
+                  cell.date === selectedDate
+                    ? 'border-blue-600 bg-blue-50'
+                    : 'border-gray-200'
+                }`}
+              >
+                <div className="mb-1 text-gray-500">{cell.day}</div>
+                <div className="flex flex-col gap-1">
+                  {(entriesByDate.get(cell.date) ?? []).map((entry) => (
+                    <div key={entry.id} className="rounded bg-red-50 p-1">
+                      <div className="font-medium text-red-600">
+                        {entry.reason_category}
+                        {entry.status}
                       </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )),
+                      <div>{studentNameById.get(entry.student_id) ?? '알 수 없음'}</div>
+                    </div>
+                  ))}
+                </div>
+              </button>
+            ) : (
+              <div
+                key={`${weekIndex}-${columnIndex}`}
+                className="min-h-20 rounded border border-gray-200 p-1 text-xs"
+              />
+            ),
+          ),
         )}
       </div>
     </div>

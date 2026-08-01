@@ -23,16 +23,12 @@ function daysInMonth(yearMonth: string) {
   return new Date(year, month, 0).getDate()
 }
 
-function isWeekday(yearMonth: string, day: number) {
-  const [year, month] = yearMonth.split('-').map(Number)
-  const dayOfWeek = new Date(year, month - 1, day).getDay()
-  return dayOfWeek >= 1 && dayOfWeek <= 5
-}
-
 function firstWeekdayOfMonth(yearMonth: string) {
+  const [year, month] = yearMonth.split('-').map(Number)
   const total = daysInMonth(yearMonth)
   for (let day = 1; day <= total; day++) {
-    if (isWeekday(yearMonth, day)) {
+    const dayOfWeek = new Date(year, month - 1, day).getDay()
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
       return `${yearMonth}-${String(day).padStart(2, '0')}`
     }
   }
@@ -126,10 +122,6 @@ export function AttendancePage() {
     ? entryByStudentAndDate.get(`${editingStudentId}_${selectedDate}`)
     : undefined
 
-  const days = Array.from({ length: daysInMonth(yearMonth) }, (_, i) => i + 1).filter((day) =>
-    isWeekday(yearMonth, day),
-  )
-
   return (
     <div className="mx-auto max-w-3xl p-6">
       <h1 className="mb-4 text-2xl font-semibold">출결관리</h1>
@@ -158,24 +150,18 @@ export function AttendancePage() {
         >
           ▶
         </button>
-        <select
-          value={selectedDate}
-          onChange={(e) => {
-            setSelectedDate(e.target.value)
-            setEditingStudentId(null)
-          }}
-          className="rounded border border-gray-300 px-2 py-1"
-        >
-          {days.map((day) => {
-            const date = `${yearMonth}-${String(day).padStart(2, '0')}`
-            return (
-              <option key={date} value={date}>
-                {day}일
-              </option>
-            )
-          })}
-        </select>
       </div>
+
+      <AttendanceCalendar
+        yearMonth={yearMonth}
+        entries={entries}
+        students={students}
+        selectedDate={selectedDate}
+        onSelectDate={(date) => {
+          setSelectedDate(date)
+          setEditingStudentId(null)
+        }}
+      />
 
       {loading && <p>불러오는 중...</p>}
       {error && <p className="text-red-600">{error}</p>}
@@ -216,8 +202,6 @@ export function AttendancePage() {
           />
         </div>
       )}
-
-      <AttendanceCalendar yearMonth={yearMonth} entries={entries} students={students} />
 
       <h2 className="mb-2 text-lg font-semibold">{yearMonth} 학급 전체 요약</h2>
       <table className="w-full border-collapse text-sm">
