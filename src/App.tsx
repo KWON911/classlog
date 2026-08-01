@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage } from './routes/LoginPage'
+import { HomePage } from './routes/HomePage'
 import { StudentListPage } from './routes/StudentListPage'
 import { StudentDetailPage } from './routes/StudentDetailPage'
 import { StudentManagePage } from './routes/StudentManagePage'
@@ -15,6 +16,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
+            <Route path="/home" element={<HomePage />} />
             <Route path="/students" element={<StudentListPage />} />
             <Route path="/students/:id" element={<StudentDetailPage />} />
             <Route path="/students/manage" element={<StudentManagePage />} />

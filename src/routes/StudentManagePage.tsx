@@ -44,7 +44,7 @@ export function StudentManagePage() {
 
   return (
     <div className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl font-semibold">명부 관리</h1>
+      <h1 className="mb-4 text-2xl font-semibold">정보관리</h1>
 
       {error && <p className="mb-4 text-red-600">{error}</p>}
 
