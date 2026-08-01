@@ -98,6 +98,21 @@ describe('placeStudents', () => {
     ).toThrow('학생 3명에 비해 사용 가능한 좌석이 2개입니다.')
   })
 
+  it('fills exactly-matching gender-restricted seats without a false unsatisfiable error', () => {
+    const seats = createSeats(5, 5)
+    for (let i = 0; i < 12; i++) {
+      seats[i].genderSeat = 'male'
+    }
+    const students = [
+      ...Array.from({ length: 12 }, (_, i) => ({ id: `m${i}`, gender: 'male' as const })),
+      ...Array.from({ length: 13 }, (_, i) => ({ id: `f${i}`, gender: 'female' as const })),
+    ]
+    for (let i = 0; i < 20; i++) {
+      const result = placeStudents(students, seats, { fixed: new Map(), separations: [], avoidPairs: new Set() })
+      expect(result.size).toBe(25)
+    }
+  })
+
   it('keeps a fixed student on their assigned seat', () => {
     const seats = createSeats(1, 3)
     const students = [

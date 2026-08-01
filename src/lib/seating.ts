@@ -105,9 +105,15 @@ export function placeStudents(
     if (index === remaining.length) return true
     if (++nodes > 30000) return false
     const student = remaining[index]
+    // Try gender-restricted seats before unrestricted ones: a gender-restricted
+    // seat can only ever be filled by a matching-gender student, while an
+    // unrestricted seat can be filled by anyone. Trying restricted seats first
+    // keeps unrestricted seats available for later students, which avoids
+    // backtracking blowups when the restricted-seat count exactly matches the
+    // matching-gender student count.
     const candidateSeats = shuffle(
       usable.filter((seat) => !isSeatTaken(placed, seat.id) && canUseSeat(student.gender, seat)),
-    )
+    ).sort((a, b) => (a.genderSeat ? 0 : 1) - (b.genderSeat ? 0 : 1))
     for (const seat of candidateSeats) {
       if (validPlacement(student.id, seat.id, placed)) {
         placed.set(student.id, seat.id)
