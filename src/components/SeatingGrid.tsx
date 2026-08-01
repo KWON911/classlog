@@ -29,6 +29,15 @@ function seatClassName(seat: Seat, isFixed: boolean, isSelected: boolean) {
   return classes.join(' ')
 }
 
+const LEGEND_ITEMS: { label: string; className: string }[] = [
+  { label: '사용 가능', className: 'border-gray-300 bg-white' },
+  { label: '학생 고정', className: 'border-green-500 bg-green-50' },
+  { label: '남학생 자리', className: 'border-blue-400 bg-blue-50' },
+  { label: '여학생 자리', className: 'border-pink-400 bg-pink-50' },
+  { label: '빈자리', className: 'border-yellow-400 bg-yellow-50' },
+  { label: '사용 안 함', className: 'border-dashed border-gray-400 bg-gray-200' },
+]
+
 export function SeatingGrid({
   seats,
   columns,
@@ -48,6 +57,7 @@ export function SeatingGrid({
   }
 
   const deskAtBottom = (teacherDirection === 'south') !== (viewMode === 'back')
+  const isBackView = viewMode === 'back'
 
   const sortedSeats = [...seats].sort((a, b) => {
     const posA = displayPosition(a, rows, columns, viewMode)
@@ -63,6 +73,21 @@ export function SeatingGrid({
 
   return (
     <div className="mb-8">
+      <p className="mb-3 text-sm text-gray-600 print:hidden">
+        {isBackView
+          ? '현재: 뒤에서 볼 때 — 교실 뒤쪽에서 칠판을 바라보는 모습입니다.'
+          : '현재: 교사 시점 — 칠판에서 학생을 바라보는 모습입니다.'}
+      </p>
+
+      <div className="mb-3 flex flex-wrap gap-3 text-xs text-gray-600 print:hidden">
+        {LEGEND_ITEMS.map((item) => (
+          <span key={item.label} className="flex items-center gap-1">
+            <i className={`inline-block h-3 w-3 rounded border ${item.className}`} />
+            {item.label}
+          </span>
+        ))}
+      </div>
+
       {!deskAtBottom && <div className="mb-4">{desk}</div>}
       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, minmax(58px, 1fr))` }}>
         {sortedSeats.map((seat) => {
@@ -95,6 +120,11 @@ export function SeatingGrid({
         })}
       </div>
       {deskAtBottom && <div className="mt-4">{desk}</div>}
+
+      <div className="mt-3 flex justify-between text-xs text-gray-500">
+        <span>{isBackView ? '복도 쪽' : '창가 쪽'}</span>
+        <span>{isBackView ? '창가 쪽' : '복도 쪽'}</span>
+      </div>
     </div>
   )
 }
