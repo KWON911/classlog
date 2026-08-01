@@ -13,7 +13,7 @@ export function StudentListPage() {
 
   return (
     <div className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl font-semibold">학생 명부</h1>
+      <h1 className="mb-4 text-2xl font-semibold">학급기록</h1>
 
       <input
         type="text"
