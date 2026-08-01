@@ -4,6 +4,8 @@ import {
   canUseSeat,
   createSeats,
   derivePastNeighborPairs,
+  derivePastSeatsByStudent,
+  filterPlansByScope,
   generatePlacement,
   mapGender,
   placeStudents,
@@ -241,6 +243,27 @@ describe('scorePlacement', () => {
     })
     expect(score).toBe(4)
   })
+
+  it('adds the recorded weight when a student lands on a past seat', () => {
+    const candidate = new Map([['s1', 'r1-c1']])
+    const score = scorePlacement(candidate, [students[0]], seats, {
+      genderBalance: false,
+      previousAssignments: new Map(),
+      avoidPairs: new Set(),
+      pastSeatsByStudent: new Map([['s1', new Map([['r1-c1', 6]])]]),
+    })
+    expect(score).toBe(6)
+  })
+
+  it('scores normally when pastSeatsByStudent is omitted (backward compatible)', () => {
+    const candidate = new Map([['s1', 'r1-c1']])
+    const score = scorePlacement(candidate, [students[0]], seats, {
+      genderBalance: false,
+      previousAssignments: new Map(),
+      avoidPairs: new Set(),
+    })
+    expect(score).toBe(0)
+  })
 })
 
 describe('generatePlacement', () => {
@@ -276,6 +299,8 @@ describe('derivePastNeighborPairs', () => {
       separations: [],
       gender_balance: false,
       avoid_past_neighbors: false,
+      avoid_previous_seats: false,
+      previous_seat_history_scope: 'latest3',
       created_at: '2026-08-01',
       ...overrides,
     }
@@ -321,5 +346,167 @@ describe('derivePastNeighborPairs', () => {
 
     const pairs = derivePastNeighborPairs(plans)
     expect(pairs.size).toBe(2)
+  })
+})
+
+describe('filterPlansByScope', () => {
+  function plan(overrides: Partial<SeatingPlan>): SeatingPlan {
+    return {
+      id: 'p1',
+      teacher_id: 't1',
+      title: '1차',
+      plan_date: '2026-08-01',
+      rows: 1,
+      columns: 2,
+      teacher_direction: 'north',
+      seats: createSeats(1, 2),
+      assignments: [],
+      separations: [],
+      gender_balance: false,
+      avoid_past_neighbors: false,
+      avoid_previous_seats: false,
+      previous_seat_history_scope: 'latest3',
+      created_at: '2026-08-01',
+      ...overrides,
+    }
+  }
+
+  it('sorts by created_at (actual save time), not by array order or plan_date', () => {
+    // plan_date order deliberately disagrees with created_at order, so a
+    // naive plan_date-based or array-order-based sort would fail this.
+    const plans = [
+      plan({ id: 'old-but-listed-first', plan_date: '2026-01-01', created_at: '2026-01-01T00:00:00Z' }),
+      plan({ id: 'newest', plan_date: '2025-12-01', created_at: '2026-08-01T00:00:00Z' }),
+      plan({ id: 'middle', plan_date: '2026-05-01', created_at: '2026-05-01T00:00:00Z' }),
+    ]
+    const result = filterPlansByScope(plans, 'latest1', '2026-08-02')
+    expect(result.map((p) => p.id)).toEqual(['newest'])
+  })
+
+  it('latest3 returns at most the 3 most recent plans', () => {
+    const plans = [
+      plan({ id: 'p1', created_at: '2026-01-01T00:00:00Z' }),
+      plan({ id: 'p2', created_at: '2026-02-01T00:00:00Z' }),
+      plan({ id: 'p3', created_at: '2026-03-01T00:00:00Z' }),
+      plan({ id: 'p4', created_at: '2026-04-01T00:00:00Z' }),
+    ]
+    const result = filterPlansByScope(plans, 'latest3', '2026-08-02')
+    expect(result.map((p) => p.id)).toEqual(['p4', 'p3', 'p2'])
+  })
+
+  it('currentSemester keeps plans within the first-semester range (Mar 1 - Aug 31)', () => {
+    const plans = [
+      plan({ id: 'in-semester', plan_date: '2026-05-15' }),
+      plan({ id: 'before-semester', plan_date: '2026-02-20' }),
+      plan({ id: 'after-semester', plan_date: '2026-09-05' }),
+    ]
+    const result = filterPlansByScope(plans, 'currentSemester', '2026-08-02')
+    expect(result.map((p) => p.id)).toEqual(['in-semester'])
+  })
+
+  it('currentSemester treats Jan/Feb as belonging to the previous year\'s second semester', () => {
+    const plans = [
+      plan({ id: 'prev-fall', plan_date: '2025-11-01' }),
+      plan({ id: 'this-jan', plan_date: '2026-01-15' }),
+      plan({ id: 'not-in-range', plan_date: '2025-08-01' }),
+    ]
+    // referenceDate is in February, so "current semester" is the 2nd
+    // semester that started the previous September.
+    const result = filterPlansByScope(plans, 'currentSemester', '2026-02-10')
+    const ids = result.map((p) => p.id).sort()
+    expect(ids).toEqual(['prev-fall', 'this-jan'])
+  })
+
+  it('all returns every plan, newest first', () => {
+    const plans = [
+      plan({ id: 'p1', created_at: '2026-01-01T00:00:00Z' }),
+      plan({ id: 'p2', created_at: '2026-03-01T00:00:00Z' }),
+    ]
+    const result = filterPlansByScope(plans, 'all', '2026-08-02')
+    expect(result.map((p) => p.id)).toEqual(['p2', 'p1'])
+  })
+})
+
+describe('derivePastSeatsByStudent', () => {
+  function plan(overrides: Partial<SeatingPlan>): SeatingPlan {
+    return {
+      id: 'p1',
+      teacher_id: 't1',
+      title: '1차',
+      plan_date: '2026-08-01',
+      rows: 1,
+      columns: 2,
+      teacher_direction: 'north',
+      seats: createSeats(1, 2),
+      assignments: [],
+      separations: [],
+      gender_balance: false,
+      avoid_past_neighbors: false,
+      avoid_previous_seats: false,
+      previous_seat_history_scope: 'latest3',
+      created_at: '2026-08-01',
+      ...overrides,
+    }
+  }
+
+  it('records the most recent plan\'s seat with the highest weight', () => {
+    const plans = [
+      plan({ assignments: [{ student_id: 's1', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' }] }),
+      plan({
+        id: 'p2',
+        assignments: [{ student_id: 's1', seat_id: 'r1-c2', is_fixed: false, source: 'automatic' }],
+      }),
+    ]
+    const currentSeatIds = new Set(['r1-c1', 'r1-c2'])
+    const { pastSeatsByStudent, excludedRecordCount } = derivePastSeatsByStudent(plans, currentSeatIds)
+
+    expect(pastSeatsByStudent.get('s1')?.get('r1-c1')).toBe(6)
+    expect(pastSeatsByStudent.get('s1')?.get('r1-c2')).toBe(5)
+    expect(excludedRecordCount).toBe(0)
+  })
+
+  it('sums weight when the same student repeats the same seat across multiple plans', () => {
+    const plans = [
+      plan({ assignments: [{ student_id: 's1', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' }] }),
+      plan({
+        id: 'p2',
+        assignments: [{ student_id: 's1', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' }],
+      }),
+    ]
+    const currentSeatIds = new Set(['r1-c1', 'r1-c2'])
+    const { pastSeatsByStudent } = derivePastSeatsByStudent(plans, currentSeatIds)
+
+    expect(pastSeatsByStudent.get('s1')?.get('r1-c1')).toBe(11)
+  })
+
+  it('excludes seats that do not exist in the current layout and counts them', () => {
+    const plans = [
+      plan({
+        assignments: [
+          { student_id: 's1', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' },
+          { student_id: 's2', seat_id: 'r5-c9', is_fixed: false, source: 'automatic' },
+        ],
+      }),
+    ]
+    const currentSeatIds = new Set(['r1-c1', 'r1-c2'])
+    const { pastSeatsByStudent, excludedRecordCount } = derivePastSeatsByStudent(plans, currentSeatIds)
+
+    expect(pastSeatsByStudent.get('s1')?.get('r1-c1')).toBe(6)
+    expect(pastSeatsByStudent.has('s2')).toBe(false)
+    expect(excludedRecordCount).toBe(1)
+  })
+
+  it('the weight floor never drops below 1 no matter how old the record', () => {
+    const plans = Array.from({ length: 10 }, (_, i) =>
+      plan({
+        id: `p${i}`,
+        assignments: [{ student_id: 's1', seat_id: 'r1-c1', is_fixed: false, source: 'automatic' }],
+      }),
+    )
+    const currentSeatIds = new Set(['r1-c1'])
+    const { pastSeatsByStudent } = derivePastSeatsByStudent(plans, currentSeatIds)
+
+    // weights: 6,5,4,3,2,1,1,1,1,1 = 25
+    expect(pastSeatsByStudent.get('s1')?.get('r1-c1')).toBe(25)
   })
 })

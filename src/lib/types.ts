@@ -68,6 +68,8 @@ export type SeatSeparation = {
   type: SeparationType
 }
 
+export type PreviousSeatHistoryScope = 'latest1' | 'latest3' | 'currentSemester' | 'all'
+
 export type SeatingPlan = {
   id: string
   teacher_id: string
@@ -81,5 +83,7 @@ export type SeatingPlan = {
   separations: SeatSeparation[]
   gender_balance: boolean
   avoid_past_neighbors: boolean
+  avoid_previous_seats: boolean
+  previous_seat_history_scope: PreviousSeatHistoryScope
   created_at: string
 }

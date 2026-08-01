@@ -3,8 +3,30 @@ import { useStudents } from '../lib/hooks/useStudents'
 import { useSeatingPlans, type SeatingPlanInput } from '../lib/hooks/useSeatingPlans'
 import { SeatingGrid } from '../components/SeatingGrid'
 import { Modal } from '../components/Modal'
-import { createSeats, derivePastNeighborPairs, generatePlacement, mapGender } from '../lib/seating'
-import type { Seat, SeatGender, SeatingPlan, SeatSeparation, SeparationType, TeacherDirection } from '../lib/types'
+import {
+  createSeats,
+  derivePastNeighborPairs,
+  derivePastSeatsByStudent,
+  filterPlansByScope,
+  generatePlacement,
+  mapGender,
+} from '../lib/seating'
+import type {
+  PreviousSeatHistoryScope,
+  Seat,
+  SeatGender,
+  SeatingPlan,
+  SeatSeparation,
+  SeparationType,
+  TeacherDirection,
+} from '../lib/types'
+
+const PREVIOUS_SEAT_SCOPE_LABELS: Record<PreviousSeatHistoryScope, string> = {
+  latest1: '최근 1회',
+  latest3: '최근 3회',
+  currentSemester: '이번 학기',
+  all: '전체 저장 기록',
+}
 
 type ActiveTool =
   | { type: 'swap'; firstStudentId: string | null }
@@ -60,10 +82,21 @@ export function SeatingPage() {
   const [recordMonth, setRecordMonth] = useState(todayYearMonth())
   const [savedPlanId, setSavedPlanId] = useState<string | null>(null)
   const [avoidPastNeighbors, setAvoidPastNeighbors] = useState(false)
+  const [avoidPreviousSeats, setAvoidPreviousSeats] = useState(false)
+  const [previousSeatHistoryScope, setPreviousSeatHistoryScope] = useState<PreviousSeatHistoryScope>('latest3')
   const [saveMessage, setSaveMessage] = useState('')
   const [showSettings, setShowSettings] = useState(false)
 
-  const { plans, loading: plansLoading, error: plansError, savePlan, deletePlan } = useSeatingPlans(recordMonth)
+  // Fetched once, unfiltered — the Archive list (this month only) and the
+  // "지난 짝 피하기"/"이전에 앉았던 자리 피하기" history both derive from this
+  // single source, so saving a new plan updates every view immediately
+  // without a page reload.
+  const { plans: allPlans, loading: plansLoading, error: plansError, savePlan, deletePlan } = useSeatingPlans('all')
+  const archivePlans = useMemo(
+    () => allPlans.filter((plan) => plan.plan_date.slice(0, 7) === recordMonth),
+    [allPlans, recordMonth],
+  )
+  const noPreviousSeatHistory = !plansLoading && allPlans.length === 0
 
   const columns = useMemo(() => seats.reduce((max, s) => Math.max(max, s.column), 0), [seats])
   const studentGenderById = useMemo(
@@ -329,20 +362,67 @@ export function SeatingPage() {
       return
     }
     try {
-      const avoidPairs = avoidPastNeighbors ? derivePastNeighborPairs(plans) : new Set<string>()
+      const avoidPairs = avoidPastNeighbors ? derivePastNeighborPairs(archivePlans) : new Set<string>()
+
+      let pastSeatsByStudent = new Map<string, Map<string, number>>()
+      let excludedRecordCount = 0
+      if (avoidPreviousSeats) {
+        const currentSeatIds = new Set(seats.map((s) => s.id))
+        const scopedPlans = filterPlansByScope(allPlans, previousSeatHistoryScope, todayDate())
+        const derived = derivePastSeatsByStudent(scopedPlans, currentSeatIds)
+        pastSeatsByStudent = derived.pastSeatsByStudent
+        excludedRecordCount = derived.excludedRecordCount
+      }
+
       const result = generatePlacement(
         students.map((s) => ({ id: s.id, gender: mapGender(s.gender) })),
         seats,
         { fixed, separations, avoidPairs },
-        { genderBalance, previousAssignments: assignments },
+        { genderBalance, previousAssignments: assignments, pastSeatsByStudent },
       )
       setAssignments(result)
       setManuallyMoved(new Set())
-      setMessage(
+
+      const parts: string[] = [
         avoidPastNeighbors
           ? `기록 월의 지난 짝 ${avoidPairs.size}쌍을 피하면서 새 자리표를 만들었습니다.`
           : '필수 조건을 지키면서 새 자리표를 만들었습니다.',
-      )
+      ]
+
+      if (excludedRecordCount > 0) {
+        parts.push(`현재 좌석 구조와 다른 과거 기록 ${excludedRecordCount}개를 제외했습니다.`)
+      }
+
+      if (avoidPreviousSeats) {
+        const repeatedEntries = [...result.entries()].filter(
+          ([studentId, seatId]) => pastSeatsByStudent.get(studentId)?.has(seatId),
+        )
+        const fixedRepeatedCount = repeatedEntries.filter(([studentId]) => fixed.has(studentId)).length
+        const nonFixedRepeated = repeatedEntries.filter(([studentId]) => !fixed.has(studentId))
+
+        if (fixedRepeatedCount > 0) {
+          parts.push(`고정 좌석 학생 ${fixedRepeatedCount}명은 이전 좌석과 동일하게 배치되었습니다.`)
+        }
+        if (nonFixedRepeated.length > 0) {
+          const detail = nonFixedRepeated
+            .map(([studentId, seatId]) => {
+              const seat = getSeat(seatId)
+              return `${studentNameById.get(studentId) ?? ''}: ${seat ? `${seat.row}행 ${seat.column}열` : ''}`
+            })
+            .join(', ')
+          parts.push(
+            `가능한 한 이전 좌석을 피했지만 ${nonFixedRepeated.length}명의 좌석이 과거 기록과 겹쳤습니다 (${detail}).`,
+          )
+        } else if (fixedRepeatedCount === 0) {
+          parts.push(
+            pastSeatsByStudent.size > 0
+              ? `${PREVIOUS_SEAT_SCOPE_LABELS[previousSeatHistoryScope]} 기록을 기준으로 이전 좌석을 피해 배치했습니다.`
+              : `선택한 범위(${PREVIOUS_SEAT_SCOPE_LABELS[previousSeatHistoryScope]})에 해당하는 저장 기록이 없어 이전 좌석 피하기가 적용되지 않았습니다.`,
+          )
+        }
+      }
+
+      setMessage(parts.join(' '))
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '자리 배치 중 문제가 발생했습니다.')
     }
@@ -372,6 +452,8 @@ export function SeatingPage() {
       separations,
       gender_balance: genderBalance,
       avoid_past_neighbors: avoidPastNeighbors,
+      avoid_previous_seats: avoidPreviousSeats,
+      previous_seat_history_scope: previousSeatHistoryScope,
     }
   }
 
@@ -404,6 +486,8 @@ export function SeatingPage() {
     setTeacherDirection(plan.teacher_direction)
     setGenderBalance(plan.gender_balance)
     setAvoidPastNeighbors(plan.avoid_past_neighbors)
+    setAvoidPreviousSeats(plan.avoid_previous_seats ?? false)
+    setPreviousSeatHistoryScope(plan.previous_seat_history_scope ?? 'latest3')
     setRowsInput(plan.rows)
     setColumnsInput(plan.columns)
     setActiveTool(null)
@@ -521,7 +605,14 @@ export function SeatingPage() {
         onSeatClick={handleSeatClick}
       />
 
-      <p className="mb-6 text-sm text-gray-600 print:hidden">{message}</p>
+      {message && (
+        <p
+          className="mb-6 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700 print:hidden"
+          aria-live="polite"
+        >
+          {message}
+        </p>
+      )}
 
       {showSettings && (
         <Modal
@@ -655,6 +746,55 @@ export function SeatingPage() {
                 </label>
               </div>
 
+              <div className="mt-4 rounded-[11px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+                <h4 className="mb-2 text-sm font-semibold text-gray-800">기록 기반 규칙</h4>
+                <label className="flex items-start gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={avoidPreviousSeats}
+                    onChange={(e) => setAvoidPreviousSeats(e.target.checked)}
+                    className="mt-0.5 accent-blue-600"
+                    aria-describedby="avoid-previous-seats-description"
+                  />
+                  <span>
+                    <span className="font-medium text-gray-800">이전에 앉았던 자리 피하기</span>
+                    <span id="avoid-previous-seats-description" className="block text-xs text-gray-500">
+                      저장된 자리표를 기준으로 같은 학생이 같은 자리에 다시 배치되지 않도록 합니다.
+                    </span>
+                  </span>
+                </label>
+
+                {avoidPreviousSeats && (
+                  <div className="mt-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label htmlFor="previous-seat-scope" className="text-sm font-medium text-gray-700">
+                        기록 범위
+                      </label>
+                      <select
+                        id="previous-seat-scope"
+                        value={previousSeatHistoryScope}
+                        onChange={(e) => setPreviousSeatHistoryScope(e.target.value as PreviousSeatHistoryScope)}
+                        disabled={noPreviousSeatHistory}
+                        className={`${fieldClass} disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-500`}
+                      >
+                        {(Object.entries(PREVIOUS_SEAT_SCOPE_LABELS) as [PreviousSeatHistoryScope, string][]).map(
+                          ([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    </div>
+                    {noPreviousSeatHistory && (
+                      <p className="mt-2 text-xs text-amber-700">
+                        저장된 과거 자리표가 없습니다. 먼저 현재 자리표를 저장해 주세요.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50/60 p-4">
                 <h4 className="mb-3 text-sm font-semibold text-gray-800">분리 설정</h4>
                 <div className="flex flex-wrap items-end gap-2">
@@ -775,11 +915,11 @@ export function SeatingPage() {
 
               <h4 className="mb-3 mt-6 text-sm font-semibold text-gray-800">자리바꾸기 목록</h4>
               {plansLoading && <p className="text-sm text-gray-500">불러오는 중...</p>}
-              {!plansLoading && plans.length === 0 && (
+              {!plansLoading && archivePlans.length === 0 && (
                 <p className="text-sm text-gray-500">선택한 달에 저장된 자리표가 없습니다.</p>
               )}
               <ul className="flex flex-col gap-2">
-                {plans.map((plan) => (
+                {archivePlans.map((plan) => (
                   <li
                     key={plan.id}
                     className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 sm:flex-row sm:items-center sm:justify-between"

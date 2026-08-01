@@ -27,6 +27,8 @@ const planA = {
   separations: [],
   gender_balance: false,
   avoid_past_neighbors: false,
+  avoid_previous_seats: false,
+  previous_seat_history_scope: 'latest3' as const,
   created_at: '2026-08-05',
 }
 
@@ -48,6 +50,19 @@ describe('useSeatingPlans', () => {
 
     expect(builder.gte).toHaveBeenCalledWith('plan_date', '2026-08-01')
     expect(builder.lt).toHaveBeenCalledWith('plan_date', '2026-09-01')
+    expect(result.current.plans).toEqual([planB, planA])
+  })
+
+  it('fetches every plan with no date filter when yearMonth is "all"', async () => {
+    const builder = createQueryBuilder({ data: [planB, planA], error: null })
+    mockFrom.mockReturnValue(builder)
+
+    const { result } = renderHook(() => useSeatingPlans('all'))
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(builder.gte).not.toHaveBeenCalled()
+    expect(builder.lt).not.toHaveBeenCalled()
     expect(result.current.plans).toEqual([planB, planA])
   })
 

@@ -1,4 +1,4 @@
-import type { Seat, SeatingPlan, SeatSeparation, SeparationType } from './types'
+import type { PreviousSeatHistoryScope, Seat, SeatingPlan, SeatSeparation, SeparationType } from './types'
 
 export type StudentGenderBucket = 'male' | 'female' | 'unspecified'
 
@@ -137,7 +137,12 @@ export function scorePlacement(
   candidate: Map<string, string>,
   students: { id: string; gender: StudentGenderBucket }[],
   seats: Seat[],
-  options: { genderBalance: boolean; previousAssignments: Map<string, string>; avoidPairs: Set<string> },
+  options: {
+    genderBalance: boolean
+    previousAssignments: Map<string, string>
+    avoidPairs: Set<string>
+    pastSeatsByStudent?: Map<string, Map<string, number>>
+  },
 ): number {
   let total = 0
   const seatById = new Map(seats.map((seat) => [seat.id, seat]))
@@ -189,6 +194,13 @@ export function scorePlacement(
     }
   }
 
+  if (options.pastSeatsByStudent) {
+    for (const [studentId, seatId] of candidate) {
+      const weight = options.pastSeatsByStudent.get(studentId)?.get(seatId)
+      if (weight) total += weight
+    }
+  }
+
   return total
 }
 
@@ -196,7 +208,11 @@ export function generatePlacement(
   students: { id: string; gender: StudentGenderBucket }[],
   seats: Seat[],
   constraints: PlacementConstraints,
-  options: { genderBalance: boolean; previousAssignments: Map<string, string> },
+  options: {
+    genderBalance: boolean
+    previousAssignments: Map<string, string>
+    pastSeatsByStudent?: Map<string, Map<string, number>>
+  },
 ): Map<string, string> {
   let best: Map<string, string> | null = null
   let bestScore = Infinity
@@ -233,4 +249,72 @@ export function derivePastNeighborPairs(plans: SeatingPlan[]): Set<string> {
     }
   }
   return pairs
+}
+
+// Korean school calendar: 1st semester Mar 1 - Aug 31, 2nd semester Sep 1 -
+// end of Feb the following year. January/February belong to the *previous*
+// calendar year's 2nd semester, not a new one.
+function semesterRange(referenceDate: string): { start: string; end: string } {
+  const [yearStr, monthStr] = referenceDate.split('-')
+  const year = Number(yearStr)
+  const month = Number(monthStr)
+  if (month >= 3 && month <= 8) {
+    return { start: `${year}-03-01`, end: `${year}-09-01` }
+  }
+  const startYear = month >= 9 ? year : year - 1
+  return { start: `${startYear}-09-01`, end: `${startYear + 1}-03-01` }
+}
+
+/**
+ * Selects which saved plans count as "history" for a given scope. Recency
+ * (`latest1`/`latest3`) is ordered by `created_at` — the actual save
+ * time — not by `plan_date` (a user-editable field) or the caller's array
+ * order, since either of those can disagree with when a plan was really
+ * saved.
+ */
+export function filterPlansByScope(
+  plans: SeatingPlan[],
+  scope: PreviousSeatHistoryScope,
+  referenceDate: string,
+): SeatingPlan[] {
+  const sortedByRecency = [...plans].sort((a, b) => b.created_at.localeCompare(a.created_at))
+  if (scope === 'latest1') return sortedByRecency.slice(0, 1)
+  if (scope === 'latest3') return sortedByRecency.slice(0, 3)
+  if (scope === 'currentSemester') {
+    const { start, end } = semesterRange(referenceDate)
+    return sortedByRecency.filter((plan) => plan.plan_date >= start && plan.plan_date < end)
+  }
+  return sortedByRecency
+}
+
+/**
+ * For each student, maps their past seat ids (from the given plans, already
+ * scope-filtered by the caller) to a recency-weighted penalty: the most
+ * recent plan contributes weight 6, decreasing by 1 per older plan down to
+ * a floor of 1, and repeats of the same seat across multiple plans sum. A
+ * past seat id that doesn't exist in the current layout (`currentSeatIds`)
+ * is skipped and counted in `excludedRecordCount`, so callers can tell the
+ * user some history didn't apply to the current seat structure.
+ */
+export function derivePastSeatsByStudent(
+  plans: SeatingPlan[],
+  currentSeatIds: Set<string>,
+): { pastSeatsByStudent: Map<string, Map<string, number>>; excludedRecordCount: number } {
+  const pastSeatsByStudent = new Map<string, Map<string, number>>()
+  let excludedRecordCount = 0
+
+  plans.forEach((plan, planIndex) => {
+    const weight = Math.max(1, 6 - planIndex)
+    for (const assignment of plan.assignments) {
+      if (!currentSeatIds.has(assignment.seat_id)) {
+        excludedRecordCount += 1
+        continue
+      }
+      const studentSeats = pastSeatsByStudent.get(assignment.student_id) ?? new Map<string, number>()
+      studentSeats.set(assignment.seat_id, (studentSeats.get(assignment.seat_id) ?? 0) + weight)
+      pastSeatsByStudent.set(assignment.student_id, studentSeats)
+    }
+  })
+
+  return { pastSeatsByStudent, excludedRecordCount }
 }

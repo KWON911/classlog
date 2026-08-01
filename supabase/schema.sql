@@ -87,6 +87,9 @@ create table if not exists seating_plans (
   separations jsonb not null,
   gender_balance boolean not null default false,
   avoid_past_neighbors boolean not null default false,
+  avoid_previous_seats boolean not null default false,
+  previous_seat_history_scope text not null default 'latest3'
+    check (previous_seat_history_scope in ('latest1', 'latest3', 'currentSemester', 'all')),
   created_at timestamptz not null default now()
 );
 
@@ -96,3 +99,26 @@ create policy "teachers manage own seating plans" on seating_plans
   for all
   using (teacher_id = auth.uid())
   with check (teacher_id = auth.uid());
+
+-- Migration for a project where seating_plans already existed before the
+-- "이전에 앉았던 자리 피하기" feature: the create table above is a no-op there
+-- (create table if not exists doesn't add columns to an existing table), so
+-- run this separately in the Supabase SQL editor. Safe to re-run and safe
+-- against existing data — both columns are NOT NULL with a DEFAULT, so
+-- existing rows are backfilled automatically, no data is dropped.
+alter table seating_plans
+  add column if not exists avoid_previous_seats boolean not null default false;
+
+alter table seating_plans
+  add column if not exists previous_seat_history_scope text not null default 'latest3';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'seating_plans_previous_seat_history_scope_check'
+  ) then
+    alter table seating_plans
+      add constraint seating_plans_previous_seat_history_scope_check
+      check (previous_seat_history_scope in ('latest1', 'latest3', 'currentSemester', 'all'));
+  end if;
+end $$;

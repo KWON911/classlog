@@ -15,6 +15,7 @@ function monthRange(yearMonth: string) {
   return { start, end }
 }
 
+/** `yearMonth` is `'YYYY-MM'` to scope to one month, or the literal `'all'` to fetch every saved plan for this teacher (no date filter). */
 export function useSeatingPlans(yearMonth: string) {
   const [plans, setPlans] = useState<SeatingPlan[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,13 +24,12 @@ export function useSeatingPlans(yearMonth: string) {
   const fetchPlans = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const { start, end } = monthRange(yearMonth)
-    const { data, error } = await supabase
-      .from('seating_plans')
-      .select('*')
-      .gte('plan_date', start)
-      .lt('plan_date', end)
-      .order('plan_date', { ascending: false })
+    let query = supabase.from('seating_plans').select('*')
+    if (yearMonth !== 'all') {
+      const { start, end } = monthRange(yearMonth)
+      query = query.gte('plan_date', start).lt('plan_date', end)
+    }
+    const { data, error } = await query.order('plan_date', { ascending: false })
 
     if (error) {
       setError(error.message)
