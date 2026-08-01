@@ -4,6 +4,7 @@ import { StudentListPage } from './routes/StudentListPage'
 import { StudentDetailPage } from './routes/StudentDetailPage'
 import { StudentManagePage } from './routes/StudentManagePage'
 import { AttendancePage } from './routes/AttendancePage'
+import { SeatingPage } from './routes/SeatingPage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { AppShell } from './components/AppShell'
 
@@ -18,6 +19,7 @@ function App() {
             <Route path="/students/:id" element={<StudentDetailPage />} />
             <Route path="/students/manage" element={<StudentManagePage />} />
             <Route path="/attendance" element={<AttendancePage />} />
+            <Route path="/seating" element={<SeatingPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/students" replace />} />

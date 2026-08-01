@@ -431,10 +431,21 @@ export function SeatingPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6">
-      <h1 className="mb-4 text-2xl font-semibold">학급 자리 배치</h1>
-      <p className="mb-4 text-sm text-gray-600">학생 {students.length}명</p>
+      <div className="mb-4 flex items-center justify-between print:hidden">
+        <div>
+          <h1 className="text-2xl font-semibold">학급 자리 배치</h1>
+          <p className="text-sm text-gray-600">학생 {students.length}명</p>
+        </div>
+        <button onClick={() => window.print()} className="rounded border border-gray-300 px-3 py-2 text-sm">
+          인쇄
+        </button>
+      </div>
 
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded border border-gray-200 p-4">
+      <p className="mb-4 hidden text-lg font-semibold print:block">
+        {title || '자리표'} · {planDate}
+      </p>
+
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded border border-gray-200 p-4 print:hidden">
         <label className="flex flex-col gap-1 text-sm">
           행
           <input
@@ -490,7 +501,7 @@ export function SeatingPage() {
         </button>
       </div>
 
-      {errorMessage && <p className="mb-4 text-red-600">{errorMessage}</p>}
+      {errorMessage && <p className="mb-4 text-red-600 print:hidden">{errorMessage}</p>}
 
       <SeatingGrid
         seats={seats}
@@ -504,9 +515,9 @@ export function SeatingPage() {
         onSeatClick={handleSeatClick}
       />
 
-      <p className="mb-6 text-sm text-gray-600">{message}</p>
+      <p className="mb-6 text-sm text-gray-600 print:hidden">{message}</p>
 
-      <div className="mb-8 flex flex-wrap gap-2">
+      <div className="mb-8 flex flex-wrap gap-2 print:hidden">
         <button onClick={generate} className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
           자리 배치 시작
         </button>
@@ -518,7 +529,7 @@ export function SeatingPage() {
         </button>
       </div>
 
-      <div className="mb-8 rounded border border-gray-200 p-4">
+      <div className="mb-8 rounded border border-gray-200 p-4 print:hidden">
         <h2 className="mb-2 text-lg font-semibold">조건 설정</h2>
         <p className="mb-3 text-sm text-gray-600">
           버튼을 누른 뒤 자리표에서 직접 좌석을 선택하세요. 배치된 학생 두 명을 차례로 클릭하면 바로 자리가 바뀝니다.
@@ -637,7 +648,7 @@ export function SeatingPage() {
         </div>
       </div>
 
-      <div className="mb-8 rounded border border-gray-200 p-4">
+      <div className="mb-8 rounded border border-gray-200 p-4 print:hidden">
         <h2 className="mb-2 text-lg font-semibold">저장 & 기록</h2>
         <div className="mb-3 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-sm">
