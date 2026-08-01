@@ -1,13 +1,23 @@
 import { useMemo, useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
+import { useSeatingPlans, type SeatingPlanInput } from '../lib/hooks/useSeatingPlans'
 import { SeatingGrid } from '../components/SeatingGrid'
-import { createSeats, generatePlacement, mapGender } from '../lib/seating'
-import type { Seat, SeatGender, SeatSeparation, SeparationType, TeacherDirection } from '../lib/types'
+import { createSeats, derivePastNeighborPairs, generatePlacement, mapGender } from '../lib/seating'
+import type { Seat, SeatGender, SeatingPlan, SeatSeparation, SeparationType, TeacherDirection } from '../lib/types'
 
 type ActiveTool =
   | { type: 'swap'; firstStudentId: string | null }
   | { type: 'fixed'; studentId: string }
   | { type: 'gender'; gender: SeatGender }
+
+function todayDate() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
+function todayYearMonth() {
+  return todayDate().slice(0, 7)
+}
 
 export function SeatingPage() {
   const { students } = useStudents()
@@ -31,6 +41,17 @@ export function SeatingPage() {
   const [separationStudentB, setSeparationStudentB] = useState('')
   const [separationType, setSeparationType] = useState<SeparationType>('orthogonal')
   const [conditionMessage, setConditionMessage] = useState('')
+
+  const [manuallyMoved, setManuallyMoved] = useState<Set<string>>(new Set())
+  const [previousAssignments, setPreviousAssignments] = useState<Map<string, string>>(new Map())
+  const [title, setTitle] = useState('')
+  const [planDate, setPlanDate] = useState(todayDate())
+  const [recordMonth, setRecordMonth] = useState(todayYearMonth())
+  const [savedPlanId, setSavedPlanId] = useState<string | null>(null)
+  const [avoidPastNeighbors, setAvoidPastNeighbors] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+
+  const { plans, loading: plansLoading, error: plansError, savePlan, deletePlan } = useSeatingPlans(recordMonth)
 
   const columns = useMemo(() => seats.reduce((max, s) => Math.max(max, s.column), 0), [seats])
   const studentGenderById = useMemo(
@@ -195,6 +216,7 @@ export function SeatingPage() {
         next.set(studentId, firstSeatId)
         return next
       })
+      setManuallyMoved((prev) => new Set(prev).add(firstId).add(studentId))
       setActiveTool(null)
       setMessage(
         `${studentNameById.get(firstId) ?? ''}과(와) ${studentNameById.get(studentId) ?? ''}의 자리를 맞바꿨습니다.`,
@@ -263,14 +285,20 @@ export function SeatingPage() {
       return
     }
     try {
+      const avoidPairs = avoidPastNeighbors ? derivePastNeighborPairs(plans) : new Set<string>()
       const result = generatePlacement(
         students.map((s) => ({ id: s.id, gender: mapGender(s.gender) })),
         seats,
-        { fixed, separations, avoidPairs: new Set() },
-        { genderBalance, previousAssignments: new Map() },
+        { fixed, separations, avoidPairs },
+        { genderBalance, previousAssignments },
       )
       setAssignments(result)
-      setMessage('필수 조건을 지키면서 새 자리표를 만들었습니다.')
+      setManuallyMoved(new Set())
+      setMessage(
+        avoidPastNeighbors
+          ? `기록 월의 지난 짝 ${avoidPairs.size}쌍을 피하면서 새 자리표를 만들었습니다.`
+          : '필수 조건을 지키면서 새 자리표를 만들었습니다.',
+      )
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '자리 배치 중 문제가 발생했습니다.')
     }
@@ -280,6 +308,78 @@ export function SeatingPage() {
     setActiveTool(null)
     setAssignments(new Map())
     setMessage('현재 배치를 초기화했습니다.')
+  }
+
+  function buildPayload(): SeatingPlanInput {
+    return {
+      title,
+      plan_date: planDate,
+      rows: seats.reduce((max, s) => Math.max(max, s.row), 0),
+      columns,
+      teacher_direction: teacherDirection,
+      seats,
+      assignments: [...assignments.entries()].map(([student_id, seat_id]) => ({
+        student_id,
+        seat_id,
+        is_fixed: fixed.get(student_id) === seat_id,
+        source: manuallyMoved.has(student_id) ? 'manual' : 'automatic',
+      })),
+      separations,
+      gender_balance: genderBalance,
+      avoid_past_neighbors: avoidPastNeighbors,
+    }
+  }
+
+  async function handleSave() {
+    if (!title.trim()) {
+      setSaveMessage('자리표 제목을 입력해 주세요.')
+      return
+    }
+    if (!assignments.size) {
+      setSaveMessage('학생 명단을 불러와 자리 배치한 뒤 저장해 주세요.')
+      return
+    }
+    const result = await savePlan(savedPlanId, buildPayload())
+    if (result.error) {
+      setSaveMessage(result.error)
+      return
+    }
+    if (result.data) {
+      setSavedPlanId(result.data.id)
+    }
+    setSaveMessage('현재 자리표를 저장했습니다.')
+  }
+
+  function handleLoad(plan: SeatingPlan, duplicate = false) {
+    setSeats(plan.seats)
+    setAssignments(new Map(plan.assignments.map((a) => [a.student_id, a.seat_id])))
+    setFixed(new Map(plan.assignments.filter((a) => a.is_fixed).map((a) => [a.student_id, a.seat_id])))
+    setManuallyMoved(new Set(plan.assignments.filter((a) => a.source === 'manual').map((a) => a.student_id)))
+    setSeparations(plan.separations)
+    setTeacherDirection(plan.teacher_direction)
+    setGenderBalance(plan.gender_balance)
+    setAvoidPastNeighbors(plan.avoid_past_neighbors)
+    setRowsInput(plan.rows)
+    setColumnsInput(plan.columns)
+    setPreviousAssignments(new Map(plan.assignments.map((a) => [a.student_id, a.seat_id])))
+    setActiveTool(null)
+    setTitle(duplicate ? `${plan.title} 복제` : plan.title)
+    setPlanDate(duplicate ? todayDate() : plan.plan_date)
+    setSavedPlanId(duplicate ? null : plan.id)
+    setSaveMessage(
+      duplicate ? '자리표를 복제했습니다. 제목이나 조건을 수정한 뒤 새로 저장하세요.' : '저장된 자리표를 불러왔습니다.',
+    )
+  }
+
+  async function handleDelete(id: string) {
+    if (!window.confirm('이 자리표를 삭제할까요? 삭제한 기록은 되돌릴 수 없습니다.')) return
+    const result = await deletePlan(id)
+    if (result.error) {
+      setSaveMessage(result.error)
+      return
+    }
+    if (savedPlanId === id) setSavedPlanId(null)
+    setSaveMessage('자리표를 삭제했습니다.')
   }
 
   const selectedSeatId =
@@ -461,6 +561,15 @@ export function SeatingPage() {
           성별을 고려해 가능한 고르게 배치
         </label>
 
+        <label className="mb-3 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={avoidPastNeighbors}
+            onChange={(e) => setAvoidPastNeighbors(e.target.checked)}
+          />
+          지난 짝 피하기 (아래 기록 월에 저장된 자리표 기준)
+        </label>
+
         <div className="mb-3 flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-sm">
             학생 A
@@ -526,6 +635,80 @@ export function SeatingPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="mb-8 rounded border border-gray-200 p-4">
+        <h2 className="mb-2 text-lg font-semibold">저장 & 기록</h2>
+        <div className="mb-3 flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1 text-sm">
+            제목
+            <input
+              type="text"
+              maxLength={80}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="예: 2026년 8월 1차 자리표"
+              className="rounded border border-gray-300 px-2 py-1"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            날짜
+            <input
+              type="date"
+              value={planDate}
+              onChange={(e) => setPlanDate(e.target.value)}
+              className="rounded border border-gray-300 px-2 py-1"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            기록 월
+            <input
+              type="month"
+              value={recordMonth}
+              onChange={(e) => setRecordMonth(e.target.value)}
+              className="rounded border border-gray-300 px-2 py-1"
+            />
+          </label>
+          <button onClick={handleSave} className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
+            현재 자리표 저장
+          </button>
+        </div>
+
+        {saveMessage && <p className="mb-3 text-sm text-gray-600">{saveMessage}</p>}
+        {plansError && <p className="mb-3 text-red-600">{plansError}</p>}
+
+        <h3 className="mb-2 text-sm font-semibold">자리바꾸기 목록</h3>
+        {plansLoading && <p className="text-sm text-gray-500">불러오는 중...</p>}
+        {!plansLoading && plans.length === 0 && (
+          <p className="text-sm text-gray-500">선택한 달에 저장된 자리표가 없습니다.</p>
+        )}
+        <ul className="flex flex-col gap-2">
+          {plans.map((plan) => (
+            <li key={plan.id} className="flex items-center justify-between rounded border border-gray-100 p-2 text-sm">
+              <div>
+                <p className="font-medium">{plan.title}</p>
+                <p className="text-gray-500">{plan.plan_date}</p>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => handleLoad(plan)} className="rounded border border-gray-300 px-2 py-1 text-xs">
+                  불러오기
+                </button>
+                <button
+                  onClick={() => handleLoad(plan, true)}
+                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                >
+                  복제
+                </button>
+                <button
+                  onClick={() => handleDelete(plan.id)}
+                  className="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
+                >
+                  삭제
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )
