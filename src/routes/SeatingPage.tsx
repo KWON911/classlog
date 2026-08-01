@@ -396,6 +396,7 @@ export function SeatingPage() {
     setRowsInput(plan.rows)
     setColumnsInput(plan.columns)
     setActiveTool(null)
+    setShowSettings(false)
     setTitle(duplicate ? `${plan.title} 복제` : plan.title)
     setPlanDate(duplicate ? todayDate() : plan.plan_date)
     setSavedPlanId(duplicate ? null : plan.id)
