@@ -113,6 +113,7 @@ export function SeatingPage() {
 
   function generate() {
     setErrorMessage('')
+    setActiveTool(null)
     if (!students.length) {
       setErrorMessage('먼저 학생 명단을 불러와 주세요.')
       return
@@ -132,6 +133,7 @@ export function SeatingPage() {
   }
 
   function clearPlacement() {
+    setActiveTool(null)
     setAssignments(new Map())
     setMessage('현재 배치를 초기화했습니다.')
   }
