@@ -102,12 +102,6 @@ export function SeatingGrid({
 
   return (
     <div className="mb-8" style={{ fontFamily: "'Pretendard Variable', sans-serif" }}>
-      <p className="mb-3 text-sm text-gray-600 print:hidden">
-        {isBackView
-          ? '현재: 뒤에서 볼 때 — 교실 뒤쪽에서 칠판을 바라보는 모습입니다.'
-          : '현재: 교사 시점 — 칠판에서 학생을 바라보는 모습입니다.'}
-      </p>
-
       <div className="mb-3 flex flex-wrap gap-3 text-xs text-gray-600 print:hidden">
         {LEGEND_ITEMS.map((item) => (
           <span key={item.label} className="flex items-center gap-1">

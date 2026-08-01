@@ -465,11 +465,8 @@ export function SeatingPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 print:hidden">
-        <div>
-          <h1 className="text-2xl font-semibold">우리 반 자리 배치</h1>
-          <p className="text-sm text-gray-600">학생 {students.length}명</p>
-        </div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <h1 className="text-2xl font-semibold">우리 반 자리 배치</h1>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setShowSettings(true)}
