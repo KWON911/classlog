@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/hooks/useAuth'
 
@@ -9,6 +9,19 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const [logoSize, setLogoSize] = useState<number | null>(null)
+
+  useEffect(() => {
+    const heading = headingRef.current
+    if (!heading) return
+
+    const observer = new ResizeObserver(([entry]) => {
+      setLogoSize(entry.contentRect.width)
+    })
+    observer.observe(heading)
+    return () => observer.disconnect()
+  }, [])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -25,7 +38,17 @@ export function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 p-6">
-      <h1 className="text-2xl font-semibold">Classlog 로그인</h1>
+      <div className="flex flex-col items-center gap-3">
+        <img
+          src="/login-logo.png"
+          alt="Classlog"
+          className="aspect-square w-24 object-contain"
+          style={logoSize ? { width: logoSize } : undefined}
+        />
+        <h1 ref={headingRef} className="text-2xl font-semibold">
+          학급 로그인
+        </h1>
+      </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="email"
