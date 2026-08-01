@@ -1,3 +1,4 @@
+import 'pretendard/dist/web/variable/pretendardvariable.css'
 import { mapGender } from '../lib/seating'
 import type { Seat, Student, TeacherDirection } from '../lib/types'
 
@@ -19,7 +20,16 @@ function displayPosition(seat: Seat, rows: number, columns: number, viewMode: 't
 }
 
 function seatClassName(seat: Seat, occupantGender: 'male' | 'female' | 'unspecified', isFixed: boolean, isSelected: boolean) {
-  const classes = ['min-h-[70px]', 'rounded', 'border', 'p-2', 'text-center', 'text-xs']
+  const classes = [
+    'relative',
+    'flex',
+    'min-h-[96px]',
+    'items-center',
+    'justify-center',
+    'rounded',
+    'border',
+    'p-2',
+  ]
   const effectiveGender = seat.genderSeat ?? (occupantGender !== 'unspecified' ? occupantGender : undefined)
   if (seat.status === 'disabled') classes.push('border-dashed', 'bg-gray-200', 'text-gray-500')
   else if (seat.status === 'empty') classes.push('border-yellow-400', 'bg-yellow-50')
@@ -70,14 +80,28 @@ export function SeatingGrid({
     return posA.row - posB.row || posA.column - posB.column
   })
 
+  // Desk sits in its own mini-grid sharing the seat grid's column tracks, so
+  // spanning 2 tracks makes it exactly 2 seat-widths wide (plus the gap
+  // between them) regardless of how many columns or how wide the page is.
+  const deskSpan = Math.min(2, columns)
+  const deskStart = Math.max(1, Math.floor((columns - deskSpan) / 2) + 1)
+
   const desk = (
-    <div className="mx-auto w-fit rounded border-2 border-green-800 bg-green-700 px-6 py-2 text-center font-bold text-white">
-      칠판
+    <div
+      className="grid gap-2"
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(70px, 1fr))` }}
+    >
+      <div
+        className="rounded border-2 border-green-800 bg-green-700 py-3 text-center text-lg font-bold text-white"
+        style={{ gridColumn: `${deskStart} / span ${deskSpan}` }}
+      >
+        칠판
+      </div>
     </div>
   )
 
   return (
-    <div className="mb-8">
+    <div className="mb-8" style={{ fontFamily: "'Pretendard Variable', sans-serif" }}>
       <p className="mb-3 text-sm text-gray-600 print:hidden">
         {isBackView
           ? '현재: 뒤에서 볼 때 — 교실 뒤쪽에서 칠판을 바라보는 모습입니다.'
@@ -94,7 +118,7 @@ export function SeatingGrid({
       </div>
 
       {!deskAtBottom && <div className="mb-4">{desk}</div>}
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, minmax(58px, 1fr))` }}>
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, minmax(70px, 1fr))` }}>
         {sortedSeats.map((seat) => {
           const pos = displayPosition(seat, rows, columns, viewMode)
           const student = studentBySeatId.get(seat.id)
@@ -108,18 +132,18 @@ export function SeatingGrid({
               style={{ gridRow: pos.row, gridColumn: pos.column }}
               className={seatClassName(seat, occupantGender, isFixed, seat.id === selectedSeatId)}
             >
-              {isFixed && <div className="text-[10px]">🔒</div>}
-              <div className="mb-1 text-gray-500">
+              <span className="absolute left-1 top-1 text-[10px] text-gray-500">
                 {seat.row}행 {seat.column}열
-              </div>
+              </span>
+              {isFixed && <span className="absolute right-1 top-1 text-[10px]">🔒</span>}
               {seat.status === 'disabled' ? (
-                <strong>사용 안 함</strong>
+                <strong className="text-sm">사용 안 함</strong>
               ) : seat.status === 'empty' ? (
-                <strong className="text-yellow-700">빈자리</strong>
+                <strong className="text-sm text-yellow-700">빈자리</strong>
               ) : student ? (
-                <strong>{student.name}</strong>
+                <strong className="w-full truncate px-1 text-2xl font-bold leading-tight">{student.name}</strong>
               ) : (
-                <strong>—</strong>
+                <strong className="text-lg text-gray-300">—</strong>
               )}
             </button>
           )
