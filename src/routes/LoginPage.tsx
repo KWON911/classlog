@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/hooks/useAuth'
 
@@ -9,19 +9,6 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const headingRef = useRef<HTMLHeadingElement>(null)
-  const [logoSize, setLogoSize] = useState<number | null>(null)
-
-  useEffect(() => {
-    const heading = headingRef.current
-    if (!heading) return
-
-    const observer = new ResizeObserver(([entry]) => {
-      setLogoSize(entry.contentRect.width)
-    })
-    observer.observe(heading)
-    return () => observer.disconnect()
-  }, [])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -37,44 +24,39 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 p-6">
-      <div className="flex flex-col items-center gap-3">
-        <img
-          src="/login-logo.png"
-          alt="Classlog"
-          className="aspect-square w-24 object-contain"
-          style={logoSize ? { width: logoSize } : undefined}
-        />
-        <h1 ref={headingRef} className="text-2xl font-semibold">
-          학급 로그인
-        </h1>
+    <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-5">
+      <div className="mb-10 w-full max-w-[480px] rounded-[18px] border border-gray-200 bg-white p-9 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.12)] sm:mb-16">
+        <div className="flex flex-col items-center gap-3">
+          <img src="/login-logo.png" alt="Classlog" className="h-auto w-32 sm:w-40" />
+          <h1 className="text-2xl font-bold text-gray-900">학급 로그인</h1>
+        </div>
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          <input
+            type="email"
+            required
+            placeholder="이메일"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-12 rounded-[10px] border border-slate-300 px-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
+          <input
+            type="password"
+            required
+            placeholder="비밀번호"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-12 rounded-[10px] border border-slate-300 px-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="h-12 rounded-[10px] bg-blue-600 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          >
+            로그인
+          </button>
+        </form>
       </div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          type="email"
-          required
-          placeholder="이메일"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-        <input
-          type="password"
-          required
-          placeholder="비밀번호"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded bg-blue-600 px-3 py-2 text-white disabled:opacity-50"
-        >
-          로그인
-        </button>
-      </form>
     </div>
   )
 }
