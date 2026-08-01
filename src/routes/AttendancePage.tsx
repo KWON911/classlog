@@ -1,11 +1,11 @@
-import { Fragment, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useAttendance } from '../lib/hooks/useAttendance'
-import { AttendanceEditRow } from '../components/AttendanceEditRow'
 import { AttendanceCalendar } from '../components/AttendanceCalendar'
-import type { AttendanceReasonCategory, AttendanceStatus } from '../lib/types'
+import { DailyStudentAttendance } from '../components/DailyStudentAttendance'
+import { MonthlyAttendanceSummary } from '../components/MonthlyAttendanceSummary'
 
-const STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
+type Tab = 'daily' | 'monthly'
 
 function todayYearMonth() {
   const now = new Date()
@@ -18,14 +18,9 @@ function shiftMonth(yearMonth: string, delta: number) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
-function daysInMonth(yearMonth: string) {
-  const [year, month] = yearMonth.split('-').map(Number)
-  return new Date(year, month, 0).getDate()
-}
-
 function firstWeekdayOfMonth(yearMonth: string) {
   const [year, month] = yearMonth.split('-').map(Number)
-  const total = daysInMonth(yearMonth)
+  const total = new Date(year, month, 0).getDate()
   for (let day = 1; day <= total; day++) {
     const dayOfWeek = new Date(year, month - 1, day).getDay()
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
@@ -35,232 +30,100 @@ function firstWeekdayOfMonth(yearMonth: string) {
   return `${yearMonth}-01`
 }
 
-function formatMonthDay(date: string) {
-  const [, month, day] = date.split('-')
-  return `${Number(month)}/${Number(day)}`
+const tabButtonClass = (active: boolean) =>
+  `rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+    active ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+  }`
+
+function MonthNav({ yearMonth, onChange }: { yearMonth: string; onChange: (delta: number) => void }) {
+  return (
+    <div className="mb-3 flex items-center gap-3">
+      <button
+        type="button"
+        onClick={() => onChange(-1)}
+        className="h-9 w-9 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
+      >
+        ◀
+      </button>
+      <span className="text-sm font-medium text-gray-900">{yearMonth}</span>
+      <button
+        type="button"
+        onClick={() => onChange(1)}
+        className="h-9 w-9 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
+      >
+        ▶
+      </button>
+    </div>
+  )
 }
 
 export function AttendancePage() {
+  const [activeTab, setActiveTab] = useState<Tab>('daily')
   const [yearMonth, setYearMonth] = useState(todayYearMonth())
   const [selectedDate, setSelectedDate] = useState(firstWeekdayOfMonth(todayYearMonth()))
-  const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
-  const [expandedStudentIds, setExpandedStudentIds] = useState<Set<string>>(new Set())
 
   const { students, error: studentsError } = useStudents()
   const { entries, loading, error, upsertEntry, clearEntry } = useAttendance(yearMonth)
 
-  const entryByStudentAndDate = useMemo(() => {
-    const map = new Map<string, (typeof entries)[number]>()
-    for (const entry of entries) {
-      map.set(`${entry.student_id}_${entry.date}`, entry)
-    }
-    return map
-  }, [entries])
-
-  const summaryByStudent = useMemo(() => {
-    const table = new Map<string, Record<AttendanceStatus, number>>()
-    for (const student of students) {
-      table.set(student.id, { 결석: 0, 지각: 0, 조퇴: 0, 결과: 0 })
-    }
-    for (const entry of entries) {
-      const row = table.get(entry.student_id)
-      if (row) {
-        row[entry.status] += 1
-      }
-    }
-    return table
-  }, [students, entries])
-
-  const entriesByStudent = useMemo(() => {
-    const map = new Map<string, typeof entries>()
-    for (const entry of entries) {
-      const list = map.get(entry.student_id) ?? []
-      list.push(entry)
-      map.set(entry.student_id, list)
-    }
-    for (const list of map.values()) {
-      list.sort((a, b) => a.date.localeCompare(b.date))
-    }
-    return map
-  }, [entries])
-
-  const handleSave = async (
-    studentId: string,
-    status: AttendanceStatus,
-    reasonCategory: AttendanceReasonCategory,
-    note: string,
-  ) => {
-    const result = await upsertEntry(studentId, selectedDate, {
-      status,
-      reason_category: reasonCategory,
-      note: note || null,
-    })
-    if (!result.error) {
-      setEditingStudentId(null)
-    }
+  const changeMonth = (delta: number) => {
+    const next = shiftMonth(yearMonth, delta)
+    setYearMonth(next)
+    setSelectedDate(firstWeekdayOfMonth(next))
   }
-
-  const handleClear = async (studentId: string) => {
-    await clearEntry(studentId, selectedDate)
-    setEditingStudentId(null)
-  }
-
-  const toggleExpanded = (studentId: string) => {
-    setExpandedStudentIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(studentId)) {
-        next.delete(studentId)
-      } else {
-        next.add(studentId)
-      }
-      return next
-    })
-  }
-
-  const editingStudent = students.find((s) => s.id === editingStudentId)
-  const editingEntry = editingStudentId
-    ? entryByStudentAndDate.get(`${editingStudentId}_${selectedDate}`)
-    : undefined
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="mx-auto max-w-6xl p-6">
       <h1 className="mb-4 text-2xl font-semibold">출결관리</h1>
 
-      <div className="mb-4 flex items-center gap-3">
-        <button
-          onClick={() => {
-            const next = shiftMonth(yearMonth, -1)
-            setYearMonth(next)
-            setSelectedDate(firstWeekdayOfMonth(next))
-            setEditingStudentId(null)
-          }}
-          className="rounded border border-gray-300 px-2 py-1"
-        >
-          ◀
+      <div className="mb-6 flex gap-2 border-b border-gray-200 pb-2">
+        <button type="button" onClick={() => setActiveTab('daily')} className={tabButtonClass(activeTab === 'daily')}>
+          일일 출결
         </button>
-        <span className="font-medium">{yearMonth}</span>
         <button
-          onClick={() => {
-            const next = shiftMonth(yearMonth, 1)
-            setYearMonth(next)
-            setSelectedDate(firstWeekdayOfMonth(next))
-            setEditingStudentId(null)
-          }}
-          className="rounded border border-gray-300 px-2 py-1"
+          type="button"
+          onClick={() => setActiveTab('monthly')}
+          className={tabButtonClass(activeTab === 'monthly')}
         >
-          ▶
+          월간 요약
         </button>
       </div>
 
-      <AttendanceCalendar
-        yearMonth={yearMonth}
-        entries={entries}
-        students={students}
-        selectedDate={selectedDate}
-        onSelectDate={(date) => {
-          setSelectedDate(date)
-          setEditingStudentId(null)
-        }}
-      />
-
-      {loading && <p>불러오는 중...</p>}
-      {error && <p className="text-red-600">{error}</p>}
-      {studentsError && <p className="text-red-600">{studentsError}</p>}
-
-      <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-        {students.map((student) => {
-          const entry = entryByStudentAndDate.get(`${student.id}_${selectedDate}`)
-          return (
-            <button
-              key={student.id}
-              onClick={() =>
-                setEditingStudentId(editingStudentId === student.id ? null : student.id)
-              }
-              className={`rounded border border-gray-200 p-2 text-sm ${entry ? 'text-red-600' : ''}`}
-            >
-              {student.number}. {student.name}
-            </button>
-          )
-        })}
-      </div>
-
-      {editingStudent && (
-        <div className="mb-8 rounded border border-gray-200 p-4">
-          <p className="mb-2 text-sm font-medium">
-            {editingStudent.number}. {editingStudent.name} 입력:
-          </p>
-          <AttendanceEditRow
-            key={editingStudent.id}
-            initialStatus={editingEntry?.status}
-            initialReasonCategory={editingEntry?.reason_category}
-            initialNote={editingEntry?.note ?? undefined}
-            onSave={(status, reasonCategory, note) =>
-              handleSave(editingStudent.id, status, reasonCategory, note)
-            }
-            onClear={editingEntry ? () => handleClear(editingStudent.id) : undefined}
-            onCancel={() => setEditingStudentId(null)}
-          />
-        </div>
+      {error && (
+        <p className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      )}
+      {studentsError && (
+        <p className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {studentsError}
+        </p>
       )}
 
-      <h2 className="mb-2 text-lg font-semibold">{yearMonth} 학급 전체 요약</h2>
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-gray-300 text-left">
-            <th className="py-1">학생</th>
-            {STATUSES.map((status) => (
-              <th key={status} className="py-1 text-center">
-                {status}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((student) => {
-            const row = summaryByStudent.get(student.id)
-            const isExpanded = expandedStudentIds.has(student.id)
-            const studentEntries = entriesByStudent.get(student.id) ?? []
-            return (
-              <Fragment key={student.id}>
-                <tr className="border-b border-gray-100">
-                  <td className="py-1">
-                    <button
-                      type="button"
-                      onClick={() => toggleExpanded(student.id)}
-                      className="text-left hover:underline"
-                    >
-                      {isExpanded ? '▾' : '▸'} {student.number}. {student.name}
-                    </button>
-                  </td>
-                  {STATUSES.map((status) => (
-                    <td key={status} className="py-1 text-center">
-                      {row?.[status] ?? 0}
-                    </td>
-                  ))}
-                </tr>
-                {isExpanded && (
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <td colSpan={STATUSES.length + 1} className="py-2 pl-6 text-sm text-gray-600">
-                      {studentEntries.length === 0 ? (
-                        '이번 달 기록 없음'
-                      ) : (
-                        <ul className="flex flex-col gap-1">
-                          {studentEntries.map((entry) => (
-                            <li key={entry.id}>
-                              {formatMonthDay(entry.date)} {entry.status}({entry.reason_category})
-                              {entry.note ? ` - ${entry.note}` : ''}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            )
-          })}
-        </tbody>
-      </table>
+      {activeTab === 'daily' ? (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[38%_62%]">
+          <div>
+            <MonthNav yearMonth={yearMonth} onChange={changeMonth} />
+            <AttendanceCalendar
+              yearMonth={yearMonth}
+              entries={entries}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+            />
+          </div>
+
+          <DailyStudentAttendance
+            selectedDate={selectedDate}
+            students={students}
+            entries={entries}
+            loading={loading}
+            upsertEntry={upsertEntry}
+            clearEntry={clearEntry}
+          />
+        </div>
+      ) : (
+        <div>
+          <MonthNav yearMonth={yearMonth} onChange={changeMonth} />
+          <MonthlyAttendanceSummary yearMonth={yearMonth} students={students} entries={entries} />
+        </div>
+      )}
     </div>
   )
 }
