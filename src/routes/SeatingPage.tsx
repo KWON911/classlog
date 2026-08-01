@@ -20,6 +20,17 @@ function todayYearMonth() {
   return todayDate().slice(0, 7)
 }
 
+const fieldClass =
+  'h-11 rounded-lg border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100'
+const labelClass = 'flex flex-col gap-1 text-sm font-medium text-gray-700'
+const primaryButtonClass =
+  'h-11 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700'
+const secondaryButtonClass =
+  'h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
+const dangerButtonClass =
+  'rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100'
+const sectionCardClass = 'rounded-[14px] border border-gray-200 p-5 sm:p-6'
+
 export function SeatingPage() {
   const { students } = useStudents()
 
@@ -519,10 +530,11 @@ export function SeatingPage() {
           onClose={() => setShowSettings(false)}
         >
           <div className="flex flex-col gap-6">
-            <section>
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-blue-700">Layout</h3>
-              <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 p-4">
-                <label className="flex flex-col gap-1 text-sm">
+            <section className={sectionCardClass}>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-blue-700">Layout</h3>
+              <p className="mb-4 mt-1 text-sm text-gray-500">좌석 배치와 칠판 방향을 설정합니다.</p>
+              <div className="flex flex-wrap items-end gap-3">
+                <label className={labelClass}>
                   행
                   <input
                     type="number"
@@ -530,10 +542,10 @@ export function SeatingPage() {
                     max={12}
                     value={rowsInput}
                     onChange={(e) => setRowsInput(Number(e.target.value))}
-                    className="w-20 rounded border border-gray-300 px-2 py-1"
+                    className={`w-20 ${fieldClass}`}
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-sm">
+                <label className={labelClass}>
                   열
                   <input
                     type="number"
@@ -541,26 +553,30 @@ export function SeatingPage() {
                     max={12}
                     value={columnsInput}
                     onChange={(e) => setColumnsInput(Number(e.target.value))}
-                    className="w-20 rounded border border-gray-300 px-2 py-1"
+                    className={`w-20 ${fieldClass}`}
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-sm">
+                <label className={labelClass}>
                   칠판 방향
                   <select
                     value={teacherDirection}
                     onChange={(e) => setTeacherDirection(e.target.value as TeacherDirection)}
-                    className="rounded border border-gray-300 px-2 py-1"
+                    className={fieldClass}
                   >
                     <option value="north">위쪽</option>
                     <option value="south">아래쪽</option>
                   </select>
                 </label>
-                <button onClick={applyLayout} className="rounded border border-gray-300 px-3 py-2 text-sm">
+                <button onClick={applyLayout} className={primaryButtonClass}>
                   좌석 구조 적용
                 </button>
                 <button
                   onClick={toggleSeatEditMode}
-                  className={`rounded border px-3 py-2 text-sm ${seatEditMode ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
+                  className={
+                    seatEditMode
+                      ? 'h-11 rounded-lg border border-blue-600 bg-blue-50 px-4 text-sm font-medium text-blue-700 transition-colors'
+                      : secondaryButtonClass
+                  }
                 >
                   {seatEditMode === 'disabled'
                     ? '사용 안 함 지정 중'
@@ -571,73 +587,83 @@ export function SeatingPage() {
               </div>
             </section>
 
-            <section>
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-blue-700">Rules</h3>
-              <div className="rounded border border-gray-200 p-4">
-                <p className="mb-3 text-sm text-gray-600">
-                  버튼을 누른 뒤 자리표에서 직접 좌석을 선택하세요. 배치된 학생 두 명을 차례로 클릭하면 바로 자리가
-                  바뀝니다.
-                </p>
+            <section className={sectionCardClass}>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-blue-700">Rules</h3>
+              <p className="mb-4 mt-1 text-sm text-gray-500">
+                버튼을 누른 뒤 자리표에서 직접 좌석을 선택하세요. 배치된 학생 두 명을 차례로 클릭하면 바로 자리가
+                바뀝니다.
+              </p>
 
-                <div className="mb-3 flex flex-wrap items-end gap-2">
-                  <label className="flex flex-col gap-1 text-sm">
-                    고정할 학생
-                    <select
-                      value={selectedFixedStudentId}
-                      onChange={(e) => setSelectedFixedStudentId(e.target.value)}
-                      className="rounded border border-gray-300 px-2 py-1"
-                    >
-                      <option value="">학생 선택</option>
-                      {students.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.number}. {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button onClick={startFixedTool} className="rounded border border-gray-300 px-3 py-2 text-sm">
-                    학생 자리 직접 지정
-                  </button>
-                  <button
-                    onClick={() => startGenderTool('male')}
-                    className="rounded border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    남학생 자리 지정
-                  </button>
-                  <button
-                    onClick={() => startGenderTool('female')}
-                    className="rounded border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    여학생 자리 지정
-                  </button>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+                  <h4 className="mb-3 text-sm font-semibold text-gray-800">학생 자리 고정</h4>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className={labelClass}>
+                      고정할 학생
+                      <select
+                        value={selectedFixedStudentId}
+                        onChange={(e) => setSelectedFixedStudentId(e.target.value)}
+                        className={fieldClass}
+                      >
+                        <option value="">학생 선택</option>
+                        {students.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.number}. {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button onClick={startFixedTool} className={secondaryButtonClass}>
+                      학생 자리 직접 지정
+                    </button>
+                  </div>
                 </div>
 
-                <label className="mb-3 flex items-center gap-2 text-sm">
+                <div className="rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+                  <h4 className="mb-3 text-sm font-semibold text-gray-800">성별 지정 좌석</h4>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => startGenderTool('male')} className={secondaryButtonClass}>
+                      남학생 자리 지정
+                    </button>
+                    <button onClick={() => startGenderTool('female')} className={secondaryButtonClass}>
+                      여학생 자리 지정
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-6">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
                     checked={genderBalance}
                     disabled={!hasGenderInfo}
                     onChange={(e) => setGenderBalance(e.target.checked)}
+                    className="accent-blue-600"
                   />
                   성별을 고려해 가능한 고르게 배치
                 </label>
 
-                <label className="mb-3 flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
                     checked={avoidPastNeighbors}
                     onChange={(e) => setAvoidPastNeighbors(e.target.checked)}
+                    className="accent-blue-600"
                   />
                   지난 짝 피하기 (아래 기록 월에 저장된 자리표 기준)
                 </label>
+              </div>
 
-                <div className="mb-3 flex flex-wrap items-end gap-2">
-                  <label className="flex flex-col gap-1 text-sm">
+              <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50/60 p-4">
+                <h4 className="mb-3 text-sm font-semibold text-gray-800">분리 설정</h4>
+                <div className="flex flex-wrap items-end gap-2">
+                  <label className={labelClass}>
                     학생 A
                     <select
                       value={separationStudentA}
                       onChange={(e) => setSeparationStudentA(e.target.value)}
-                      className="rounded border border-gray-300 px-2 py-1"
+                      className={fieldClass}
                     >
                       <option value="">학생 선택</option>
                       {students.map((s) => (
@@ -647,12 +673,12 @@ export function SeatingPage() {
                       ))}
                     </select>
                   </label>
-                  <label className="flex flex-col gap-1 text-sm">
+                  <label className={labelClass}>
                     학생 B
                     <select
                       value={separationStudentB}
                       onChange={(e) => setSeparationStudentB(e.target.value)}
-                      className="rounded border border-gray-300 px-2 py-1"
+                      className={fieldClass}
                     >
                       <option value="">학생 선택</option>
                       {students.map((s) => (
@@ -662,123 +688,128 @@ export function SeatingPage() {
                       ))}
                     </select>
                   </label>
-                  <label className="flex flex-col gap-1 text-sm">
+                  <label className={labelClass}>
                     분리 수준
                     <select
                       value={separationType}
                       onChange={(e) => setSeparationType(e.target.value as SeparationType)}
-                      className="rounded border border-gray-300 px-2 py-1"
+                      className={fieldClass}
                     >
                       <option value="orthogonal">앞뒤·좌우 인접 금지</option>
                       <option value="diagonal">대각선 포함 인접 금지</option>
                     </select>
                   </label>
-                  <button onClick={addSeparation} className="rounded border border-gray-300 px-3 py-2 text-sm">
+                  <button onClick={addSeparation} className={secondaryButtonClass}>
                     분리 설정 추가
                   </button>
                 </div>
+              </div>
 
-                {conditionMessage && <p className="mb-3 text-sm text-gray-600">{conditionMessage}</p>}
+              {conditionMessage && (
+                <p className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                  {conditionMessage}
+                </p>
+              )}
 
-                <div className="flex flex-col gap-2">
+              {conditionRows.length > 0 && (
+                <div className="mt-4 flex flex-col gap-2">
                   {conditionRows.map((row) => (
                     <div
                       key={row.key}
-                      className="flex items-center justify-between rounded border border-gray-100 p-2 text-sm"
+                      className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm"
                     >
                       <div>
-                        <strong>{row.title}</strong>
+                        <strong className="text-gray-800">{row.title}</strong>
                         <p className="text-gray-500">{row.detail}</p>
                       </div>
-                      <button onClick={row.onRemove} className="rounded border border-gray-300 px-2 py-1 text-xs">
+                      <button onClick={row.onRemove} className={dangerButtonClass}>
                         삭제
                       </button>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
             </section>
 
-            <section>
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-blue-700">Archive</h3>
-              <div className="rounded border border-gray-200 p-4">
-                <div className="mb-3 flex flex-wrap items-end gap-3">
-                  <label className="flex flex-col gap-1 text-sm">
-                    제목
-                    <input
-                      type="text"
-                      maxLength={80}
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="예: 2026년 8월 1차 자리표"
-                      className="rounded border border-gray-300 px-2 py-1"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    날짜
-                    <input
-                      type="date"
-                      value={planDate}
-                      onChange={(e) => setPlanDate(e.target.value)}
-                      className="rounded border border-gray-300 px-2 py-1"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-sm">
-                    기록 월
-                    <input
-                      type="month"
-                      value={recordMonth}
-                      onChange={(e) => setRecordMonth(e.target.value)}
-                      className="rounded border border-gray-300 px-2 py-1"
-                    />
-                  </label>
-                  <button onClick={handleSave} className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
-                    현재 자리표 저장
-                  </button>
-                </div>
+            <section className={sectionCardClass}>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-blue-700">Archive</h3>
+              <p className="mb-4 mt-1 text-sm text-gray-500">자리표를 저장하고 이전 기록을 불러올 수 있습니다.</p>
 
-                {saveMessage && <p className="mb-3 text-sm text-gray-600">{saveMessage}</p>}
-                {plansError && <p className="mb-3 text-red-600">{plansError}</p>}
-
-                <h4 className="mb-2 text-sm font-semibold">자리바꾸기 목록</h4>
-                {plansLoading && <p className="text-sm text-gray-500">불러오는 중...</p>}
-                {!plansLoading && plans.length === 0 && (
-                  <p className="text-sm text-gray-500">선택한 달에 저장된 자리표가 없습니다.</p>
-                )}
-                <ul className="flex flex-col gap-2">
-                  {plans.map((plan) => (
-                    <li
-                      key={plan.id}
-                      className="flex items-center justify-between rounded border border-gray-100 p-2 text-sm"
-                    >
-                      <div>
-                        <p className="font-medium">{plan.title}</p>
-                        <p className="text-gray-500">{plan.plan_date}</p>
-                      </div>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => handleLoad(plan)}
-                          className="rounded border border-gray-300 px-2 py-1 text-xs"
-                        >
-                          불러오기
-                        </button>
-                        <button
-                          onClick={() => handleLoad(plan, true)}
-                          className="rounded border border-gray-300 px-2 py-1 text-xs"
-                        >
-                          복제
-                        </button>
-                        <button
-                          onClick={() => handleDelete(plan.id)}
-                          className="rounded border border-red-300 px-2 py-1 text-xs text-red-600"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-end">
+                <label className={labelClass}>
+                  제목
+                  <input
+                    type="text"
+                    maxLength={80}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="예: 2026년 8월 1차 자리표"
+                    className={fieldClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  날짜
+                  <input
+                    type="date"
+                    value={planDate}
+                    onChange={(e) => setPlanDate(e.target.value)}
+                    className={fieldClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  기록 월
+                  <input
+                    type="month"
+                    value={recordMonth}
+                    onChange={(e) => setRecordMonth(e.target.value)}
+                    className={fieldClass}
+                  />
+                </label>
+                <button onClick={handleSave} className={primaryButtonClass}>
+                  현재 자리표 저장
+                </button>
               </div>
+
+              {saveMessage && <p className="mt-3 text-sm text-gray-600">{saveMessage}</p>}
+              {plansError && <p className="mt-3 text-red-600">{plansError}</p>}
+
+              <h4 className="mb-3 mt-6 text-sm font-semibold text-gray-800">자리바꾸기 목록</h4>
+              {plansLoading && <p className="text-sm text-gray-500">불러오는 중...</p>}
+              {!plansLoading && plans.length === 0 && (
+                <p className="text-sm text-gray-500">선택한 달에 저장된 자리표가 없습니다.</p>
+              )}
+              <ul className="flex flex-col gap-2">
+                {plans.map((plan) => (
+                  <li
+                    key={plan.id}
+                    className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-semibold text-gray-900">{plan.title}</p>
+                      <p className="text-xs text-gray-500">
+                        {plan.plan_date} · {plan.plan_date.slice(0, 7)}
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => handleLoad(plan)}
+                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                      >
+                        불러오기
+                      </button>
+                      <button
+                        onClick={() => handleLoad(plan, true)}
+                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                      >
+                        복제
+                      </button>
+                      <button onClick={() => handleDelete(plan.id)} className={dangerButtonClass}>
+                        삭제
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </section>
           </div>
         </Modal>
