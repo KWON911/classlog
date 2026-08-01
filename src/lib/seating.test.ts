@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { areAdjacent, canUseSeat, createSeats, mapGender, shuffle } from './seating'
+import { areAdjacent, canUseSeat, createSeats, mapGender, placeStudents, shuffle } from './seating'
 
 describe('createSeats', () => {
   it('creates a row-major grid with ids encoding row and column', () => {
@@ -71,5 +71,86 @@ describe('canUseSeat', () => {
     expect(canUseSeat('male', maleSeat)).toBe(true)
     expect(canUseSeat('female', maleSeat)).toBe(false)
     expect(canUseSeat('unspecified', maleSeat)).toBe(false)
+  })
+})
+
+describe('placeStudents', () => {
+  it('throws when there are more students than available seats', () => {
+    const seats = createSeats(1, 2)
+    const students = [
+      { id: 's1', gender: 'unspecified' as const },
+      { id: 's2', gender: 'unspecified' as const },
+      { id: 's3', gender: 'unspecified' as const },
+    ]
+    expect(() =>
+      placeStudents(students, seats, { fixed: new Map(), separations: [], avoidPairs: new Set() }),
+    ).toThrow('학생 3명에 비해 사용 가능한 좌석이 2개입니다.')
+  })
+
+  it('keeps a fixed student on their assigned seat', () => {
+    const seats = createSeats(1, 3)
+    const students = [
+      { id: 's1', gender: 'unspecified' as const },
+      { id: 's2', gender: 'unspecified' as const },
+      { id: 's3', gender: 'unspecified' as const },
+    ]
+    const fixed = new Map([['s1', 'r1-c2']])
+    const result = placeStudents(students, seats, { fixed, separations: [], avoidPairs: new Set() })
+    expect(result.get('s1')).toBe('r1-c2')
+    expect(result.size).toBe(3)
+  })
+
+  it('throws when two students with an orthogonal separation cannot avoid being adjacent', () => {
+    const seats = createSeats(1, 2)
+    const students = [
+      { id: 's1', gender: 'unspecified' as const },
+      { id: 's2', gender: 'unspecified' as const },
+    ]
+    const separations = [{ student_a: 's1', student_b: 's2', type: 'orthogonal' as const }]
+    expect(() =>
+      placeStudents(students, seats, { fixed: new Map(), separations, avoidPairs: new Set() }),
+    ).toThrow(
+      '현재 고정·분리·성별 자리 조건을 동시에 만족하는 자리를 찾지 못했습니다. 조건이나 좌석 수를 확인해 주세요.',
+    )
+  })
+
+  it('respects a diagonal separation rule across multiple runs', () => {
+    const seats = createSeats(2, 3)
+    const students = [
+      { id: 's1', gender: 'unspecified' as const },
+      { id: 's2', gender: 'unspecified' as const },
+    ]
+    const separations = [{ student_a: 's1', student_b: 's2', type: 'diagonal' as const }]
+    const seatById = new Map(seats.map((s) => [s.id, s]))
+    for (let i = 0; i < 20; i++) {
+      const result = placeStudents(students, seats, { fixed: new Map(), separations, avoidPairs: new Set() })
+      const seatA = seatById.get(result.get('s1')!)!
+      const seatB = seatById.get(result.get('s2')!)!
+      const dr = Math.abs(seatA.row - seatB.row)
+      const dc = Math.abs(seatA.column - seatB.column)
+      expect(Math.max(dr, dc)).toBeGreaterThan(1)
+    }
+  })
+
+  it('only places a gender-restricted seat with a matching-gender student', () => {
+    const seats = createSeats(1, 2)
+    seats[0].genderSeat = 'male'
+    const students = [
+      { id: 's1', gender: 'female' as const },
+      { id: 's2', gender: 'male' as const },
+    ]
+    const result = placeStudents(students, seats, { fixed: new Map(), separations: [], avoidPairs: new Set() })
+    expect(result.get('s2')).toBe('r1-c1')
+    expect(result.get('s1')).toBe('r1-c2')
+  })
+
+  it('throws when a fixed seat conflicts with a gender-restricted seat', () => {
+    const seats = createSeats(1, 1)
+    seats[0].genderSeat = 'female'
+    const students = [{ id: 's1', gender: 'male' as const }]
+    const fixed = new Map([['s1', 'r1-c1']])
+    expect(() =>
+      placeStudents(students, seats, { fixed, separations: [], avoidPairs: new Set() }),
+    ).toThrow('고정 조건과 성별 지정 좌석이 맞지 않습니다.')
   })
 })
