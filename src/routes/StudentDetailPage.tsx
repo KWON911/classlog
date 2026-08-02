@@ -152,7 +152,7 @@ export function StudentDetailPage() {
         onClick={() => runOrConfirm(() => navigate('/students'))}
         className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
       >
-        ← 명부로
+        ← 학생 목록으로 돌아가기
       </button>
 
       <div className="mt-3 mb-4 grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-4">
