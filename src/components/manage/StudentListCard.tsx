@@ -6,13 +6,7 @@ import { ImportStudentsPanel } from '../ImportStudentsPanel'
 import { StudentForm, type StudentFormValues } from '../StudentForm'
 import { StudentRowMenu } from './StudentRowMenu'
 import { mapGender } from '../../lib/seating'
-import {
-  cardDescriptionClass,
-  cardTitleClass,
-  primaryButtonClass,
-  secondaryButtonClass,
-  sectionCardClass,
-} from '../../lib/ui/classNames'
+import { cardTitleClass, primaryButtonClass, secondaryButtonClass, sectionCardClass } from '../../lib/ui/classNames'
 import { buildStudentsCsv, type ParsedStudentRow } from '../../lib/csv'
 import { yyyymmdd } from '../../lib/utils/date-utils'
 import type { Student } from '../../lib/types'
@@ -41,6 +35,13 @@ type StudentListCardProps = {
 }
 
 const ROW_GRID_CLASS = 'sm:grid-cols-[64px_minmax(160px,1fr)_120px_72px]'
+
+// Sized/spaced per spec: nowrap text, shrink-0 so the group never squeezes
+// individual buttons, min-width so 한글 labels never wrap to a second line.
+const csvButtonClass =
+  'inline-flex h-11 min-w-[136px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40'
+const addButtonClass =
+  'inline-flex h-11 min-w-[116px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-1'
 
 export function StudentListCard({
   students,
@@ -140,11 +141,11 @@ export function StudentListCard({
   }
 
   return (
-    <div className={sectionCardClass}>
-      <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <div className={`${sectionCardClass} @container`}>
+      <div className="flex flex-col gap-3 border-b border-gray-100 pb-4">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className={cardTitleClass}>학생 명단</h2>
+            <h2 className={cardTitleClass}>학생 정보</h2>
             <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
               {students.length}명
             </span>
@@ -155,31 +156,27 @@ export function StudentListCard({
               </span>
             )}
           </div>
-          <p className={`mt-1 ${cardDescriptionClass}`}>학급에서 공통으로 사용할 학생을 관리합니다.</p>
         </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={() => setShowImport(true)} className={secondaryButtonClass}>
-            <span className="inline-flex items-center gap-1.5">
+
+        <div className="flex flex-wrap items-center gap-3 @sm:flex-nowrap">
+          <div className="order-2 flex shrink-0 items-center gap-2 @sm:order-1">
+            <button type="button" onClick={() => setShowImport(true)} className={csvButtonClass}>
               <Upload size={16} />
               CSV 가져오기
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={students.length === 0}
-            className={secondaryButtonClass}
-          >
-            <span className="inline-flex items-center gap-1.5">
+            </button>
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={students.length === 0}
+              className={csvButtonClass}
+            >
               <Download size={16} />
-              내보내기
-            </span>
-          </button>
-          <button type="button" onClick={() => setShowAdd(true)} className={primaryButtonClass}>
-            <span className="inline-flex items-center gap-1.5">
-              <Plus size={16} />
-              학생 추가
-            </span>
+              CSV 내보내기
+            </button>
+          </div>
+          <button type="button" onClick={() => setShowAdd(true)} className={`order-1 @sm:order-2 ${addButtonClass}`}>
+            <Plus size={16} />
+            개별 추가
           </button>
         </div>
       </div>
@@ -217,7 +214,7 @@ export function StudentListCard({
                 CSV 가져오기
               </button>
               <button type="button" onClick={() => setShowAdd(true)} className={primaryButtonClass}>
-                학생 추가
+                개별 추가
               </button>
             </div>
           </div>
