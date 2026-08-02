@@ -51,11 +51,44 @@ describe('fetchTimetable', () => {
 
     const result = await fetchTimetable(settings, '202608')
 
+    // Regression test: pIndex/pSize were missing entirely on the first port
+    // from school_manage, so NEIS silently paginated elsTimetable down to
+    // just the first couple of rows (reported as "only Monday's first two
+    // periods show, the rest are '-'"). This must always be sent explicitly.
+    const requestedUrl = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(requestedUrl.searchParams.get('pIndex')).toBe('1')
+    expect(requestedUrl.searchParams.get('pSize')).toBe('1000')
+
     expect(result.error).toBeNull()
     expect(result.data?.['20260804']).toEqual([
       { period: 1, subject: '국어' },
       { period: 2, subject: '수학' },
     ])
+  })
+
+  it('drops a row with blank ITRT_CNTNT instead of fabricating a placeholder subject', async () => {
+    // Observed against real NEIS data: the last two weekdays before a
+    // school break can come back with rows for every period slot but an
+    // empty ITRT_CNTNT — must not paper over that with a fake "수업" label.
+    mockFetch.mockReturnValue(
+      jsonResponse({
+        elsTimetable: [
+          {},
+          {
+            row: [
+              { ALL_TI_YMD: '20260202', PERIO: '1', ITRT_CNTNT: '국어' },
+              { ALL_TI_YMD: '20260202', PERIO: '2', ITRT_CNTNT: '' },
+              { ALL_TI_YMD: '20260202', PERIO: '3', ITRT_CNTNT: '   ' },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const result = await fetchTimetable(settings, '202602')
+
+    expect(result.error).toBeNull()
+    expect(result.data?.['20260202']).toEqual([{ period: 1, subject: '국어' }])
   })
 
   it('treats an INFO-200 RESULT (no data) as a valid empty result, not an error', async () => {
@@ -136,6 +169,10 @@ describe('fetchMeals', () => {
     )
 
     const result = await fetchMeals(settings, '202608')
+
+    const requestedUrl = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(requestedUrl.searchParams.get('pIndex')).toBe('1')
+    expect(requestedUrl.searchParams.get('pSize')).toBe('100')
 
     expect(result.error).toBeNull()
     expect(result.data?.['20260803']).toEqual({

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useWeeklyMeal } from '../../lib/hooks/useWeeklyMeal'
 import { stripAllergyCode } from '../../lib/services/neis-service'
 import { yyyymmdd } from '../../lib/utils/date-utils'
@@ -8,15 +9,20 @@ type WeeklyMealCardProps = {
   settings: SchoolSettings | null
   weekStart: Date
   refreshToken: number
+  onLoadingChange?: (loading: boolean) => void
 }
 
 function formatDayDate(dateStr: string) {
   return `${Number(dateStr.slice(4, 6))}/${Number(dateStr.slice(6, 8))}`
 }
 
-export function WeeklyMealCard({ settings, weekStart, refreshToken }: WeeklyMealCardProps) {
+export function WeeklyMealCard({ settings, weekStart, refreshToken, onLoadingChange }: WeeklyMealCardProps) {
   const { status, days, error, retry } = useWeeklyMeal(settings, weekStart, refreshToken)
   const todayStr = yyyymmdd(new Date())
+
+  useEffect(() => {
+    onLoadingChange?.(status === 'loading')
+  }, [status, onLoadingChange])
 
   const isEmpty = days.every((d) => d.menus.length === 0)
 

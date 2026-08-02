@@ -66,29 +66,66 @@ export async function fetchTimetable(
       CLASS_NM: settings.class_name,
       TI_FROM_YMD: `${yearMonth}01`,
       TI_TO_YMD: `${yearMonth}${String(lastDay).padStart(2, '0')}`,
+      // NEIS silently paginates when these are omitted — a month of
+      // elsTimetable rows (weekdays x periods) can exceed its default page
+      // size, which is what caused the "only Monday's first two periods"
+      // bug. Matches the pSize school_manage (the reference repo) used.
+      pIndex: '1',
+      pSize: '1000',
     })
 
     const result = json.RESULT as NeisResultBlock | undefined
     if (result) {
       if (isNoDataResult(result)) {
+        if (import.meta.env.DEV) {
+          console.debug('[neis-service] fetchTimetable: no data', { yearMonth, ay, sem, cacheKey })
+        }
         timetableCache.set(cacheKey, {})
         return { data: {}, error: null }
       }
       return { data: null, error: result.MESSAGE ?? '시간표를 불러오지 못했습니다.' }
     }
 
-    const elsTimetable = json.elsTimetable as [unknown, { row?: Record<string, string>[] }] | undefined
+    const elsTimetable = json.elsTimetable as [{ head?: Record<string, unknown>[] }, { row?: Record<string, string>[] }] | undefined
     const rows = elsTimetable?.[1]?.row ?? []
     const map: TimetableByDate = {}
     for (const r of rows) {
       const ds = r.ALL_TI_YMD
       if (!ds) continue
       const period = parseInt(r.PERIO || '0', 10) || 0
-      const subject = (r.ITRT_CNTNT || '').replace(/<br\/?\s*>/gi, ' ').trim() || '수업'
+      const subject = (r.ITRT_CNTNT || '').replace(/<br\/?\s*>/gi, ' ').trim()
+      // NEIS sometimes returns a row for a period slot with a genuinely
+      // blank ITRT_CNTNT (observed on the last two weekdays before a
+      // school break). Falling back to a placeholder like "수업" here
+      // would fabricate a subject that was never actually there — skip
+      // the row instead, same as if NEIS hadn't returned it at all.
+      if (!subject) continue
       ;(map[ds] ??= []).push({ period, subject })
     }
     for (const list of Object.values(map)) {
       list.sort((a, b) => a.period - b.period)
+    }
+
+    if (import.meta.env.DEV) {
+      const head = elsTimetable?.[0]?.head as { list_total_count?: number }[] | undefined
+      console.debug(
+        '[neis-service] fetchTimetable diagnostics',
+        JSON.stringify({
+          yearMonth,
+          officeCode: settings.office_code,
+          schoolCode: settings.school_code,
+          ay,
+          sem,
+          grade: settings.grade,
+          classNm: settings.class_name,
+          totalCountFromNeis: head?.find((h) => h.list_total_count !== undefined)?.list_total_count,
+          rawRowCount: rows.length,
+          rawRowSample: rows.slice(0, 10),
+          dates: Object.keys(map)
+            .sort()
+            .map((ds) => `${ds}: ${map[ds].length} rows / periods ${map[ds].map((p) => p.period).join(',')}`),
+        }),
+      )
     }
 
     timetableCache.set(cacheKey, map)
@@ -137,6 +174,8 @@ export async function fetchMeals(
       SD_SCHUL_CODE: settings.school_code,
       MLSV_FROM_YMD: `${yearMonth}01`,
       MLSV_TO_YMD: `${yearMonth}${String(lastDay).padStart(2, '0')}`,
+      pIndex: '1',
+      pSize: '100',
     })
 
     const result = json.RESULT as NeisResultBlock | undefined
@@ -195,6 +234,8 @@ export async function searchSchools(query: string): Promise<FetchResult<NeisScho
     const json = await callNeis('schoolInfo', {
       SCHUL_NM: query,
       SCHUL_KND_SC_NM: '초등학교',
+      pIndex: '1',
+      pSize: '20',
     })
 
     const result = json.RESULT as NeisResultBlock | undefined

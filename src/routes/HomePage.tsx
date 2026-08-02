@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
 import { WeeklyTimetableCard } from '../components/home/WeeklyTimetableCard'
 import { WeeklyMealCard } from '../components/home/WeeklyMealCard'
@@ -12,8 +12,16 @@ export function HomePage() {
   const { settings } = useSchoolSettings()
   const [refreshToken, setRefreshToken] = useState(0)
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
+  const [timetableLoading, setTimetableLoading] = useState(false)
+  const [mealLoading, setMealLoading] = useState(false)
 
   const weekEnd = useMemo(() => addDays(weekStart, 4), [weekStart])
+  const isRefreshing = timetableLoading || mealLoading
+
+  const handleRefresh = useCallback(() => {
+    if (isRefreshing) return
+    setRefreshToken((t) => t + 1)
+  }, [isRefreshing])
 
   return (
     <div className="mx-auto max-w-6xl p-6">
@@ -43,17 +51,28 @@ export function HomePage() {
         </div>
         <button
           type="button"
-          onClick={() => setRefreshToken((t) => t + 1)}
-          className="h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="시간표·급식 새로고침"
         >
-          ↻ 새로고침
+          {isRefreshing ? '새로고침 중...' : '↻ 새로고침'}
         </button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[55%_45%]">
-        <WeeklyTimetableCard settings={settings} weekStart={weekStart} refreshToken={refreshToken} />
-        <WeeklyMealCard settings={settings} weekStart={weekStart} refreshToken={refreshToken} />
+        <WeeklyTimetableCard
+          settings={settings}
+          weekStart={weekStart}
+          refreshToken={refreshToken}
+          onLoadingChange={setTimetableLoading}
+        />
+        <WeeklyMealCard
+          settings={settings}
+          weekStart={weekStart}
+          refreshToken={refreshToken}
+          onLoadingChange={setMealLoading}
+        />
       </div>
     </div>
   )

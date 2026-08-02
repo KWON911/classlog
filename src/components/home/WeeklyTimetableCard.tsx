@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useWeeklyTimetable } from '../../lib/hooks/useWeeklyTimetable'
 import { yyyymmdd } from '../../lib/utils/date-utils'
 import type { SchoolSettings } from '../../lib/types'
@@ -7,15 +8,20 @@ type WeeklyTimetableCardProps = {
   settings: SchoolSettings | null
   weekStart: Date
   refreshToken: number
+  onLoadingChange?: (loading: boolean) => void
 }
 
 function formatDayDate(dateStr: string) {
   return `${Number(dateStr.slice(4, 6))}/${Number(dateStr.slice(6, 8))}`
 }
 
-export function WeeklyTimetableCard({ settings, weekStart, refreshToken }: WeeklyTimetableCardProps) {
+export function WeeklyTimetableCard({ settings, weekStart, refreshToken, onLoadingChange }: WeeklyTimetableCardProps) {
   const { status, days, error, retry } = useWeeklyTimetable(settings, weekStart, refreshToken)
   const todayStr = yyyymmdd(new Date())
+
+  useEffect(() => {
+    onLoadingChange?.(status === 'loading')
+  }, [status, onLoadingChange])
 
   const maxPeriod = Math.max(1, ...days.flatMap((d) => d.periods.map((p) => p.period)))
   const isEmpty = days.every((d) => d.periods.length === 0)
