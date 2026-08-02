@@ -14,11 +14,13 @@ type DayCell = { day: number; date: string } | null
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금']
 
+const TAG_BASE_CLASS = 'block truncate rounded-[4px] px-1.5 py-0.5 text-[10px] font-medium leading-tight'
+
 const STATUS_BADGE_CLASS: Record<AttendanceStatus, string> = {
   결석: 'bg-red-50 text-red-700',
   지각: 'bg-amber-50 text-amber-700',
-  조퇴: 'bg-orange-50 text-orange-700',
-  결과: 'bg-purple-50 text-purple-700',
+  조퇴: 'bg-purple-50 text-purple-700',
+  결과: 'bg-teal-50 text-teal-700',
 }
 
 function buildWeeks(yearMonth: string): DayCell[][] {
@@ -86,7 +88,7 @@ export function AttendanceCalendar({
               return (
                 <div
                   key={`${weekIndex}-${columnIndex}`}
-                  className="min-h-20 rounded-[10px] border border-transparent p-1.5 text-xs"
+                  className="min-h-20 rounded-[10px] border border-transparent p-2"
                 />
               )
             }
@@ -101,47 +103,41 @@ export function AttendanceCalendar({
             const nonInstructional = isNonInstructionalDay(events)
             const eventBadgeText = summarizeEventBadge(events)
 
+            // Four distinct states: default, today, selected, and today+selected
+            // together — border carries the "today" signal, background carries
+            // the "selected" signal, so the combined state simply layers both.
+            const cellStateClass = isToday
+              ? isSelected
+                ? 'border-2 border-blue-700 bg-blue-50'
+                : 'border-2 border-blue-700 bg-white hover:bg-gray-50'
+              : isSelected
+                ? 'border border-blue-300 bg-blue-50'
+                : 'border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+
+            const dayNumberClass = isToday || isSelected ? 'text-blue-800' : 'text-gray-500'
+
             return (
               <button
                 type="button"
                 key={`${weekIndex}-${columnIndex}`}
                 onClick={() => onSelectDate(cell.date)}
-                className={`min-h-20 rounded-[10px] border p-1.5 text-left text-xs transition-colors ${
-                  nonInstructional && !isSelected ? 'bg-gray-50' : 'bg-white'
-                } ${
-                  isSelected
-                    ? 'border-blue-600 bg-blue-50'
-                    : isToday
-                      ? 'border-blue-200 hover:bg-gray-50'
-                      : 'border-gray-200 hover:bg-gray-50'
-                }`}
+                className={`flex min-h-20 flex-col rounded-[10px] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-1 ${cellStateClass}`}
               >
-                <div className="mb-1 flex items-center gap-1">
-                  <span className={isToday ? 'font-semibold text-blue-600' : 'text-gray-500'}>{cell.day}</span>
-                  {isToday && <span className="text-[10px] font-medium text-blue-500">오늘</span>}
-                </div>
+                <span className={`text-sm font-medium ${dayNumberClass}`}>{cell.day}</span>
 
-                {nonInstructional ? (
-                  <span className="mb-0.5 block truncate rounded bg-gray-200 px-1 py-0.5 text-[11px] font-medium text-gray-600">
-                    수업일 아님
-                  </span>
-                ) : (
-                  eventBadgeText && (
-                    <span
-                      className="mb-0.5 block truncate rounded bg-blue-50 px-1 py-0.5 text-[11px] font-medium text-blue-600"
-                      title={eventBadgeText}
-                    >
-                      {eventBadgeText}
-                    </span>
-                  )
-                )}
+                <div className="mt-1.5 flex flex-col gap-1">
+                  {nonInstructional ? (
+                    <span className={`${TAG_BASE_CLASS} bg-gray-200 text-gray-600`}>수업일 아님</span>
+                  ) : (
+                    eventBadgeText && (
+                      <span className={`${TAG_BASE_CLASS} bg-blue-50 text-blue-600`} title={eventBadgeText}>
+                        {eventBadgeText}
+                      </span>
+                    )
+                  )}
 
-                <div className="flex flex-col gap-0.5">
                   {badges.map(([status, count]) => (
-                    <span
-                      key={status}
-                      className={`rounded px-1 py-0.5 text-[11px] font-medium ${STATUS_BADGE_CLASS[status]}`}
-                    >
+                    <span key={status} className={`${TAG_BASE_CLASS} ${STATUS_BADGE_CLASS[status]}`}>
                       {status} {count}
                     </span>
                   ))}
