@@ -15,7 +15,7 @@ const secondaryButtonClass =
 const GRADES = ['1', '2', '3', '4', '5', '6']
 
 export function SchoolSettingsSection() {
-  const { settings, loading, saveSettings } = useSchoolSettings()
+  const { settings, loading, error, saveSettings } = useSchoolSettings()
 
   const [showSearch, setShowSearch] = useState(false)
   const [query, setQuery] = useState('')
@@ -27,6 +27,7 @@ export function SchoolSettingsSection() {
   const [grade, setGrade] = useState(settings?.grade ?? '1')
   const [className, setClassName] = useState(settings?.class_name ?? '1')
   const [savingClass, setSavingClass] = useState(false)
+  const [selectingSchoolCode, setSelectingSchoolCode] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   const hasSchool = Boolean(settings?.school_code)
@@ -45,6 +46,7 @@ export function SchoolSettingsSection() {
   }
 
   const handleSelectSchool = async (school: NeisSchoolSearchResult) => {
+    setSelectingSchoolCode(school.school_code)
     const response = await saveSettings({
       office_code: school.office_code,
       school_code: school.school_code,
@@ -53,6 +55,7 @@ export function SchoolSettingsSection() {
       grade: settings?.grade ?? grade,
       class_name: settings?.class_name ?? className,
     })
+    setSelectingSchoolCode(null)
     if (!response.error) {
       setShowSearch(false)
       setResults([])
@@ -133,9 +136,13 @@ export function SchoolSettingsSection() {
                     <button
                       type="button"
                       onClick={() => handleSelectSchool(school)}
-                      className="w-full rounded-lg border border-gray-100 p-3 text-left transition-colors hover:border-blue-200 hover:bg-blue-50"
+                      disabled={selectingSchoolCode !== null}
+                      className="w-full rounded-lg border border-gray-100 p-3 text-left transition-colors hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <p className="text-sm font-medium text-gray-900">{school.school_name}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {school.school_name}
+                        {selectingSchoolCode === school.school_code && ' — 설정 중...'}
+                      </p>
                       <p className="text-xs text-gray-500">{school.address}</p>
                     </button>
                   </li>
@@ -193,7 +200,13 @@ export function SchoolSettingsSection() {
         {!hasSchool && <p className="mt-2 text-xs text-gray-400">먼저 위에서 학교를 설정해 주세요.</p>}
       </div>
 
-      {message && (
+      {error && (
+        <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700" aria-live="polite">
+          저장하지 못했습니다: {error}
+        </p>
+      )}
+
+      {message && !error && (
         <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700" aria-live="polite">
           {message}
         </p>
