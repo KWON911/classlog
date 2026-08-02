@@ -14,6 +14,14 @@ const REASONS: AttendanceReasonCategory[] = ['질병', '미인정', '인정', '�
 const fieldClass =
   'h-9 rounded-lg border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100'
 
+/** 연한 강조만 — 색상만으로 상태를 구분하지 않도록 select의 상태 텍스트와 함께 사용한다. */
+const STATUS_ACCENT_CLASS: Record<AttendanceStatus, string> = {
+  결석: 'border-l-red-300 bg-red-50/40',
+  지각: 'border-l-amber-300 bg-amber-50/40',
+  조퇴: 'border-l-purple-300 bg-purple-50/40',
+  결과: 'border-l-teal-300 bg-teal-50/40',
+}
+
 type AttendanceStudentRowProps = {
   number: number
   name: string
@@ -26,15 +34,17 @@ export function AttendanceStudentRow({ number, name, draft, onChange }: Attendan
 
   return (
     <div
-      className={`rounded-[10px] border p-3 ${isPresent ? 'border-gray-200 bg-white' : 'border-blue-100 bg-blue-50/40'}`}
+      className={`rounded-[10px] border border-gray-200 border-l-[3px] p-2.5 ${
+        isPresent ? 'bg-white' : STATUS_ACCENT_CLASS[draft.status as AttendanceStatus]
+      } ${!isPresent ? 'col-span-full' : ''}`}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="w-14 shrink-0 text-sm text-gray-500">{number}번</span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{name}</span>
+      <div className="grid grid-cols-[36px_minmax(0,1fr)_92px] items-center gap-2">
+        <span className="text-sm text-gray-500">{number}번</span>
+        <span className="min-w-0 truncate text-sm font-medium text-gray-900">{name}</span>
         <select
           value={draft.status}
           onChange={(e) => onChange({ status: e.target.value as DisplayStatus })}
-          className={`${fieldClass} w-20`}
+          className={fieldClass}
           aria-label={`${name} 출결 상태`}
         >
           {STATUSES.map((status) => (
@@ -46,11 +56,11 @@ export function AttendanceStudentRow({ number, name, draft, onChange }: Attendan
       </div>
 
       {!isPresent && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="mt-2 grid grid-cols-[110px_minmax(0,1fr)] gap-2">
           <select
             value={draft.reasonCategory}
             onChange={(e) => onChange({ reasonCategory: e.target.value as AttendanceReasonCategory })}
-            className={`${fieldClass} w-24`}
+            className={fieldClass}
             aria-label={`${name} 출결 구분`}
           >
             {REASONS.map((reason) => (
@@ -64,7 +74,7 @@ export function AttendanceStudentRow({ number, name, draft, onChange }: Attendan
             placeholder="사유 또는 메모"
             value={draft.note}
             onChange={(e) => onChange({ note: e.target.value })}
-            className={`${fieldClass} min-w-0 flex-1`}
+            className={`${fieldClass} min-w-0`}
             aria-label={`${name} 사유 또는 메모`}
           />
         </div>

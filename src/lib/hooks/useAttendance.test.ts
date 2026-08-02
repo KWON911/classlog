@@ -151,4 +151,41 @@ describe('useAttendance', () => {
     // the near-miss rows must remain.
     expect(result.current.entries).toEqual([entryBSameStudentDifferentDate, entryCDifferentStudentSameDate])
   })
+
+  it('deletes exactly one record by id, leaving same-student/same-date near-misses alone', async () => {
+    mockFrom.mockReturnValueOnce(
+      createQueryBuilder({
+        data: [entryA, entryBSameStudentDifferentDate, entryCDifferentStudentSameDate],
+        error: null,
+      }),
+    )
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    const deleteBuilder = createQueryBuilder({ data: [entryA], error: null })
+    mockFrom.mockReturnValueOnce(deleteBuilder)
+
+    const response = await act(async () => result.current.deleteEntry('a1'))
+
+    expect(deleteBuilder.eq).toHaveBeenCalledWith('id', 'a1')
+    expect(response).toEqual({ data: entryA })
+    expect(result.current.entries).toEqual([entryBSameStudentDifferentDate, entryCDifferentStudentSameDate])
+  })
+
+  it('reports an error instead of a silent no-op when zero rows are deleted (foreign or stale id)', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [entryA], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // RLS silently excludes rows the caller doesn't own — a delete on
+    // someone else's record resolves with an empty array, not an error.
+    const deleteBuilder = createQueryBuilder({ data: [], error: null })
+    mockFrom.mockReturnValueOnce(deleteBuilder)
+
+    const response = await act(async () => result.current.deleteEntry('not-mine'))
+
+    expect(response).toEqual({ error: '기록을 찾을 수 없거나 삭제 권한이 없습니다.' })
+    // entryA must survive untouched since nothing was actually deleted.
+    expect(result.current.entries).toEqual([entryA])
+  })
 })

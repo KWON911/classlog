@@ -91,5 +91,28 @@ export function useAttendance(yearMonth: string) {
     return {}
   }, [])
 
-  return { entries, loading, error, upsertEntry, clearEntry, refetch: fetchEntries }
+  /**
+   * Deletes exactly one record by its primary key. RLS's `teacher_id =
+   * auth.uid()` clause already scopes DELETE to rows the caller owns, so a
+   * foreign or stale id simply matches zero rows rather than erroring —
+   * `.select()` on the delete lets us tell that apart from a real failure.
+   */
+  const deleteEntry = useCallback(async (recordId: string) => {
+    const { data, error } = await supabase.from('attendance').delete().eq('id', recordId).select()
+
+    if (error) {
+      setError(error.message)
+      return { error: error.message }
+    }
+    if (!data || data.length === 0) {
+      const message = '기록을 찾을 수 없거나 삭제 권한이 없습니다.'
+      setError(message)
+      return { error: message }
+    }
+
+    setEntries((prev) => prev.filter((e) => e.id !== recordId))
+    return { data: data[0] }
+  }, [])
+
+  return { entries, loading, error, upsertEntry, clearEntry, deleteEntry, refetch: fetchEntries }
 }

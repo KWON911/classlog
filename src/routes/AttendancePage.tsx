@@ -66,7 +66,7 @@ export function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(firstWeekdayOfMonth(todayYearMonth()))
 
   const { students, error: studentsError } = useStudents()
-  const { entries, loading, error, upsertEntry, clearEntry } = useAttendance(yearMonth)
+  const { entries, loading, error, upsertEntry, clearEntry, deleteEntry } = useAttendance(yearMonth)
   const { settings: schoolSettings } = useSchoolSettings()
   const { eventsByDate: rawEventsByDate, status: eventsStatus } = useSchoolEvents(schoolSettings, yearMonth)
 
@@ -109,7 +109,7 @@ export function AttendancePage() {
       )}
 
       {activeTab === 'daily' ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[38%_62%]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(360px,35fr)_minmax(0,65fr)]">
           <div>
             <MonthNav yearMonth={yearMonth} onChange={changeMonth} />
             {!schoolSettings ? (
@@ -132,20 +132,27 @@ export function AttendancePage() {
             />
           </div>
 
-          <DailyStudentAttendance
-            selectedDate={selectedDate}
-            students={students}
-            entries={entries}
-            loading={loading}
-            events={selectedDateEvents}
-            upsertEntry={upsertEntry}
-            clearEntry={clearEntry}
-          />
+          <div className="min-w-0">
+            <DailyStudentAttendance
+              selectedDate={selectedDate}
+              students={students}
+              entries={entries}
+              loading={loading}
+              events={selectedDateEvents}
+              upsertEntry={upsertEntry}
+              clearEntry={clearEntry}
+            />
+          </div>
         </div>
       ) : (
         <div>
           <MonthNav yearMonth={yearMonth} onChange={changeMonth} />
-          <MonthlyAttendanceSummary yearMonth={yearMonth} students={students} entries={entries} />
+          <MonthlyAttendanceSummary
+            yearMonth={yearMonth}
+            students={students}
+            entries={entries}
+            deleteEntry={deleteEntry}
+          />
         </div>
       )}
     </div>

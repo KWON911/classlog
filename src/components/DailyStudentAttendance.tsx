@@ -153,7 +153,7 @@ export function DailyStudentAttendance({
   const showAttendanceInput = !isNonInstructional || forceEnableInput
 
   return (
-    <div className="flex flex-col">
+    <div className="@container flex flex-col">
       <h2 className="text-lg font-semibold text-gray-900">{formatSelectedDateTitle(selectedDate)}</h2>
 
       {events.length > 0 && (
@@ -202,6 +202,7 @@ export function DailyStudentAttendance({
               />
               변경 학생만 보기
             </label>
+            {dirtyIds.size > 0 && <span className="text-sm text-gray-500">변경 {dirtyIds.size}명</span>}
           </div>
 
           {confirmingBulkPresent && (
@@ -240,7 +241,7 @@ export function DailyStudentAttendance({
           {loading ? (
             <p className="mt-4 text-sm text-gray-500">불러오는 중...</p>
           ) : (
-            <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-2.5 @md:grid-cols-2 @2xl:grid-cols-3">
               {visibleStudents.map((student) => (
                 <AttendanceStudentRow
                   key={student.id}
