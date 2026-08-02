@@ -147,12 +147,7 @@ export function AttendancePage() {
       ) : (
         <div>
           <MonthNav yearMonth={yearMonth} onChange={changeMonth} />
-          <MonthlyAttendanceSummary
-            yearMonth={yearMonth}
-            students={students}
-            entries={entries}
-            deleteEntry={deleteEntry}
-          />
+          <MonthlyAttendanceSummary students={students} entries={entries} deleteEntry={deleteEntry} />
         </div>
       )}
     </div>
