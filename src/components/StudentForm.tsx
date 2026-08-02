@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { fieldClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui/classNames'
 
 export type StudentFormValues = {
   number: number
@@ -64,128 +65,116 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm">
-        출석번호
-        <input
-          type="number"
-          required
-          value={number}
-          onChange={(e) => setNumber(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        이름
-        <input
-          type="text"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        성별
-        <input
-          type="text"
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        생년월일
-        <input
-          type="text"
-          placeholder="예: 240304"
-          value={birthdate}
-          onChange={(e) => setBirthdate(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        학생 전화
-        <input
-          type="text"
-          value={studentPhone}
-          onChange={(e) => setStudentPhone(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        주소
-        <input
-          type="text"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        부 성명
-        <input
-          type="text"
-          value={fatherName}
-          onChange={(e) => setFatherName(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        부 전화
-        <input
-          type="text"
-          value={fatherPhone}
-          onChange={(e) => setFatherPhone(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        모 성명
-        <input
-          type="text"
-          value={motherName}
-          onChange={(e) => setMotherName(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        모 전화
-        <input
-          type="text"
-          value={motherPhone}
-          onChange={(e) => setMotherPhone(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        비상연락처
-        <input
-          type="text"
-          value={emergencyContact}
-          onChange={(e) => setEmergencyContact(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        비고
-        <input
-          type="text"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2"
-        />
-      </label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className={labelClass}>
+          출석번호
+          <input
+            type="number"
+            required
+            value={number}
+            onChange={(e) => setNumber(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
+          이름
+          <input
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
+          성별
+          <input type="text" value={gender} onChange={(e) => setGender(e.target.value)} className={fieldClass} />
+        </label>
+        <label className={labelClass}>
+          생년월일
+          <input
+            type="text"
+            placeholder="예: 240304"
+            value={birthdate}
+            onChange={(e) => setBirthdate(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
+          학생 전화
+          <input
+            type="text"
+            value={studentPhone}
+            onChange={(e) => setStudentPhone(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
+          비상연락처
+          <input
+            type="text"
+            value={emergencyContact}
+            onChange={(e) => setEmergencyContact(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={`${labelClass} sm:col-span-2`}>
+          주소
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
+          부 성명
+          <input
+            type="text"
+            value={fatherName}
+            onChange={(e) => setFatherName(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
+          부 전화
+          <input
+            type="text"
+            value={fatherPhone}
+            onChange={(e) => setFatherPhone(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
+          모 성명
+          <input
+            type="text"
+            value={motherName}
+            onChange={(e) => setMotherName(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={labelClass}>
+          모 전화
+          <input
+            type="text"
+            value={motherPhone}
+            onChange={(e) => setMotherPhone(e.target.value)}
+            className={fieldClass}
+          />
+        </label>
+        <label className={`${labelClass} sm:col-span-2`}>
+          비고
+          <input type="text" value={note} onChange={(e) => setNote(e.target.value)} className={fieldClass} />
+        </label>
+      </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded bg-blue-600 px-3 py-2 text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className={primaryButtonClass}>
           {submitLabel}
         </button>
-        <button type="button" onClick={onCancel} className="rounded border border-gray-300 px-3 py-2">
+        <button type="button" onClick={onCancel} className={secondaryButtonClass}>
           취소
         </button>
       </div>
