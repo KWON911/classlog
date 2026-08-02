@@ -3,6 +3,7 @@ import { Plus, Upload, UsersRound } from 'lucide-react'
 import { Modal } from '../Modal'
 import { ConfirmDialog } from '../ConfirmDialog'
 import { ImportStudentsPanel } from '../ImportStudentsPanel'
+import { StudentForm, type StudentFormValues } from '../StudentForm'
 import { StudentQuickFormModal, type StudentQuickFormValues } from './StudentQuickFormModal'
 import { StudentRowMenu } from './StudentRowMenu'
 import { mapGender } from '../../lib/seating'
@@ -65,6 +66,13 @@ export function StudentListCard({
     () => (students.length === 0 ? 1 : Math.max(...students.map((s) => s.number)) + 1),
     [students],
   )
+  const genderCounts = useMemo(() => {
+    const counts = { male: 0, female: 0, unspecified: 0 }
+    for (const student of students) {
+      counts[mapGender(student.gender)] += 1
+    }
+    return counts
+  }, [students])
 
   const handleAddSubmit = async (values: StudentQuickFormValues): Promise<MutationResult> => {
     const result = await addStudent({
@@ -85,14 +93,23 @@ export function StudentListCard({
     return result
   }
 
-  const handleEditSubmit = async (values: StudentQuickFormValues): Promise<MutationResult> => {
-    if (!editingStudent) return { error: '학생을 찾을 수 없습니다.' }
+  const handleEditSubmit = async (values: StudentFormValues) => {
+    if (!editingStudent) return
     const result = await updateStudent(editingStudent.id, {
+      number: values.number,
       name: values.name,
       gender: values.gender || null,
+      birthdate: values.birthdate || null,
+      student_phone: values.student_phone || null,
+      address: values.address || null,
+      father_name: values.father_name || null,
+      father_phone: values.father_phone || null,
+      mother_name: values.mother_name || null,
+      mother_phone: values.mother_phone || null,
+      emergency_contact: values.emergency_contact || null,
+      note: values.note || null,
     })
     if (!result.error) setEditingStudent(null)
-    return result
   }
 
   const handleConfirmDeleteOne = async () => {
@@ -114,11 +131,17 @@ export function StudentListCard({
     <div className={sectionCardClass}>
       <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className={cardTitleClass}>학생 명단</h2>
             <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
               {students.length}명
             </span>
+            {students.length > 0 && (
+              <span className="text-xs text-gray-400">
+                남 {genderCounts.male}명 · 여 {genderCounts.female}명
+                {genderCounts.unspecified > 0 && ` · 미입력 ${genderCounts.unspecified}명`}
+              </span>
+            )}
           </div>
           <p className={`mt-1 ${cardDescriptionClass}`}>학급에서 공통으로 사용할 학생을 관리합니다.</p>
         </div>
@@ -226,7 +249,6 @@ export function StudentListCard({
 
       {showAdd && (
         <StudentQuickFormModal
-          mode="add"
           suggestedNumber={suggestedNumber}
           onCancel={() => setShowAdd(false)}
           onSubmit={handleAddSubmit}
@@ -234,12 +256,32 @@ export function StudentListCard({
       )}
 
       {editingStudent && (
-        <StudentQuickFormModal
-          mode="edit"
-          student={editingStudent}
-          onCancel={() => setEditingStudent(null)}
-          onSubmit={handleEditSubmit}
-        />
+        <Modal
+          title="학생 정보 수정"
+          description={`${editingStudent.number}. ${editingStudent.name} 학생의 정보를 수정합니다.`}
+          onClose={() => setEditingStudent(null)}
+        >
+          <StudentForm
+            key={editingStudent.id}
+            submitLabel="변경 저장"
+            initialValues={{
+              number: editingStudent.number,
+              name: editingStudent.name,
+              gender: editingStudent.gender ?? '',
+              birthdate: editingStudent.birthdate ?? '',
+              student_phone: editingStudent.student_phone ?? '',
+              address: editingStudent.address ?? '',
+              father_name: editingStudent.father_name ?? '',
+              father_phone: editingStudent.father_phone ?? '',
+              mother_name: editingStudent.mother_name ?? '',
+              mother_phone: editingStudent.mother_phone ?? '',
+              emergency_contact: editingStudent.emergency_contact ?? '',
+              note: editingStudent.note ?? '',
+            }}
+            onSubmit={handleEditSubmit}
+            onCancel={() => setEditingStudent(null)}
+          />
+        </Modal>
       )}
 
       {showImport && (

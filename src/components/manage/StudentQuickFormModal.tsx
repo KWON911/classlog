@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { fieldClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../../lib/ui/classNames'
-import type { Student } from '../../lib/types'
 
 export type StudentQuickFormValues = {
   number: number
@@ -9,34 +8,22 @@ export type StudentQuickFormValues = {
 }
 
 type StudentQuickFormModalProps = {
-  mode: 'add' | 'edit'
-  /** Required for edit mode — the student being edited. */
-  student?: Student
-  /** Prefilled 출석번호 for add mode (next available number). */
-  suggestedNumber?: number
+  /** Prefilled 출석번호 (next available number). */
+  suggestedNumber: number
   onCancel: () => void
   onSubmit: (values: StudentQuickFormValues) => Promise<{ error?: string }>
 }
 
-export function StudentQuickFormModal({
-  mode,
-  student,
-  suggestedNumber,
-  onCancel,
-  onSubmit,
-}: StudentQuickFormModalProps) {
-  const [number, setNumber] = useState(String(mode === 'edit' ? student?.number : (suggestedNumber ?? '')))
-  const [name, setName] = useState(student?.name ?? '')
-  const [gender, setGender] = useState(student?.gender ?? '')
+/** Small "학생 추가" dialog for quickly adding a student (출석번호/이름/성별 only).
+ *  Editing an existing student's full info uses StudentForm inside a Modal instead. */
+export function StudentQuickFormModal({ suggestedNumber, onCancel, onSubmit }: StudentQuickFormModalProps) {
+  const [number, setNumber] = useState(String(suggestedNumber))
+  const [name, setName] = useState('')
+  const [gender, setGender] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
   const firstFieldRef = useRef<HTMLInputElement>(null)
-
-  const isDirty = useMemo(() => {
-    if (mode === 'add') return true
-    return name !== (student?.name ?? '') || gender !== (student?.gender ?? '')
-  }, [mode, name, gender, student])
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
@@ -101,29 +88,26 @@ export function StudentQuickFormModal({
         style={{ boxShadow: '0 20px 50px -12px rgba(15, 23, 42, 0.18)' }}
       >
         <h2 id="student-quick-form-title" className="text-base font-bold text-gray-900">
-          {mode === 'add' ? '학생 추가' : '학생 정보 수정'}
+          학생 추가
         </h2>
 
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
-          {mode === 'add' && (
-            <label className={labelClass} htmlFor="quick-student-number">
-              출석번호
-              <input
-                id="quick-student-number"
-                ref={firstFieldRef}
-                type="number"
-                required
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-                className={fieldClass}
-              />
-            </label>
-          )}
+          <label className={labelClass} htmlFor="quick-student-number">
+            출석번호
+            <input
+              id="quick-student-number"
+              ref={firstFieldRef}
+              type="number"
+              required
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
+              className={fieldClass}
+            />
+          </label>
           <label className={labelClass} htmlFor="quick-student-name">
             이름
             <input
               id="quick-student-name"
-              ref={mode === 'edit' ? firstFieldRef : undefined}
               type="text"
               required
               value={name}
@@ -151,12 +135,8 @@ export function StudentQuickFormModal({
             <button type="button" onClick={onCancel} disabled={submitting} className={secondaryButtonClass}>
               취소
             </button>
-            <button
-              type="submit"
-              disabled={submitting || (mode === 'edit' && !isDirty)}
-              className={primaryButtonClass}
-            >
-              {submitting ? (mode === 'add' ? '추가 중...' : '저장 중...') : mode === 'add' ? '추가' : '변경 저장'}
+            <button type="submit" disabled={submitting} className={primaryButtonClass}>
+              {submitting ? '추가 중...' : '추가'}
             </button>
           </div>
         </form>
