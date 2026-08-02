@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 import type { AttendanceEntry, AttendanceStatus, Student } from '../lib/types'
 import { AttendanceDeleteConfirmModal } from './AttendanceDeleteConfirmModal'
+import { ATTENDANCE_STATUS_COLOR_CLASS } from '../lib/utils/attendanceStatusColors'
 
 const STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 
@@ -141,28 +142,34 @@ function DetailRecord({ entry, studentName, onDeleteClick }: DetailRecordProps) 
     </button>
   )
 
+  const statusBadge = (
+    <span
+      className={`inline-flex h-[25px] w-fit items-center justify-center rounded-full px-2.5 text-[12px] font-semibold ${ATTENDANCE_STATUS_COLOR_CLASS[entry.status]}`}
+    >
+      {entry.status}
+    </span>
+  )
+
   return (
     <div className="border-b border-gray-200 py-2 text-sm last:border-b-0">
-      <div className="hidden items-center gap-2 md:grid md:h-[42px] md:grid-cols-[72px_64px_86px_minmax(0,1fr)_40px] md:py-0">
+      <div className="hidden items-center gap-2 md:grid md:h-[42px] md:grid-cols-[40px_72px_84px_92px_minmax(0,1fr)] md:py-0">
+        {deleteButton}
         <span className="text-gray-500">{formatMonthDay(entry.date)}</span>
-        <span className="text-gray-700">{entry.status}</span>
+        {statusBadge}
         <span className="text-gray-700">{entry.reason_category}</span>
         <span className="min-w-0 truncate text-gray-600" title={entry.note ?? undefined}>
           {entry.note ?? ''}
         </span>
-        {deleteButton}
       </div>
 
       <div className="flex flex-col gap-1 md:hidden">
-        <div className="flex items-center gap-2 text-gray-700">
-          <span className="text-gray-500">{formatMonthDay(entry.date)}</span>
-          <span>{entry.status}</span>
-          <span>{entry.reason_category}</span>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="min-w-0 flex-1 truncate text-gray-600">{entry.note ?? ''}</span>
+        <div className="flex items-center gap-2">
           {deleteButton}
+          <span className="text-gray-500">{formatMonthDay(entry.date)}</span>
+          {statusBadge}
+          <span className="text-gray-700">{entry.reason_category}</span>
         </div>
+        <span className="min-w-0 truncate pl-[48px] text-gray-600">{entry.note ?? ''}</span>
       </div>
     </div>
   )

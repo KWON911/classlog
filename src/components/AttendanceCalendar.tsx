@@ -1,4 +1,5 @@
 import { isNonInstructionalDay, summarizeEventBadge } from '../lib/utils/schoolEvents'
+import { ATTENDANCE_STATUS_COLOR_CLASS } from '../lib/utils/attendanceStatusColors'
 import type { AttendanceEntry, AttendanceStatus, SchoolEventByDate } from '../lib/types'
 
 type AttendanceCalendarProps = {
@@ -15,13 +16,6 @@ type DayCell = { day: number; date: string } | null
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금']
 
 const TAG_BASE_CLASS = 'block truncate rounded-[4px] px-1.5 py-0.5 text-[10px] font-medium leading-tight'
-
-const STATUS_BADGE_CLASS: Record<AttendanceStatus, string> = {
-  결석: 'bg-red-50 text-red-700',
-  지각: 'bg-amber-50 text-amber-700',
-  조퇴: 'bg-purple-50 text-purple-700',
-  결과: 'bg-teal-50 text-teal-700',
-}
 
 function buildWeeks(yearMonth: string): DayCell[][] {
   const [year, month] = yearMonth.split('-').map(Number)
@@ -137,7 +131,7 @@ export function AttendanceCalendar({
                   )}
 
                   {badges.map(([status, count]) => (
-                    <span key={status} className={`${TAG_BASE_CLASS} ${STATUS_BADGE_CLASS[status]}`}>
+                    <span key={status} className={`${TAG_BASE_CLASS} ${ATTENDANCE_STATUS_COLOR_CLASS[status]}`}>
                       {status} {count}
                     </span>
                   ))}
