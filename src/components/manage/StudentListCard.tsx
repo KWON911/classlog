@@ -6,7 +6,14 @@ import { ImportStudentsPanel } from '../ImportStudentsPanel'
 import { StudentForm, type StudentFormValues } from '../StudentForm'
 import { StudentRowMenu } from './StudentRowMenu'
 import { mapGender } from '../../lib/seating'
-import { cardTitleClass, primaryButtonClass, secondaryButtonClass, sectionCardClass } from '../../lib/ui/classNames'
+import {
+  addButtonClass,
+  cardTitleClass,
+  csvButtonClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+  sectionCardClass,
+} from '../../lib/ui/classNames'
 import { buildStudentsCsv, type ParsedStudentRow } from '../../lib/csv'
 import { yyyymmdd } from '../../lib/utils/date-utils'
 import type { Student } from '../../lib/types'
@@ -35,13 +42,6 @@ type StudentListCardProps = {
 }
 
 const ROW_GRID_CLASS = 'sm:grid-cols-[64px_minmax(160px,1fr)_120px_72px]'
-
-// Sized/spaced per spec: nowrap text, shrink-0 so the group never squeezes
-// individual buttons, min-width so 한글 labels never wrap to a second line.
-const csvButtonClass =
-  'inline-flex h-11 min-w-[136px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40'
-const addButtonClass =
-  'inline-flex h-11 min-w-[116px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-1'
 
 export function StudentListCard({
   students,
@@ -158,7 +158,7 @@ export function StudentListCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 @sm:flex-nowrap">
+        <div className="flex flex-wrap items-center gap-3 @sm:flex-nowrap @sm:justify-end">
           <div className="order-2 flex shrink-0 items-center gap-2 @sm:order-1">
             <button type="button" onClick={() => setShowImport(true)} className={csvButtonClass}>
               <Upload size={16} />
@@ -321,7 +321,12 @@ export function StudentListCard({
       )}
 
       {showImport && (
-        <Modal title="CSV로 학생 가져오기" description="기존 학생 명단 CSV 파일을 불러옵니다." onClose={() => setShowImport(false)}>
+        <Modal
+          title="CSV로 학생 가져오기"
+          description="기존 학생 명단 CSV 파일을 불러옵니다."
+          maxWidthClassName="max-w-xl"
+          onClose={() => setShowImport(false)}
+        >
           <ImportStudentsPanel
             existingNumbers={existingNumbers}
             onImport={addStudents}

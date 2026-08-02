@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
 import { decodeCsvBytes, parseStudentsCsv, type ParsedStudentRow, type SkippedRow } from '../lib/csv'
-import { primaryButtonClass, secondaryButtonClass } from '../lib/ui/classNames'
+import { csvButtonClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui/classNames'
 
 type ImportStudentsPanelProps = {
   existingNumbers: Set<number>
@@ -9,11 +9,11 @@ type ImportStudentsPanelProps = {
 }
 
 export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: ImportStudentsPanelProps) {
+  const [fileName, setFileName] = useState<string | null>(null)
   const [valid, setValid] = useState<ParsedStudentRow[]>([])
   const [skipped, setSkipped] = useState<SkippedRow[]>([])
   const [fileError, setFileError] = useState<string | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
-  const [hasFile, setHasFile] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -22,6 +22,7 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
 
     setFileError(null)
     setImportError(null)
+    setFileName(file.name)
 
     try {
       const bytes = await file.arrayBuffer()
@@ -30,16 +31,17 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
 
       if (result.valid.length === 0 && result.skipped.length === 0) {
         setFileError('파일에서 읽을 수 있는 내용이 없습니다.')
-        setHasFile(false)
+        setValid([])
+        setSkipped([])
         return
       }
 
       setValid(result.valid)
       setSkipped(result.skipped)
-      setHasFile(true)
     } catch {
       setFileError('파일을 읽을 수 없습니다.')
-      setHasFile(false)
+      setValid([])
+      setSkipped([])
     }
   }
 
@@ -55,24 +57,42 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <input type="file" accept=".csv" onChange={handleFileChange} />
+    <div className="flex flex-col gap-5">
+      <div>
+        <p className="mb-2 text-sm font-medium text-gray-700">파일 선택</p>
+        <div className="flex items-center gap-3">
+          <label
+            htmlFor="csv-file-input"
+            className={`${csvButtonClass} cursor-pointer focus-within:ring-2 focus-within:ring-blue-300 focus-within:ring-offset-1`}
+          >
+            CSV 파일 선택
+          </label>
+          <input id="csv-file-input" type="file" accept=".csv" onChange={handleFileChange} className="sr-only" />
+          <span className={`min-w-0 flex-1 truncate text-sm ${fileName ? 'text-gray-700' : 'text-gray-400'}`}>
+            {fileName ?? '선택된 파일 없음'}
+          </span>
+        </div>
+
+        {fileError && (
+          <p className="mt-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {fileError}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <p className="text-sm text-gray-500">샘플 파일이 필요하면 아래를 이용하세요.</p>
         <a
           href="/sample-students.csv"
           download
-          className="text-sm text-blue-600 underline whitespace-nowrap"
+          className="mt-1 inline-block text-sm font-medium text-blue-600 hover:underline"
         >
           샘플 파일 다운로드
         </a>
       </div>
 
-      {fileError && (
-        <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">{fileError}</p>
-      )}
-
-      {hasFile && (
-        <>
+      {(valid.length > 0 || skipped.length > 0) && (
+        <div className="flex flex-col gap-3 border-t border-gray-100 pt-4">
           <p className="text-sm text-gray-600">
             추가될 학생 {valid.length}명 · 건너뛴 항목 {skipped.length}건
           </p>
@@ -97,23 +117,26 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
               ))}
             </ul>
           )}
-
-          {importError && (
-            <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {importError}
-            </p>
-          )}
-
-          <div className="flex gap-2">
-            <button onClick={handleConfirm} disabled={submitting || valid.length === 0} className={primaryButtonClass}>
-              {submitting ? '가져오는 중...' : '가져오기'}
-            </button>
-            <button type="button" onClick={onCancel} className={secondaryButtonClass}>
-              취소
-            </button>
-          </div>
-        </>
+        </div>
       )}
+
+      {importError && (
+        <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">{importError}</p>
+      )}
+
+      <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
+        <button type="button" onClick={onCancel} disabled={submitting} className={secondaryButtonClass}>
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={handleConfirm}
+          disabled={submitting || valid.length === 0}
+          className={primaryButtonClass}
+        >
+          {submitting ? '가져오는 중...' : '가져오기'}
+        </button>
+      </div>
     </div>
   )
 }

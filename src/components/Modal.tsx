@@ -1,19 +1,47 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 type ModalProps = {
   title: string
   description?: string
   onClose: () => void
   children: ReactNode
+  /** Overrides the dialog box's max-width class (defaults to 'max-w-3xl'). */
+  maxWidthClassName?: string
 }
 
-export function Modal({ title, description, onClose, children }: ModalProps) {
+export function Modal({ title, description, onClose, children, maxWidthClassName = 'max-w-3xl' }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    dialogRef.current?.querySelector<HTMLElement>('input, select, textarea, button:not([disabled])')?.focus()
+
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab' || !dialogRef.current) return
+      const items = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>('input, select, textarea, button:not([disabled]), a[href]'),
+      )
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      previouslyFocused?.focus()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose])
 
   return (
@@ -26,7 +54,8 @@ export function Modal({ title, description, onClose, children }: ModalProps) {
       }}
     >
       <div
-        className="max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-auto rounded-[18px] bg-white"
+        ref={dialogRef}
+        className={`max-h-[calc(100vh-3rem)] w-full ${maxWidthClassName} overflow-auto rounded-[18px] bg-white`}
         style={{ boxShadow: '0 20px 50px -12px rgba(15, 23, 42, 0.18)' }}
       >
         <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white p-5 sm:p-6">
@@ -37,7 +66,7 @@ export function Modal({ title, description, onClose, children }: ModalProps) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="설정 창 닫기"
+            aria-label={`${title} 닫기`}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100"
           >
             ✕
