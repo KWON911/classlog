@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Plus, Upload, UsersRound } from 'lucide-react'
+import { Download, Plus, Upload, UsersRound } from 'lucide-react'
 import { Modal } from '../Modal'
 import { ConfirmDialog } from '../ConfirmDialog'
 import { ImportStudentsPanel } from '../ImportStudentsPanel'
 import { StudentForm, type StudentFormValues } from '../StudentForm'
-import { StudentQuickFormModal, type StudentQuickFormValues } from './StudentQuickFormModal'
 import { StudentRowMenu } from './StudentRowMenu'
 import { mapGender } from '../../lib/seating'
 import {
@@ -14,7 +13,8 @@ import {
   secondaryButtonClass,
   sectionCardClass,
 } from '../../lib/ui/classNames'
-import type { ParsedStudentRow } from '../../lib/csv'
+import { buildStudentsCsv, type ParsedStudentRow } from '../../lib/csv'
+import { yyyymmdd } from '../../lib/utils/date-utils'
 import type { Student } from '../../lib/types'
 
 const GENDER_LABEL: Record<'male' | 'female' | 'unspecified', string> = {
@@ -74,23 +74,35 @@ export function StudentListCard({
     return counts
   }, [students])
 
-  const handleAddSubmit = async (values: StudentQuickFormValues): Promise<MutationResult> => {
+  const handleAddSubmit = async (values: StudentFormValues) => {
     const result = await addStudent({
       number: values.number,
       name: values.name,
       gender: values.gender || null,
-      birthdate: null,
-      student_phone: null,
-      address: null,
-      father_name: null,
-      father_phone: null,
-      mother_name: null,
-      mother_phone: null,
-      emergency_contact: null,
-      note: null,
+      birthdate: values.birthdate || null,
+      student_phone: values.student_phone || null,
+      address: values.address || null,
+      father_name: values.father_name || null,
+      father_phone: values.father_phone || null,
+      mother_name: values.mother_name || null,
+      mother_phone: values.mother_phone || null,
+      emergency_contact: values.emergency_contact || null,
+      note: values.note || null,
     })
     if (!result.error) setShowAdd(false)
-    return result
+  }
+
+  const handleExportCsv = () => {
+    const csv = buildStudentsCsv(students)
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `학생명단_${yyyymmdd(new Date())}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   const handleEditSubmit = async (values: StudentFormValues) => {
@@ -150,6 +162,17 @@ export function StudentListCard({
             <span className="inline-flex items-center gap-1.5">
               <Upload size={16} />
               CSV 가져오기
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={students.length === 0}
+            className={secondaryButtonClass}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <Download size={16} />
+              내보내기
             </span>
           </button>
           <button type="button" onClick={() => setShowAdd(true)} className={primaryButtonClass}>
@@ -248,11 +271,27 @@ export function StudentListCard({
       </div>
 
       {showAdd && (
-        <StudentQuickFormModal
-          suggestedNumber={suggestedNumber}
-          onCancel={() => setShowAdd(false)}
-          onSubmit={handleAddSubmit}
-        />
+        <Modal title="학생 추가" description="새 학생의 정보를 입력합니다." onClose={() => setShowAdd(false)}>
+          <StudentForm
+            submitLabel="추가"
+            initialValues={{
+              number: suggestedNumber,
+              name: '',
+              gender: '',
+              birthdate: '',
+              student_phone: '',
+              address: '',
+              father_name: '',
+              father_phone: '',
+              mother_name: '',
+              mother_phone: '',
+              emergency_contact: '',
+              note: '',
+            }}
+            onSubmit={handleAddSubmit}
+            onCancel={() => setShowAdd(false)}
+          />
+        </Modal>
       )}
 
       {editingStudent && (

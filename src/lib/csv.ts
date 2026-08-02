@@ -59,6 +59,64 @@ export type SkippedRow = {
   reason: string
 }
 
+export type ExportableStudent = {
+  number: number
+  name: string
+  gender: string | null
+  birthdate: string | null
+  student_phone: string | null
+  address: string | null
+  father_name: string | null
+  father_phone: string | null
+  mother_name: string | null
+  mother_phone: string | null
+  emergency_contact: string | null
+  note: string | null
+}
+
+const CSV_HEADER = [
+  '번호',
+  '성명',
+  '성별',
+  '생년월일',
+  '학생전번',
+  '주소',
+  '부성명',
+  '부전번',
+  '모성명',
+  '모전번',
+  '비상연락처',
+  '비고',
+]
+
+function escapeCsvField(value: string): string {
+  return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
+}
+
+/** Builds a CSV string in the same 12-column shape parseStudentsCsv expects,
+ *  so an exported file can be re-imported without modification. */
+export function buildStudentsCsv(students: ExportableStudent[]): string {
+  const rows = students.map((s) =>
+    [
+      String(s.number),
+      s.name,
+      s.gender ?? '',
+      s.birthdate ?? '',
+      s.student_phone ?? '',
+      s.address ?? '',
+      s.father_name ?? '',
+      s.father_phone ?? '',
+      s.mother_name ?? '',
+      s.mother_phone ?? '',
+      s.emergency_contact ?? '',
+      s.note ?? '',
+    ]
+      .map(escapeCsvField)
+      .join(','),
+  )
+  return [CSV_HEADER.join(','), ...rows].join('\r\n')
+}
+
 export function parseStudentsCsv(
   text: string,
   existingNumbers: Set<number>,

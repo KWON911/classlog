@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decodeCsvBytes, parseStudentsCsv } from './csv'
+import { buildStudentsCsv, decodeCsvBytes, parseStudentsCsv } from './csv'
 
 function csvRow(fields: string[]): string {
   return fields.join(',')
@@ -162,5 +162,47 @@ describe('parseStudentsCsv', () => {
 
     expect(valid).toEqual([{ number: 1, name: '김민준', ...emptyStudentFields }])
     expect(skipped).toEqual([{ raw: secondRow, reason: 'CSV 내 중복된 출석번호' }])
+  })
+})
+
+describe('buildStudentsCsv', () => {
+  it('writes the same 12-column header parseStudentsCsv strips as a header row', () => {
+    const csv = buildStudentsCsv([{ number: 1, name: '김민준', ...emptyStudentFields }])
+    const header = csv.split('\r\n')[0]
+
+    expect(header).toBe('번호,성명,성별,생년월일,학생전번,주소,부성명,부전번,모성명,모전번,비상연락처,비고')
+  })
+
+  it('quotes a field that contains a comma, e.g. a Korean street address', () => {
+    const csv = buildStudentsCsv([
+      { number: 1, name: '김민준', ...emptyStudentFields, address: '인천시 연수구, 컨벤시아대로 1' },
+    ])
+    const dataRow = csv.split('\r\n')[1]
+
+    expect(dataRow).toBe('1,김민준,,,,"인천시 연수구, 컨벤시아대로 1",,,,,,')
+  })
+
+  it('round-trips through parseStudentsCsv without loss', () => {
+    const student = {
+      number: 1,
+      name: '김민준',
+      gender: '남',
+      birthdate: '240304',
+      student_phone: '010-1111-2222',
+      address: '인천시 연수구, 컨벤시아대로 1',
+      father_name: '김철수',
+      father_phone: '010-3333-4444',
+      mother_name: '이영희',
+      mother_phone: '010-5555-6666',
+      emergency_contact: '이모)010-7777-8888',
+      note: '비고 내용',
+    }
+
+    const csv = buildStudentsCsv([student])
+    const { valid, skipped } = parseStudentsCsv(csv, new Set())
+
+    const header = ['번호', '성명', '성별', '생년월일', '학생전번', '주소', '부성명', '부전번', '모성명', '모전번', '비상연락처', '비고']
+    expect(skipped).toEqual([{ raw: header, reason: '헤더로 판단해 제외' }])
+    expect(valid).toEqual([student])
   })
 })
