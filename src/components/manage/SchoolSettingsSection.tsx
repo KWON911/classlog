@@ -3,14 +3,14 @@ import { useSchoolSettings } from '../../lib/hooks/useSchoolSettings'
 import { searchSchools } from '../../lib/services/neis-service'
 import { schoolYearOf } from '../../lib/utils/date-utils'
 import type { NeisSchoolSearchResult } from '../../lib/types'
-
-const sectionCardClass = 'rounded-[14px] border border-gray-200 bg-white p-5 sm:p-6'
-const fieldClass =
-  'h-11 rounded-lg border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100'
-const primaryButtonClass =
-  'h-11 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
-const secondaryButtonClass =
-  'h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
+import {
+  cardDescriptionClass,
+  cardTitleClass,
+  fieldClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+  sectionCardClass,
+} from '../../lib/ui/classNames'
 
 const GRADES = ['1', '2', '3', '4', '5', '6']
 
@@ -84,8 +84,8 @@ export function SchoolSettingsSection() {
   return (
     <div className="flex flex-col gap-4">
       <div className={sectionCardClass}>
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-blue-600">학교 정보</h2>
-        <p className="mb-4 text-sm text-gray-500">홈 화면의 시간표·급식 조회에 사용할 학교를 설정합니다.</p>
+        <h2 className={`mb-1 ${cardTitleClass}`}>학교 정보</h2>
+        <p className={`mb-4 ${cardDescriptionClass}`}>홈 화면의 시간표·급식 조회에 사용할 학교를 설정합니다.</p>
 
         {loading ? (
           <p className="text-sm text-gray-500">불러오는 중...</p>
@@ -154,8 +154,8 @@ export function SchoolSettingsSection() {
       </div>
 
       <div className={sectionCardClass}>
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-blue-600">학급 정보</h2>
-        <p className="mb-4 text-sm text-gray-500">시간표 조회에 필요한 학년도·학년·반입니다.</p>
+        <h2 className={`mb-1 ${cardTitleClass}`}>학급 정보</h2>
+        <p className={`mb-4 ${cardDescriptionClass}`}>시간표 조회에 필요한 학년도·학년·반입니다.</p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">

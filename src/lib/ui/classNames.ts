@@ -21,4 +21,9 @@ export const secondaryActiveButtonClass =
 export const dangerButtonClass =
   'h-11 rounded-lg border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100'
 
-export const sectionCardClass = 'rounded-[14px] border border-gray-200 p-5 sm:p-6'
+export const sectionCardClass = 'rounded-[14px] border border-gray-200 bg-white p-5 sm:p-6'
+
+// Card header title/description pair shared by 정보관리's 학교 정보 / 학급 정보 / 학생 명단
+// cards, so the three can never visually drift from each other.
+export const cardTitleClass = 'text-sm font-semibold uppercase tracking-wide text-blue-600'
+export const cardDescriptionClass = 'text-sm text-gray-500'

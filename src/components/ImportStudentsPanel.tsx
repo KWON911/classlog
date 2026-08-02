@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
 import { decodeCsvBytes, parseStudentsCsv, type ParsedStudentRow, type SkippedRow } from '../lib/csv'
+import { primaryButtonClass, secondaryButtonClass } from '../lib/ui/classNames'
 
 type ImportStudentsPanelProps = {
   existingNumbers: Set<number>
@@ -66,16 +67,18 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
         </a>
       </div>
 
-      {fileError && <p className="text-sm text-red-600">{fileError}</p>}
+      {fileError && (
+        <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">{fileError}</p>
+      )}
 
       {hasFile && (
         <>
-          <p className="text-sm">
+          <p className="text-sm text-gray-600">
             추가될 학생 {valid.length}명 · 건너뛴 항목 {skipped.length}건
           </p>
 
           {valid.length > 0 && (
-            <ul className="flex flex-col gap-1 text-sm">
+            <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto text-sm text-gray-700">
               {valid.map((row) => (
                 <li key={row.number}>
                   {row.number}. {row.name} · {row.gender ?? '-'} · 부 {row.father_phone ?? '-'} · 모{' '}
@@ -86,7 +89,7 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
           )}
 
           {skipped.length > 0 && (
-            <ul className="flex flex-col gap-1 text-sm text-gray-500">
+            <ul className="flex max-h-32 flex-col gap-1 overflow-y-auto text-sm text-gray-500">
               {skipped.map((row, index) => (
                 <li key={index}>
                   {row.raw.join(', ')} — {row.reason}
@@ -95,17 +98,17 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
             </ul>
           )}
 
-          {importError && <p className="text-sm text-red-600">{importError}</p>}
+          {importError && (
+            <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {importError}
+            </p>
+          )}
 
           <div className="flex gap-2">
-            <button
-              onClick={handleConfirm}
-              disabled={submitting || valid.length === 0}
-              className="rounded bg-blue-600 px-3 py-2 text-white disabled:opacity-50"
-            >
-              가져오기
+            <button onClick={handleConfirm} disabled={submitting || valid.length === 0} className={primaryButtonClass}>
+              {submitting ? '가져오는 중...' : '가져오기'}
             </button>
-            <button type="button" onClick={onCancel} className="rounded border border-gray-300 px-3 py-2">
+            <button type="button" onClick={onCancel} className={secondaryButtonClass}>
               취소
             </button>
           </div>
