@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useStudentRecords } from '../lib/hooks/useStudentRecords'
 import { useAttendanceSummary } from '../lib/hooks/useAttendanceSummary'
-import { StudentForm, type StudentFormValues } from '../components/StudentForm'
+import { StudentDetailCard } from '../components/StudentDetailCard'
+import type { StudentFormValues } from '../components/StudentForm'
 import { RecordForm, type RecordFormValues } from '../components/RecordForm'
 import { RecordTimeline } from '../components/RecordTimeline'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -19,6 +20,7 @@ import { ATTENDANCE_STATUS_COLOR_CLASS } from '../lib/utils/attendanceStatusColo
 import type { AttendanceStatus, StudentRecord } from '../lib/types'
 
 const ATTENDANCE_SUMMARY_LABELS: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
+const DETAIL_PANEL_ID = 'student-detail-panel'
 
 export function StudentDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -33,14 +35,41 @@ export function StudentDetailPage() {
   const { records, loading, error, addRecord, updateRecord, deleteRecord } = useStudentRecords(id ?? '')
   const { summary: attendanceSummary, error: attendanceError } = useAttendanceSummary(id ?? '')
 
-  const [editingStudent, setEditingStudent] = useState(false)
+  // showDetails intentionally persists across student navigation (spec: moving
+  // to the next student while details are open should keep them open) — only
+  // the per-student states below reset when `id` changes.
   const [showDetails, setShowDetails] = useState(false)
+  const [detailEditMode, setDetailEditMode] = useState(false)
+  const [detailFormDirty, setDetailFormDirty] = useState(false)
   const [showRecordForm, setShowRecordForm] = useState(false)
   const [editingRecord, setEditingRecord] = useState<StudentRecord | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deletingStudent, setDeletingStudent] = useState(false)
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
+
+  useEffect(() => {
+    setDetailEditMode(false)
+    setDetailFormDirty(false)
+    setShowRecordForm(false)
+    setEditingRecord(null)
+    setShowDeleteConfirm(false)
+    setPendingAction(null)
+  }, [id])
+
+  useEffect(() => {
+    if (!(detailEditMode && detailFormDirty)) return
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [detailEditMode, detailFormDirty])
 
   const student = students.find((s) => s.id === id)
+  const currentIndex = students.findIndex((s) => s.id === id)
+  const prevStudent = currentIndex > 0 ? students[currentIndex - 1] : null
+  const nextStudent = currentIndex >= 0 && currentIndex < students.length - 1 ? students[currentIndex + 1] : null
 
   if (!student) {
     if (studentsLoading) {
@@ -52,6 +81,16 @@ export function StudentDetailPage() {
         <p>{studentsError ? '학생 정보를 불러오지 못했습니다.' : '존재하지 않는 학생입니다.'}</p>
       </div>
     )
+  }
+
+  const hasUnsavedChanges = detailEditMode && detailFormDirty
+
+  function runOrConfirm(action: () => void) {
+    if (hasUnsavedChanges) {
+      setPendingAction(() => action)
+    } else {
+      action()
+    }
   }
 
   const handleUpdateStudent = async (values: StudentFormValues) => {
@@ -70,7 +109,8 @@ export function StudentDetailPage() {
       note: values.note || null,
     })
     if (!result.error) {
-      setEditingStudent(false)
+      setDetailEditMode(false)
+      setDetailFormDirty(false)
     }
   }
 
@@ -78,10 +118,15 @@ export function StudentDetailPage() {
     setDeletingStudent(true)
     const result = await deleteStudent(student.id)
     setDeletingStudent(false)
-    if (!result.error) {
-      navigate('/students')
+    setShowDeleteConfirm(false)
+    if (result.error) return
+
+    if (nextStudent) {
+      navigate(`/students/${nextStudent.id}`, { replace: true })
+    } else if (prevStudent) {
+      navigate(`/students/${prevStudent.id}`, { replace: true })
     } else {
-      setShowDeleteConfirm(false)
+      navigate('/students')
     }
   }
 
@@ -102,38 +147,48 @@ export function StudentDetailPage() {
 
   return (
     <div className="mx-auto max-w-2xl p-6">
-      <Link
-        to="/students"
-        className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
+      <button
+        type="button"
+        onClick={() => runOrConfirm(() => navigate('/students'))}
+        className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
       >
-        <ArrowLeft size={16} />
-        명부로
-      </Link>
+        ← 명부로
+      </button>
 
-      <div className="mt-3 mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">
-          {student.number}. {student.name}
-        </h1>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setShowDetails((v) => !v)}
-            className={showDetails ? secondaryActiveButtonClass : secondaryButtonClass}
-          >
-            {showDetails ? '닫기' : '상세정보 보기'}
-          </button>
-          <button
-            onClick={() => setEditingStudent((v) => !v)}
-            className={editingStudent ? secondaryActiveButtonClass : secondaryButtonClass}
-          >
-            {editingStudent ? '닫기' : '정보 수정'}
-          </button>
-          <button onClick={() => setShowDeleteConfirm(true)} className={dangerButtonClass}>
-            학생 삭제
-          </button>
+      <div className="mt-3 mb-4 grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-4">
+        <button
+          type="button"
+          onClick={() => prevStudent && runOrConfirm(() => navigate(`/students/${prevStudent.id}`))}
+          disabled={!prevStudent}
+          aria-label="이전 학생 보기"
+          className="flex h-10 min-w-10 shrink-0 items-center justify-center gap-1 rounded-lg border border-gray-300 px-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          <ChevronLeft size={18} />
+          <span className="hidden sm:inline">이전 학생</span>
+        </button>
+
+        <div className="min-w-0 text-center">
+          <h1 className="truncate text-2xl font-bold text-gray-900">
+            {student.number}. {student.name}
+          </h1>
+          <p className="mt-0.5 text-xs text-gray-400">
+            {currentIndex + 1} / {students.length}
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => nextStudent && runOrConfirm(() => navigate(`/students/${nextStudent.id}`))}
+          disabled={!nextStudent}
+          aria-label="다음 학생 보기"
+          className="flex h-10 min-w-10 shrink-0 items-center justify-center gap-1 rounded-lg border border-gray-300 px-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          <span className="hidden sm:inline">다음 학생</span>
+          <ChevronRight size={18} />
+        </button>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-1.5">
+      <div className="mb-4 flex flex-wrap gap-1.5">
         {ATTENDANCE_SUMMARY_LABELS.map((status) => (
           <span
             key={status}
@@ -142,6 +197,21 @@ export function StudentDetailPage() {
             {status} {attendanceSummary[status]}
           </span>
         ))}
+      </div>
+
+      <div className="mb-6 flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => runOrConfirm(() => setShowDetails((v) => !v))}
+          aria-expanded={showDetails}
+          aria-controls={DETAIL_PANEL_ID}
+          className={showDetails ? secondaryActiveButtonClass : secondaryButtonClass}
+        >
+          {showDetails ? '상세정보 닫기' : '상세정보 보기'}
+        </button>
+        <button type="button" onClick={() => runOrConfirm(() => setShowDeleteConfirm(true))} className={dangerButtonClass}>
+          학생 삭제
+        </button>
       </div>
 
       {studentsError && (
@@ -156,56 +226,18 @@ export function StudentDetailPage() {
       )}
 
       {showDetails && (
-        <dl className={`mb-6 grid grid-cols-2 gap-x-4 gap-y-3 text-sm ${sectionCardClass}`}>
-          <dt className="text-gray-500">출석번호</dt>
-          <dd className="font-medium text-gray-900">{student.number}</dd>
-          <dt className="text-gray-500">이름</dt>
-          <dd className="font-medium text-gray-900">{student.name}</dd>
-          <dt className="text-gray-500">성별</dt>
-          <dd className="font-medium text-gray-900">{student.gender ?? '-'}</dd>
-          <dt className="text-gray-500">생년월일</dt>
-          <dd className="font-medium text-gray-900">{student.birthdate ?? '-'}</dd>
-          <dt className="text-gray-500">본인 연락처</dt>
-          <dd className="font-medium text-gray-900">{student.student_phone ?? '-'}</dd>
-          <dt className="text-gray-500">주소</dt>
-          <dd className="font-medium text-gray-900">{student.address ?? '-'}</dd>
-          <dt className="text-gray-500">부 성명</dt>
-          <dd className="font-medium text-gray-900">{student.father_name ?? '-'}</dd>
-          <dt className="text-gray-500">부 연락처</dt>
-          <dd className="font-medium text-gray-900">{student.father_phone ?? '-'}</dd>
-          <dt className="text-gray-500">모 성명</dt>
-          <dd className="font-medium text-gray-900">{student.mother_name ?? '-'}</dd>
-          <dt className="text-gray-500">모 연락처</dt>
-          <dd className="font-medium text-gray-900">{student.mother_phone ?? '-'}</dd>
-          <dt className="text-gray-500">비상연락처</dt>
-          <dd className="font-medium text-gray-900">{student.emergency_contact ?? '-'}</dd>
-          <dt className="text-gray-500">비고</dt>
-          <dd className="font-medium text-gray-900">{student.note ?? '-'}</dd>
-        </dl>
-      )}
-
-      {editingStudent && (
-        <div className={`mb-6 ${sectionCardClass}`}>
-          <StudentForm
-            submitLabel="저장"
-            initialValues={{
-              number: student.number,
-              name: student.name,
-              gender: student.gender ?? '',
-              birthdate: student.birthdate ?? '',
-              student_phone: student.student_phone ?? '',
-              address: student.address ?? '',
-              father_name: student.father_name ?? '',
-              father_phone: student.father_phone ?? '',
-              mother_name: student.mother_name ?? '',
-              mother_phone: student.mother_phone ?? '',
-              emergency_contact: student.emergency_contact ?? '',
-              note: student.note ?? '',
-            }}
-            onSubmit={handleUpdateStudent}
-            onCancel={() => setEditingStudent(false)}
-          />
-        </div>
+        <StudentDetailCard
+          student={student}
+          panelId={DETAIL_PANEL_ID}
+          editMode={detailEditMode}
+          onStartEdit={() => setDetailEditMode(true)}
+          onCancelEdit={() => {
+            setDetailEditMode(false)
+            setDetailFormDirty(false)
+          }}
+          onSubmit={handleUpdateStudent}
+          onDirtyChange={setDetailFormDirty}
+        />
       )}
 
       <div className="mb-4 flex items-center justify-between">
@@ -270,6 +302,23 @@ export function StudentDetailPage() {
           pending={deletingStudent}
           onCancel={() => setShowDeleteConfirm(false)}
           onConfirm={handleDeleteStudent}
+        />
+      )}
+
+      {pendingAction && (
+        <ConfirmDialog
+          title="저장하지 않은 변경사항"
+          message="저장하지 않은 변경사항이 있습니다. 변경 내용을 버리고 이동할까요?"
+          confirmLabel="변경사항 버리고 이동"
+          cancelLabel="계속 수정"
+          onCancel={() => setPendingAction(null)}
+          onConfirm={() => {
+            const action = pendingAction
+            setPendingAction(null)
+            setDetailEditMode(false)
+            setDetailFormDirty(false)
+            action?.()
+          }}
         />
       )}
     </div>

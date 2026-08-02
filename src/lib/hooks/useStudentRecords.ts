@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import type { RecordCategory, StudentRecord } from '../types'
 
@@ -13,8 +13,10 @@ export function useStudentRecords(studentId: string) {
   const [records, setRecords] = useState<StudentRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const requestIdRef = useRef(0)
 
   const fetchRecords = useCallback(async () => {
+    const requestId = ++requestIdRef.current
     setLoading(true)
     setError(null)
     const { data, error } = await supabase
@@ -22,6 +24,11 @@ export function useStudentRecords(studentId: string) {
       .select('*')
       .eq('student_id', studentId)
       .order('record_date', { ascending: false })
+
+    // A newer request (e.g. the user switched students again) may have
+    // started and finished while this one was in flight — ignore this
+    // stale response instead of overwriting the current student's data.
+    if (requestIdRef.current !== requestId) return
 
     if (error) {
       setError(error.message)

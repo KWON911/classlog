@@ -5,6 +5,7 @@ type ConfirmDialogProps = {
   message: ReactNode
   confirmLabel?: string
   pendingLabel?: string
+  cancelLabel?: string
   pending?: boolean
   onCancel: () => void
   onConfirm: () => void
@@ -15,6 +16,7 @@ export function ConfirmDialog({
   message,
   confirmLabel = '삭제',
   pendingLabel = '삭제 중...',
+  cancelLabel = '취소',
   pending = false,
   onCancel,
   onConfirm,
@@ -52,7 +54,7 @@ export function ConfirmDialog({
             disabled={pending}
             className="h-9 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            취소
+            {cancelLabel}
           </button>
           <button
             type="button"

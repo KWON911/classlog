@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { fieldClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui/classNames'
 
 export type StudentFormValues = {
@@ -21,9 +21,12 @@ type StudentFormProps = {
   onSubmit: (values: StudentFormValues) => Promise<void> | void
   onCancel: () => void
   submitLabel: string
+  /** Called whenever the form's current values differ from initialValues — lets a
+   *  parent warn before discarding an in-progress edit of an existing student. */
+  onDirtyChange?: (dirty: boolean) => void
 }
 
-export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: StudentFormProps) {
+export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel, onDirtyChange }: StudentFormProps) {
   const [number, setNumber] = useState(String(initialValues?.number ?? ''))
   const [name, setName] = useState(initialValues?.name ?? '')
   const [gender, setGender] = useState(initialValues?.gender ?? '')
@@ -38,6 +41,43 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
   const [note, setNote] = useState(initialValues?.note ?? '')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const isEditingExisting = initialValues !== undefined
+
+  const isDirty = useMemo(
+    () =>
+      number !== String(initialValues?.number ?? '') ||
+      name !== (initialValues?.name ?? '') ||
+      gender !== (initialValues?.gender ?? '') ||
+      birthdate !== (initialValues?.birthdate ?? '') ||
+      studentPhone !== (initialValues?.student_phone ?? '') ||
+      address !== (initialValues?.address ?? '') ||
+      fatherName !== (initialValues?.father_name ?? '') ||
+      fatherPhone !== (initialValues?.father_phone ?? '') ||
+      motherName !== (initialValues?.mother_name ?? '') ||
+      motherPhone !== (initialValues?.mother_phone ?? '') ||
+      emergencyContact !== (initialValues?.emergency_contact ?? '') ||
+      note !== (initialValues?.note ?? ''),
+    [
+      number,
+      name,
+      gender,
+      birthdate,
+      studentPhone,
+      address,
+      fatherName,
+      fatherPhone,
+      motherName,
+      motherPhone,
+      emergencyContact,
+      note,
+      initialValues,
+    ],
+  )
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -171,7 +211,11 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
-        <button type="submit" disabled={submitting} className={primaryButtonClass}>
+        <button
+          type="submit"
+          disabled={submitting || (isEditingExisting && !isDirty)}
+          className={primaryButtonClass}
+        >
           {submitLabel}
         </button>
         <button type="button" onClick={onCancel} className={secondaryButtonClass}>
