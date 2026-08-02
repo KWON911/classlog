@@ -3,6 +3,7 @@ import {
   buildWeeklyMeal,
   buildWeeklyTimetable,
   fetchMeals,
+  fetchSchoolEvents,
   fetchTimetable,
   getMealsForRange,
   getTimetableForRange,
@@ -244,6 +245,107 @@ describe('searchSchools', () => {
 
     expect(result).toEqual({ data: [], error: null })
     expect(mockFetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('fetchSchoolEvents', () => {
+  it('parses rows into a date-keyed map and sends pIndex/pSize', async () => {
+    mockFetch.mockReturnValue(
+      jsonResponse({
+        SchoolSchedule: [
+          {},
+          {
+            row: [
+              {
+                AA_YMD: '20260803',
+                EVENT_NM: '개학식',
+                EVENT_CNTNT: '2학기 개학',
+                EVENT_CRGR_SC_NM: '기타',
+                ONE_GRADE_EVENT_YN: 'Y',
+                TW_GRADE_EVENT_YN: 'Y',
+                THREE_GRADE_EVENT_YN: 'Y',
+                FR_GRADE_EVENT_YN: 'Y',
+                FIV_GRADE_EVENT_YN: 'Y',
+                SIX_GRADE_EVENT_YN: 'Y',
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const result = await fetchSchoolEvents(settings, '202608')
+
+    const requestedUrl = new URL(mockFetch.mock.calls[0][0], 'http://localhost')
+    expect(requestedUrl.searchParams.get('pIndex')).toBe('1')
+    expect(requestedUrl.searchParams.get('pSize')).toBe('100')
+
+    expect(result.error).toBeNull()
+    expect(result.data?.['20260803']).toEqual([
+      { date: '20260803', name: '개학식', content: '2학기 개학', type: '기타', isSchoolWide: true, grades: [] },
+    ])
+  })
+
+  it('treats an event with none of the six grade flags set as school-wide', async () => {
+    mockFetch.mockReturnValue(
+      jsonResponse({
+        SchoolSchedule: [{}, { row: [{ AA_YMD: '20260810', EVENT_NM: '학교 행사' }] }],
+      }),
+    )
+
+    const result = await fetchSchoolEvents(settings, '202609')
+
+    expect(result.data?.['20260810'][0]).toMatchObject({ isSchoolWide: true, grades: [] })
+  })
+
+  it('extracts the specific grades when only some flags are set', async () => {
+    mockFetch.mockReturnValue(
+      jsonResponse({
+        SchoolSchedule: [
+          {},
+          {
+            row: [
+              {
+                AA_YMD: '20260812',
+                EVENT_NM: '6학년 수련회',
+                SIX_GRADE_EVENT_YN: 'Y',
+              },
+            ],
+          },
+        ],
+      }),
+    )
+
+    const result = await fetchSchoolEvents(settings, '202610')
+
+    expect(result.data?.['20260812'][0]).toMatchObject({ isSchoolWide: false, grades: ['6'] })
+  })
+
+  it('treats an INFO-200 RESULT as a valid empty result, not an error', async () => {
+    mockFetch.mockReturnValue(jsonResponse({ RESULT: { CODE: 'INFO-200', MESSAGE: '해당하는 데이터가 없습니다.' } }))
+
+    const result = await fetchSchoolEvents(settings, '202611')
+
+    expect(result.error).toBeNull()
+    expect(result.data).toEqual({})
+  })
+
+  it('reuses the cached result for the same school and month', async () => {
+    mockFetch.mockReturnValue(jsonResponse({ SchoolSchedule: [{}, { row: [] }] }))
+
+    await fetchSchoolEvents(settings, '202612')
+    await fetchSchoolEvents(settings, '202612')
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not reuse the cache across different schools', async () => {
+    mockFetch.mockReturnValue(jsonResponse({ SchoolSchedule: [{}, { row: [] }] }))
+
+    await fetchSchoolEvents(settings, '202701')
+    await fetchSchoolEvents({ ...settings, school_code: '9999999' }, '202701')
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
   })
 })
 

@@ -134,3 +134,18 @@ export type NeisSchoolSearchResult = {
   school_name: string
   address: string
 }
+
+export type SchoolEvent = {
+  /** 'YYYYMMDD' */
+  date: string
+  name: string
+  content: string
+  type: string
+  /** true면 grades는 무시 — 전교 대상이거나 NEIS가 대상 학년 정보를 주지 않은 경우 */
+  isSchoolWide: boolean
+  /** 학년 숫자 문자열, 예: ['6']. isSchoolWide가 true면 항상 빈 배열. */
+  grades: string[]
+}
+
+/** date는 'YYYYMMDD' */
+export type SchoolEventByDate = Record<string, SchoolEvent[]>

@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useAttendance } from '../lib/hooks/useAttendance'
+import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
+import { useSchoolEvents } from '../lib/hooks/useSchoolEvents'
+import { filterEventsByDateForGrade } from '../lib/utils/schoolEvents'
 import { AttendanceCalendar } from '../components/AttendanceCalendar'
 import { DailyStudentAttendance } from '../components/DailyStudentAttendance'
 import { MonthlyAttendanceSummary } from '../components/MonthlyAttendanceSummary'
@@ -64,6 +67,14 @@ export function AttendancePage() {
 
   const { students, error: studentsError } = useStudents()
   const { entries, loading, error, upsertEntry, clearEntry } = useAttendance(yearMonth)
+  const { settings: schoolSettings } = useSchoolSettings()
+  const { eventsByDate: rawEventsByDate, status: eventsStatus } = useSchoolEvents(schoolSettings, yearMonth)
+
+  const eventsByDate = useMemo(
+    () => (schoolSettings ? filterEventsByDateForGrade(rawEventsByDate, schoolSettings.grade) : {}),
+    [rawEventsByDate, schoolSettings],
+  )
+  const selectedDateEvents = eventsByDate[selectedDate.replace(/-/g, '')] ?? []
 
   const changeMonth = (delta: number) => {
     const next = shiftMonth(yearMonth, delta)
@@ -101,11 +112,23 @@ export function AttendancePage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[38%_62%]">
           <div>
             <MonthNav yearMonth={yearMonth} onChange={changeMonth} />
+            {!schoolSettings ? (
+              <p className="mb-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                학사일정을 확인하려면 정보관리에서 학교를 설정해 주세요.
+              </p>
+            ) : (
+              eventsStatus === 'error' && (
+                <p className="mb-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                  학사일정을 불러오지 못했습니다.
+                </p>
+              )
+            )}
             <AttendanceCalendar
               yearMonth={yearMonth}
               entries={entries}
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
+              eventsByDate={eventsByDate}
             />
           </div>
 
@@ -114,6 +137,7 @@ export function AttendancePage() {
             students={students}
             entries={entries}
             loading={loading}
+            events={selectedDateEvents}
             upsertEntry={upsertEntry}
             clearEntry={clearEntry}
           />

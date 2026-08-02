@@ -7,7 +7,7 @@
  * in from a server-only env var (NEIS_API_KEY, not VITE_-prefixed).
  */
 
-const ALLOWED_ENDPOINTS = new Set(['schoolInfo', 'elsTimetable', 'mealServiceDietInfo'])
+const ALLOWED_ENDPOINTS = new Set(['schoolInfo', 'elsTimetable', 'mealServiceDietInfo', 'SchoolSchedule'])
 
 const NEIS_BASE_URL = 'https://open.neis.go.kr/hub'
 

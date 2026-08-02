@@ -7,6 +7,7 @@ import { dayName, lastDayOfMonth, schoolYearOf, semesterOf, yyyymm, yyyymmdd } f
 import type {
   MealByDate,
   NeisSchoolSearchResult,
+  SchoolEventByDate,
   SchoolSettings,
   TimetableByDate,
   WeeklyMealDay,
@@ -19,6 +20,28 @@ type NeisResultBlock = { CODE?: string; MESSAGE?: string }
 
 const timetableCache = new Map<string, TimetableByDate>()
 const mealCache = new Map<string, MealByDate>()
+const schoolEventCache = new Map<string, SchoolEventByDate>()
+
+/** ONE_GRADE_EVENT_YN..SIX_GRADE_EVENT_YN, in grade order. */
+const GRADE_EVENT_KEYS: [string, string][] = [
+  ['1', 'ONE_GRADE_EVENT_YN'],
+  ['2', 'TW_GRADE_EVENT_YN'],
+  ['3', 'THREE_GRADE_EVENT_YN'],
+  ['4', 'FR_GRADE_EVENT_YN'],
+  ['5', 'FIV_GRADE_EVENT_YN'],
+  ['6', 'SIX_GRADE_EVENT_YN'],
+]
+
+/**
+ * Ported from school_manage's gradeScopeText: an event with none of the six
+ * flags set (no grade info given) or all six set (genuinely school-wide) is
+ * treated identically as "전체" — same simplification as the reference.
+ */
+function gradeScopeFromRow(r: Record<string, string>): { selected: string[]; isSchoolWide: boolean } {
+  const selected = GRADE_EVENT_KEYS.filter(([, key]) => r[key] === 'Y').map(([grade]) => grade)
+  const isSchoolWide = selected.length === 0 || selected.length === 6
+  return { selected: isSchoolWide ? [] : selected, isSchoolWide }
+}
 
 function isNoDataResult(result: NeisResultBlock): boolean {
   return String(result.CODE ?? '').startsWith('INFO-200')
@@ -257,6 +280,65 @@ export async function searchSchools(query: string): Promise<FetchResult<NeisScho
     }
   } catch (e) {
     return { data: null, error: e instanceof Error ? e.message : '학교를 검색하지 못했습니다.' }
+  }
+}
+
+export async function fetchSchoolEvents(
+  settings: SchoolSettings,
+  yearMonth: string,
+  options?: { force?: boolean },
+): Promise<FetchResult<SchoolEventByDate>> {
+  const cacheKey = `${settings.school_code}_${yearMonth}`
+
+  if (!options?.force && schoolEventCache.has(cacheKey)) {
+    return { data: schoolEventCache.get(cacheKey)!, error: null }
+  }
+
+  const lastDay = lastDayOfMonth(yearMonth)
+
+  try {
+    const json = await callNeis('SchoolSchedule', {
+      ATPT_OFCDC_SC_CODE: settings.office_code,
+      SD_SCHUL_CODE: settings.school_code,
+      AA_FROM_YMD: `${yearMonth}01`,
+      AA_TO_YMD: `${yearMonth}${String(lastDay).padStart(2, '0')}`,
+      pIndex: '1',
+      pSize: '100',
+    })
+
+    const result = json.RESULT as NeisResultBlock | undefined
+    if (result) {
+      if (isNoDataResult(result)) {
+        schoolEventCache.set(cacheKey, {})
+        return { data: {}, error: null }
+      }
+      return { data: null, error: result.MESSAGE ?? '학사일정을 불러오지 못했습니다.' }
+    }
+
+    const schoolSchedule = json.SchoolSchedule as [unknown, { row?: Record<string, string>[] }] | undefined
+    const rows = schoolSchedule?.[1]?.row ?? []
+    const map: SchoolEventByDate = {}
+    for (const r of rows) {
+      const date = r.AA_YMD
+      if (!date) continue
+      const { selected, isSchoolWide } = gradeScopeFromRow(r)
+      ;(map[date] ??= []).push({
+        date,
+        name: r.EVENT_NM || '학사일정',
+        content: r.EVENT_CNTNT || '',
+        type: r.EVENT_CRGR_SC_NM || '학사일정',
+        isSchoolWide,
+        grades: selected,
+      })
+    }
+    for (const list of Object.values(map)) {
+      list.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    }
+
+    schoolEventCache.set(cacheKey, map)
+    return { data: map, error: null }
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : '학사일정을 불러오지 못했습니다.' }
   }
 }
 

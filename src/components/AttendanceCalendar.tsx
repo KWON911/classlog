@@ -1,10 +1,13 @@
-import type { AttendanceEntry, AttendanceStatus } from '../lib/types'
+import { isNonInstructionalDay, summarizeEventBadge } from '../lib/utils/schoolEvents'
+import type { AttendanceEntry, AttendanceStatus, SchoolEventByDate } from '../lib/types'
 
 type AttendanceCalendarProps = {
   yearMonth: string
   entries: AttendanceEntry[]
   selectedDate: string
   onSelectDate: (date: string) => void
+  /** Already grade-filtered by the caller; keyed 'YYYYMMDD'. */
+  eventsByDate?: SchoolEventByDate
 }
 
 type DayCell = { day: number; date: string } | null
@@ -52,7 +55,13 @@ function todayDateString() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
-export function AttendanceCalendar({ yearMonth, entries, selectedDate, onSelectDate }: AttendanceCalendarProps) {
+export function AttendanceCalendar({
+  yearMonth,
+  entries,
+  selectedDate,
+  onSelectDate,
+  eventsByDate,
+}: AttendanceCalendarProps) {
   const countsByDate = new Map<string, Record<AttendanceStatus, number>>()
   for (const entry of entries) {
     const row = countsByDate.get(entry.date) ?? { 결석: 0, 지각: 0, 조퇴: 0, 결과: 0 }
@@ -88,6 +97,9 @@ export function AttendanceCalendar({ yearMonth, entries, selectedDate, onSelectD
             const badges = counts
               ? (Object.entries(counts) as [AttendanceStatus, number][]).filter(([, count]) => count > 0)
               : []
+            const events = eventsByDate?.[cell.date.replace(/-/g, '')] ?? []
+            const nonInstructional = isNonInstructionalDay(events)
+            const eventBadgeText = summarizeEventBadge(events)
 
             return (
               <button
@@ -95,17 +107,35 @@ export function AttendanceCalendar({ yearMonth, entries, selectedDate, onSelectD
                 key={`${weekIndex}-${columnIndex}`}
                 onClick={() => onSelectDate(cell.date)}
                 className={`min-h-20 rounded-[10px] border p-1.5 text-left text-xs transition-colors ${
+                  nonInstructional && !isSelected ? 'bg-gray-50' : 'bg-white'
+                } ${
                   isSelected
                     ? 'border-blue-600 bg-blue-50'
                     : isToday
-                      ? 'border-blue-200 bg-white hover:bg-gray-50'
-                      : 'border-gray-200 bg-white hover:bg-gray-50'
+                      ? 'border-blue-200 hover:bg-gray-50'
+                      : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
                 <div className="mb-1 flex items-center gap-1">
                   <span className={isToday ? 'font-semibold text-blue-600' : 'text-gray-500'}>{cell.day}</span>
                   {isToday && <span className="text-[10px] font-medium text-blue-500">오늘</span>}
                 </div>
+
+                {nonInstructional ? (
+                  <span className="mb-0.5 block truncate rounded bg-gray-200 px-1 py-0.5 text-[11px] font-medium text-gray-600">
+                    수업일 아님
+                  </span>
+                ) : (
+                  eventBadgeText && (
+                    <span
+                      className="mb-0.5 block truncate rounded bg-blue-50 px-1 py-0.5 text-[11px] font-medium text-blue-600"
+                      title={eventBadgeText}
+                    >
+                      {eventBadgeText}
+                    </span>
+                  )
+                )}
+
                 <div className="flex flex-col gap-0.5">
                   {badges.map(([status, count]) => (
                     <span
