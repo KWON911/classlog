@@ -11,8 +11,8 @@ function formatWeekRange(monday: Date, friday: Date) {
 export function HomePage() {
   const { settings } = useSchoolSettings()
   const [refreshToken, setRefreshToken] = useState(0)
+  const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
 
-  const weekStart = useMemo(() => mondayOf(new Date()), [])
   const weekEnd = useMemo(() => addDays(weekStart, 4), [weekStart])
 
   return (
@@ -21,7 +21,25 @@ export function HomePage() {
         <div>
           <h1 className="text-2xl font-semibold">홈</h1>
           <p className="mt-1 text-gray-600">안녕하세요, 권쌤!</p>
-          <p className="mt-1 text-sm text-gray-400">{formatWeekRange(weekStart, weekEnd)}</p>
+          <div className="mt-1 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setWeekStart((prev) => addDays(prev, -7))}
+              className="flex h-6 w-6 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+              aria-label="이전 주"
+            >
+              ‹
+            </button>
+            <p className="text-sm text-gray-400">{formatWeekRange(weekStart, weekEnd)}</p>
+            <button
+              type="button"
+              onClick={() => setWeekStart((prev) => addDays(prev, 7))}
+              className="flex h-6 w-6 items-center justify-center rounded text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+              aria-label="다음 주"
+            >
+              ›
+            </button>
+          </div>
         </div>
         <button
           type="button"

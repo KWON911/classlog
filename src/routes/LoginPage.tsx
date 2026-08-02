@@ -20,7 +20,7 @@ export function LoginPage() {
       setError(error)
       return
     }
-    navigate('/students')
+    navigate('/home')
   }
 
   return (

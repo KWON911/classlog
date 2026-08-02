@@ -24,7 +24,7 @@ function App() {
             <Route path="/seating" element={<SeatingPage />} />
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/students" replace />} />
+        <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </BrowserRouter>
   )
