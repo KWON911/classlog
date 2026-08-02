@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useWeeklyTimetable } from '../../lib/hooks/useWeeklyTimetable'
 import { yyyymmdd } from '../../lib/utils/date-utils'
+import { classifySubjectDisplay } from '../../lib/utils/subjectDisplay'
 import type { SchoolSettings } from '../../lib/types'
 import { EmptyState, ErrorState, LoadingState, UnsetState } from './HomeCardStates'
 
@@ -12,10 +13,32 @@ type WeeklyTimetableCardProps = {
   onLoadingChange?: (loading: boolean) => void
 }
 
-const cellTextClass = '[word-break:keep-all] [overflow-wrap:anywhere]'
+const PERIOD_COL_WIDTH = 64
 
 function formatDayDate(dateStr: string) {
   return `${Number(dateStr.slice(4, 6))}/${Number(dateStr.slice(6, 8))}`
+}
+
+function SubjectCell({ subject }: { subject: string }) {
+  const display = classifySubjectDisplay(subject)
+
+  if (display.tier === 1) {
+    return <span className={`whitespace-nowrap tracking-[-0.02em] ${display.fontSizeClass}`}>{display.lines[0]}</span>
+  }
+
+  const [first, second] = display.lines
+  return (
+    <span
+      className={`inline-block [word-break:keep-all] [overflow-wrap:normal] ${display.fontSizeClass} ${
+        display.tier === 3 ? 'line-clamp-2' : ''
+      }`}
+      title={display.tier === 3 ? subject : undefined}
+    >
+      {first}
+      <wbr />
+      {second}
+    </span>
+  )
 }
 
 export function WeeklyTimetableCard({
@@ -56,14 +79,14 @@ export function WeeklyTimetableCard({
         <div className="min-w-0 overflow-x-auto">
           <table className="w-full table-fixed border-collapse text-sm">
             <colgroup>
-              <col style={{ width: '72px' }} />
+              <col style={{ width: `${PERIOD_COL_WIDTH}px` }} />
               {days.map((day) => (
-                <col key={day.date} style={{ width: `calc((100% - 72px) / 5)` }} />
+                <col key={day.date} style={{ width: `calc((100% - ${PERIOD_COL_WIDTH}px) / 5)` }} />
               ))}
             </colgroup>
             <thead>
               <tr>
-                <th className="border border-[#E2E8F0] bg-[#F1F5F9] py-2 text-xs font-medium text-gray-500">
+                <th className="min-w-0 border border-[#E2E8F0] bg-[#F1F5F9] py-2 text-xs font-medium text-gray-500">
                   구분
                 </th>
                 {days.map((day) => {
@@ -71,8 +94,10 @@ export function WeeklyTimetableCard({
                   return (
                     <th
                       key={day.date}
-                      className={`border border-[#E2E8F0] px-1 py-2 text-xs font-medium ${cellTextClass} ${
-                        isToday ? 'border-t-[3px] border-t-blue-500 bg-blue-50/70 text-blue-700' : 'bg-[#F1F5F9] text-gray-500'
+                      className={`min-w-0 border border-[#E2E8F0] px-1 py-2 text-xs font-medium ${
+                        isToday
+                          ? 'border-t-[3px] border-t-blue-500 bg-blue-50/70 text-blue-700'
+                          : 'bg-[#F1F5F9] text-gray-500'
                       }`}
                     >
                       <div>{day.dayLabel}</div>
@@ -86,7 +111,7 @@ export function WeeklyTimetableCard({
             <tbody>
               {Array.from({ length: maxPeriod }, (_, i) => i + 1).map((period) => (
                 <tr key={period}>
-                  <td className="min-h-11 border border-[#E2E8F0] bg-[#F8FAFC] py-2 text-center text-xs font-medium text-gray-500">
+                  <td className="h-14 min-w-0 border border-[#E2E8F0] bg-[#F8FAFC] text-center align-middle text-xs font-medium text-gray-500">
                     {period}교시
                   </td>
                   {days.map((day) => {
@@ -95,11 +120,11 @@ export function WeeklyTimetableCard({
                     return (
                       <td
                         key={day.date}
-                        className={`min-h-11 border border-[#E2E8F0] px-1.5 py-2 text-center align-middle ${cellTextClass} ${
+                        className={`h-14 min-w-0 border border-[#E2E8F0] px-1 text-center align-middle ${
                           isToday ? 'bg-blue-50/40' : ''
                         }`}
                       >
-                        {item ? item.subject : <span className="text-gray-300">—</span>}
+                        {item ? <SubjectCell subject={item.subject} /> : <span className="text-gray-300">—</span>}
                       </td>
                     )
                   })}
