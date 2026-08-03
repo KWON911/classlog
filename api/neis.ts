@@ -1,4 +1,4 @@
-import { isAllowedEndpoint, proxyToNeis } from './_lib/neisProxy'
+import { isAllowedEndpoint, proxyToNeis } from './_lib/neisProxy.js'
 
 type ApiRequest = {
   url?: string
