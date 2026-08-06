@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useStudents } from '../lib/hooks/useStudents'
 import { StudentListItem } from '../components/StudentListItem'
+import { PageContainer } from '../components/PageContainer'
 import { secondaryButtonClass } from '../lib/ui/classNames'
 
 const GRID_CLASS = 'grid grid-cols-2 gap-2.5 @sm:grid-cols-3 @4xl:grid-cols-4 @6xl:grid-cols-5'
@@ -9,8 +10,8 @@ export function StudentListPage() {
   const { students, loading, error, refetch } = useStudents()
 
   return (
-    <div className="mx-auto max-w-7xl p-6">
-      <h1 className="mb-1 text-2xl font-semibold text-gray-900">학급기록</h1>
+    <PageContainer size="wide">
+      <h1 className="mb-1 text-2xl font-semibold text-brand-700">학급기록</h1>
       <p className="mb-5 text-sm text-gray-500">우리 반 학생 {students.length}명</p>
 
       {error && (
@@ -51,6 +52,6 @@ export function StudentListPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   )
 }

@@ -63,7 +63,7 @@ export function WeeklyTimetableCard({
       <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-gray-900">
         주간 시간표
         {isCurrentWeek && (
-          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">이번 주</span>
+          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600">이번 주</span>
         )}
       </h2>
 
@@ -96,13 +96,13 @@ export function WeeklyTimetableCard({
                       key={day.date}
                       className={`min-w-0 border border-[#E2E8F0] px-1 py-2 text-xs font-medium ${
                         isToday
-                          ? 'border-t-[3px] border-t-blue-500 bg-blue-50/70 text-blue-700'
+                          ? 'border-t-[3px] border-t-brand-500 bg-brand-50/70 text-brand-700'
                           : 'bg-[#F1F5F9] text-gray-500'
                       }`}
                     >
                       <div>{day.dayLabel}</div>
                       <div className="font-normal text-gray-400">{formatDayDate(day.date)}</div>
-                      {isToday && <div className="mt-0.5 text-[10px] font-medium text-blue-500">오늘</div>}
+                      {isToday && <div className="mt-0.5 text-[10px] font-medium text-brand-500">오늘</div>}
                     </th>
                   )
                 })}
@@ -121,7 +121,7 @@ export function WeeklyTimetableCard({
                       <td
                         key={day.date}
                         className={`h-14 min-w-0 border border-[#E2E8F0] px-1 text-center align-middle ${
-                          isToday ? 'bg-blue-50/40' : ''
+                          isToday ? 'bg-brand-50/40' : ''
                         }`}
                       >
                         {item ? <SubjectCell subject={item.subject} /> : <span className="text-gray-300">—</span>}

@@ -157,11 +157,11 @@ export function DailyStudentAttendance({
       <h2 className="text-lg font-semibold text-gray-900">{formatSelectedDateTitle(selectedDate)}</h2>
 
       {events.length > 0 && (
-        <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2">
-          <p className="text-xs font-semibold text-blue-700">오늘의 학사일정</p>
+        <div className="mt-3 rounded-lg border border-brand-100 bg-brand-50/60 px-3 py-2">
+          <p className="text-xs font-semibold text-brand-700">오늘의 학사일정</p>
           <ul className="mt-1 flex flex-col gap-0.5">
             {events.map((event, i) => (
-              <li key={i} className="text-sm text-blue-800">
+              <li key={i} className="text-sm text-brand-800">
                 · {event.name} · {gradeScopeLabel(event)}
               </li>
             ))}
@@ -198,7 +198,7 @@ export function DailyStudentAttendance({
                 type="checkbox"
                 checked={showChangedOnly}
                 onChange={(e) => setShowChangedOnly(e.target.checked)}
-                className="accent-blue-600"
+                className="accent-brand-600"
               />
               변경 학생만 보기
             </label>
@@ -230,7 +230,7 @@ export function DailyStudentAttendance({
               className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
                 statusIsError
                   ? 'border-red-100 bg-red-50 text-red-700'
-                  : 'border-blue-100 bg-blue-50 text-blue-700'
+                  : 'border-brand-100 bg-brand-50 text-brand-700'
               }`}
               aria-live="polite"
             >
@@ -259,7 +259,7 @@ export function DailyStudentAttendance({
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="h-11 w-full rounded-lg bg-blue-600 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:w-auto sm:px-6"
+              className="h-11 w-full rounded-lg bg-brand-600 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50 sm:w-auto sm:px-6"
             >
               {saving ? '저장 중...' : `출결 저장${dirtyIds.size > 0 ? ` (${dirtyIds.size}명 변경)` : ''}`}
             </button>

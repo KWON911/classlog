@@ -7,6 +7,7 @@ import { filterEventsByDateForGrade } from '../lib/utils/schoolEvents'
 import { AttendanceCalendar } from '../components/AttendanceCalendar'
 import { DailyStudentAttendance } from '../components/DailyStudentAttendance'
 import { MonthlyAttendanceSummary } from '../components/MonthlyAttendanceSummary'
+import { PageContainer } from '../components/PageContainer'
 
 type Tab = 'daily' | 'monthly'
 
@@ -35,7 +36,7 @@ function firstWeekdayOfMonth(yearMonth: string) {
 
 const tabButtonClass = (active: boolean) =>
   `rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-    active ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+    active ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100'
   }`
 
 function MonthNav({ yearMonth, onChange }: { yearMonth: string; onChange: (delta: number) => void }) {
@@ -83,8 +84,8 @@ export function AttendancePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-4 text-2xl font-semibold">출결관리</h1>
+    <PageContainer size="wide">
+      <h1 className="mb-4 text-2xl font-semibold text-brand-700">출결관리</h1>
 
       <div className="mb-6 flex gap-2 border-b border-gray-200 pb-2">
         <button type="button" onClick={() => setActiveTab('daily')} className={tabButtonClass(activeTab === 'daily')}>
@@ -150,6 +151,6 @@ export function AttendancePage() {
           <MonthlyAttendanceSummary students={students} entries={entries} deleteEntry={deleteEntry} />
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

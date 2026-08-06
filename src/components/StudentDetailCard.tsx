@@ -34,7 +34,7 @@ export function StudentDetailCard({
             type="button"
             onClick={onStartEdit}
             aria-label={`${student.name} 학생 정보 수정`}
-            className="rounded-md px-2.5 py-1 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50"
+            className="rounded-md px-2.5 py-1 text-sm font-medium text-brand-600 transition-colors hover:bg-brand-50"
           >
             수정
           </button>

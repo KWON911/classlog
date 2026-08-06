@@ -5,6 +5,7 @@ import { ConfirmDialog } from '../ConfirmDialog'
 import { ImportStudentsPanel } from '../ImportStudentsPanel'
 import { StudentForm, type StudentFormValues } from '../StudentForm'
 import { StudentRowMenu } from './StudentRowMenu'
+import { QuickAddFab } from '../QuickAddFab'
 import { mapGender } from '../../lib/seating'
 import {
   addButtonClass,
@@ -141,12 +142,13 @@ export function StudentListCard({
   }
 
   return (
+    <>
     <div className={`${sectionCardClass} @container`}>
       <div className="flex flex-col gap-3 border-b border-gray-100 pb-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className={cardTitleClass}>학생 정보</h2>
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600">
               {students.length}명
             </span>
             {students.length > 0 && (
@@ -372,5 +374,7 @@ export function StudentListCard({
         />
       )}
     </div>
+    <QuickAddFab onClick={() => setShowAdd(true)} label="학생 추가" />
+    </>
   )
 }

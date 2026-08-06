@@ -102,20 +102,20 @@ export function AttendanceCalendar({
             // the "selected" signal, so the combined state simply layers both.
             const cellStateClass = isToday
               ? isSelected
-                ? 'border-2 border-blue-700 bg-blue-50'
-                : 'border-2 border-blue-700 bg-white hover:bg-gray-50'
+                ? 'border-2 border-brand-700 bg-brand-50'
+                : 'border-2 border-brand-700 bg-white hover:bg-gray-50'
               : isSelected
-                ? 'border border-blue-300 bg-blue-50'
+                ? 'border border-brand-300 bg-brand-50'
                 : 'border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
 
-            const dayNumberClass = isToday || isSelected ? 'text-blue-800' : 'text-gray-500'
+            const dayNumberClass = isToday || isSelected ? 'text-brand-800' : 'text-gray-500'
 
             return (
               <button
                 type="button"
                 key={`${weekIndex}-${columnIndex}`}
                 onClick={() => onSelectDate(cell.date)}
-                className={`flex min-h-20 flex-col rounded-[10px] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-1 ${cellStateClass}`}
+                className={`flex min-h-20 flex-col rounded-[10px] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-1 ${cellStateClass}`}
               >
                 <span className={`text-sm font-medium ${dayNumberClass}`}>{cell.day}</span>
 
@@ -124,7 +124,7 @@ export function AttendanceCalendar({
                     <span className={`${TAG_BASE_CLASS} bg-gray-200 text-gray-600`}>수업일 아님</span>
                   ) : (
                     eventBadgeText && (
-                      <span className={`${TAG_BASE_CLASS} bg-blue-50 text-blue-600`} title={eventBadgeText}>
+                      <span className={`${TAG_BASE_CLASS} bg-brand-50 text-brand-600`} title={eventBadgeText}>
                         {eventBadgeText}
                       </span>
                     )

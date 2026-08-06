@@ -40,7 +40,7 @@ export function WeeklyMealCard({
       <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-gray-900">
         주간 식단표
         {isCurrentWeek && (
-          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">이번 주</span>
+          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-600">이번 주</span>
         )}
       </h2>
 
@@ -61,15 +61,15 @@ export function WeeklyMealCard({
                 <div
                   key={day.date}
                   className={`box-border min-w-0 rounded-lg border p-2.5 ${
-                    isToday ? 'border-2 border-blue-500 bg-blue-50/40' : 'border border-gray-200'
+                    isToday ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-gray-200'
                   }`}
                 >
                   <div className="mb-2 text-center">
-                    <div className={`text-xs font-semibold ${isToday ? 'text-blue-700' : 'text-gray-700'}`}>
+                    <div className={`text-xs font-semibold ${isToday ? 'text-brand-700' : 'text-gray-700'}`}>
                       {day.dayLabel}
                     </div>
                     <div className="text-[11px] text-gray-400">{formatDayDate(day.date)}</div>
-                    {isToday && <div className="mt-0.5 text-[10px] font-medium text-blue-500">오늘</div>}
+                    {isToday && <div className="mt-0.5 text-[10px] font-medium text-brand-500">오늘</div>}
                   </div>
 
                   {day.menus.length === 0 ? (

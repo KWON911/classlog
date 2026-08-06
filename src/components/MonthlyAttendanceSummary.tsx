@@ -74,7 +74,7 @@ type StudentSummaryRowProps = {
 function StudentSummaryRow({ student, counts, recordCount, isExpanded, detailId, onToggle }: StudentSummaryRowProps) {
   const hasRecords = recordCount > 0
   const rowClass = `w-full border-b border-gray-100 px-4 py-2.5 text-left transition-colors ${
-    isExpanded ? 'border-l-2 border-l-blue-500 bg-blue-50/40' : hasRecords ? 'hover:bg-gray-50/70' : ''
+    isExpanded ? 'border-l-2 border-l-brand-500 bg-brand-50/40' : hasRecords ? 'hover:bg-gray-50/70' : ''
   }`
 
   const content = (
@@ -279,7 +279,7 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
   }
 
   return (
-    <div className="w-full max-w-[1400px]">
+    <div className="w-full">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
           전체 {students.length}명 · 기록 학생 {studentsWithRecordsCount}명 · 출결 기록 {entries.length}건
@@ -290,7 +290,7 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
               type="button"
               onClick={() => setFilterMode('all')}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                filterMode === 'all' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                filterMode === 'all' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               전체 {students.length}
@@ -299,7 +299,7 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
               type="button"
               onClick={() => setFilterMode('withRecords')}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                filterMode === 'withRecords' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                filterMode === 'withRecords' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               기록 있음 {studentsWithRecordsCount}
@@ -319,7 +319,7 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
       {message && (
         <p
           className={`mb-3 rounded-lg border px-3 py-2 text-sm ${
-            messageIsError ? 'border-red-100 bg-red-50 text-red-700' : 'border-blue-100 bg-blue-50 text-blue-700'
+            messageIsError ? 'border-red-100 bg-red-50 text-red-700' : 'border-brand-100 bg-brand-50 text-brand-700'
           }`}
           aria-live="polite"
         >
@@ -359,7 +359,7 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
                 onToggle={() => toggleExpanded(student.id)}
               />
               {isExpanded && recordCount > 0 && (
-                <div id={detailId} className="border-l-2 border-blue-300 bg-[#F8FAFC] py-1 pl-8 pr-4 md:pl-9">
+                <div id={detailId} className="border-l-2 border-brand-300 bg-[#F8FAFC] py-1 pl-8 pr-4 md:pl-9">
                   {studentEntries.map((entry) => (
                     <DetailRecord
                       key={entry.id}

@@ -3,6 +3,7 @@ import { useStudents } from '../lib/hooks/useStudents'
 import { useSeatingPlans, type SeatingPlanInput } from '../lib/hooks/useSeatingPlans'
 import { SeatingGrid } from '../components/SeatingGrid'
 import { Modal } from '../components/Modal'
+import { PageContainer } from '../components/PageContainer'
 import {
   fieldClass,
   labelClass,
@@ -52,11 +53,11 @@ function todayYearMonth() {
 const dangerButtonClass =
   'rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100'
 const toolbarPrimaryButtonClass =
-  'h-11 rounded-[11px] bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700'
+  'h-11 rounded-[11px] bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-700'
 const toolbarSecondaryButtonClass =
   'h-11 rounded-[11px] border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
 const toolbarSecondaryActiveClass =
-  'h-11 rounded-[11px] border border-blue-200 bg-blue-50 px-4 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100'
+  'h-11 rounded-[11px] border border-brand-200 bg-brand-50 px-4 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-100'
 const toolbarNeutralButtonClass =
   'h-11 rounded-[11px] border border-gray-200 bg-gray-50 px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100'
 
@@ -566,9 +567,9 @@ export function SeatingPage() {
   }, [fixed, seats, separations, studentNameById])
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <PageContainer size="full">
       <div className="mb-4 flex flex-col gap-3 rounded-[14px] border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between print:hidden">
-        <h1 className="text-2xl font-semibold text-gray-900">우리 반 자리 배치</h1>
+        <h1 className="text-2xl font-semibold text-brand-700">우리 반 자리 배치</h1>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex items-center gap-2">
             <button onClick={() => setShowSettings(true)} className={toolbarSecondaryButtonClass}>
@@ -623,7 +624,7 @@ export function SeatingPage() {
 
       {message && (
         <p
-          className="mb-6 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700 print:hidden"
+          className="mb-6 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-sm text-brand-700 print:hidden"
           aria-live="polite"
         >
           {message}
@@ -638,7 +639,7 @@ export function SeatingPage() {
         >
           <div className="flex flex-col gap-6">
             <section className={sectionCardClass}>
-              <h3 className="text-xs font-bold uppercase tracking-wide text-blue-700">Layout</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-brand-700">Layout</h3>
               <p className="mb-4 mt-1 text-sm text-gray-500">좌석 배치와 칠판 방향을 설정합니다.</p>
               <div className="flex flex-wrap items-end gap-3">
                 <label className={labelClass}>
@@ -681,7 +682,7 @@ export function SeatingPage() {
                   onClick={toggleSeatEditMode}
                   className={
                     seatEditMode
-                      ? 'h-11 rounded-lg border border-blue-600 bg-blue-50 px-4 text-sm font-medium text-blue-700 transition-colors'
+                      ? 'h-11 rounded-lg border border-brand-600 bg-brand-50 px-4 text-sm font-medium text-brand-700 transition-colors'
                       : secondaryButtonClass
                   }
                 >
@@ -695,7 +696,7 @@ export function SeatingPage() {
             </section>
 
             <section className={sectionCardClass}>
-              <h3 className="text-xs font-bold uppercase tracking-wide text-blue-700">Rules</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-brand-700">Rules</h3>
               <p className="mb-4 mt-1 text-sm text-gray-500">
                 버튼을 누른 뒤 자리표에서 직접 좌석을 선택하세요. 배치된 학생 두 명을 차례로 클릭하면 바로 자리가
                 바뀝니다.
@@ -746,7 +747,7 @@ export function SeatingPage() {
                     checked={genderBalance}
                     disabled={!hasGenderInfo}
                     onChange={(e) => setGenderBalance(e.target.checked)}
-                    className="accent-blue-600"
+                    className="accent-brand-600"
                   />
                   성별을 고려해 가능한 고르게 배치
                 </label>
@@ -756,7 +757,7 @@ export function SeatingPage() {
                     type="checkbox"
                     checked={avoidPastNeighbors}
                     onChange={(e) => setAvoidPastNeighbors(e.target.checked)}
-                    className="accent-blue-600"
+                    className="accent-brand-600"
                   />
                   지난 짝 피하기 (아래 기록 월에 저장된 자리표 기준)
                 </label>
@@ -769,7 +770,7 @@ export function SeatingPage() {
                     type="checkbox"
                     checked={avoidPreviousSeats}
                     onChange={(e) => setAvoidPreviousSeats(e.target.checked)}
-                    className="mt-0.5 accent-blue-600"
+                    className="mt-0.5 accent-brand-600"
                     aria-describedby="avoid-previous-seats-description"
                   />
                   <span>
@@ -862,7 +863,7 @@ export function SeatingPage() {
               </div>
 
               {conditionMessage && (
-                <p className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                <p className="mt-4 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-sm text-brand-700">
                   {conditionMessage}
                 </p>
               )}
@@ -888,7 +889,7 @@ export function SeatingPage() {
             </section>
 
             <section className={sectionCardClass}>
-              <h3 className="text-xs font-bold uppercase tracking-wide text-blue-700">Archive</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-brand-700">Archive</h3>
               <p className="mb-4 mt-1 text-sm text-gray-500">자리표를 저장하고 이전 기록을 불러올 수 있습니다.</p>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-end">
@@ -970,6 +971,6 @@ export function SeatingPage() {
           </div>
         </Modal>
       )}
-    </div>
+    </PageContainer>
   )
 }

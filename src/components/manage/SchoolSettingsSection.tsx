@@ -23,7 +23,6 @@ export function SchoolSettingsSection() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [results, setResults] = useState<NeisSchoolSearchResult[]>([])
 
-  const [schoolYear, setSchoolYear] = useState(settings?.school_year ?? String(schoolYearOf(new Date())))
   const [grade, setGrade] = useState(settings?.grade ?? '1')
   const [className, setClassName] = useState(settings?.class_name ?? '1')
   const [savingClass, setSavingClass] = useState(false)
@@ -51,7 +50,7 @@ export function SchoolSettingsSection() {
       office_code: school.office_code,
       school_code: school.school_code,
       school_name: school.school_name,
-      school_year: settings?.school_year ?? schoolYear,
+      school_year: settings?.school_year ?? String(schoolYearOf(new Date())),
       grade: settings?.grade ?? grade,
       class_name: settings?.class_name ?? className,
     })
@@ -71,7 +70,7 @@ export function SchoolSettingsSection() {
       office_code: settings.office_code,
       school_code: settings.school_code,
       school_name: settings.school_name,
-      school_year: schoolYear,
+      school_year: settings?.school_year ?? String(schoolYearOf(new Date())),
       grade,
       class_name: className,
     })
@@ -137,7 +136,7 @@ export function SchoolSettingsSection() {
                       type="button"
                       onClick={() => handleSelectSchool(school)}
                       disabled={selectingSchoolCode !== null}
-                      className="w-full rounded-lg border border-gray-100 p-3 text-left transition-colors hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="w-full rounded-lg border border-gray-100 p-3 text-left transition-colors hover:border-brand-200 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <p className="text-sm font-medium text-gray-900">
                         {school.school_name}
@@ -155,18 +154,9 @@ export function SchoolSettingsSection() {
 
       <div className={sectionCardClass}>
         <h2 className={`mb-1 ${cardTitleClass}`}>학급 정보</h2>
-        <p className={`mb-4 ${cardDescriptionClass}`}>시간표 조회에 필요한 학년도·학년·반입니다.</p>
+        <p className={`mb-4 ${cardDescriptionClass}`}>시간표 조회에 필요한 학년·반입니다.</p>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-          <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
-            학년도
-            <input
-              type="text"
-              value={schoolYear}
-              onChange={(e) => setSchoolYear(e.target.value)}
-              className={fieldClass}
-            />
-          </label>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
             학년
             <select value={grade} onChange={(e) => setGrade(e.target.value)} className={fieldClass}>
@@ -207,7 +197,7 @@ export function SchoolSettingsSection() {
       )}
 
       {message && !error && (
-        <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700" aria-live="polite">
+        <p className="rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-sm text-brand-700" aria-live="polite">
           {message}
         </p>
       )}

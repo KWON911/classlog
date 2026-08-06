@@ -12,7 +12,7 @@ const STATUSES: DisplayStatus[] = ['출석', '결석', '지각', '조퇴', '결�
 const REASONS: AttendanceReasonCategory[] = ['질병', '미인정', '인정', '기타']
 
 const fieldClass =
-  'h-9 rounded-lg border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100'
+  'h-9 rounded-lg border border-gray-300 px-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100'
 
 /** 연한 강조만 — 색상만으로 상태를 구분하지 않도록 select의 상태 텍스트와 함께 사용한다. */
 const STATUS_ACCENT_CLASS: Record<AttendanceStatus, string> = {

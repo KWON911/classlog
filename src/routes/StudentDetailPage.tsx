@@ -5,6 +5,7 @@ import { useStudents } from '../lib/hooks/useStudents'
 import { useStudentRecords } from '../lib/hooks/useStudentRecords'
 import { useAttendanceSummary } from '../lib/hooks/useAttendanceSummary'
 import { StudentDetailCard } from '../components/StudentDetailCard'
+import { PageContainer } from '../components/PageContainer'
 import type { StudentFormValues } from '../components/StudentForm'
 import { RecordForm, type RecordFormValues } from '../components/RecordForm'
 import { RecordTimeline } from '../components/RecordTimeline'
@@ -146,11 +147,11 @@ export function StudentDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-6">
+    <PageContainer size="standard" maxWidth="1200px">
       <button
         type="button"
         onClick={() => runOrConfirm(() => navigate('/students'))}
-        className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
+        className="text-sm font-medium text-brand-600 transition-colors hover:text-brand-700"
       >
         ← 학생 목록으로 돌아가기
       </button>
@@ -321,6 +322,6 @@ export function StudentDetailPage() {
           }}
         />
       )}
-    </div>
+    </PageContainer>
   )
 }

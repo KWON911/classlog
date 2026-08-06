@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
 import { WeeklyTimetableCard } from '../components/home/WeeklyTimetableCard'
 import { WeeklyMealCard } from '../components/home/WeeklyMealCard'
+import { PageContainer } from '../components/PageContainer'
 import { addDays, mondayOf, yyyymmdd } from '../lib/utils/date-utils'
 
 function formatWeekRange(monday: Date, friday: Date) {
@@ -34,10 +35,10 @@ export function HomePage() {
   }, [isRefreshing])
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
+    <PageContainer size="wide">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">홈</h1>
+          <h1 className="text-2xl font-semibold text-brand-700">홈</h1>
           <p className="mt-1 text-gray-600">안녕하세요, 권쌤!</p>
           <div className="mt-2 flex items-center gap-1.5">
             <button
@@ -94,6 +95,6 @@ export function HomePage() {
           onLoadingChange={setMealLoading}
         />
       </div>
-    </div>
+    </PageContainer>
   )
 }

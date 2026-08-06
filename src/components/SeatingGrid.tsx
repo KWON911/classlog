@@ -1,4 +1,3 @@
-import 'pretendard/dist/web/variable/pretendardvariable.css'
 import { mapGender } from '../lib/seating'
 import type { Seat, Student, TeacherDirection } from '../lib/types'
 
@@ -105,10 +104,7 @@ export function SeatingGrid({
   )
 
   return (
-    <div
-      className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6"
-      style={{ fontFamily: "'Pretendard Variable', sans-serif" }}
-    >
+    <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
       <div className="mb-4 flex flex-wrap gap-2 print:hidden">
         {LEGEND_ITEMS.map((item) => (
           <span

@@ -13,7 +13,7 @@ type RecordTimelineProps = {
 
 function filterPillClass(active: boolean) {
   return `rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-    active ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+    active ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
   }`
 }
 
@@ -60,7 +60,7 @@ export function RecordTimeline({ records, onEdit, onDelete }: RecordTimelineProp
                   onClick={() => onEdit(record)}
                   aria-label="기록 수정"
                   title="기록 수정"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-brand-50 hover:text-brand-600"
                 >
                   <Pencil size={16} />
                 </button>

@@ -63,7 +63,7 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
         <div className="flex items-center gap-3">
           <label
             htmlFor="csv-file-input"
-            className={`${csvButtonClass} cursor-pointer focus-within:ring-2 focus-within:ring-blue-300 focus-within:ring-offset-1`}
+            className={`${csvButtonClass} cursor-pointer focus-within:ring-2 focus-within:ring-brand-300 focus-within:ring-offset-1`}
           >
             CSV 파일 선택
           </label>
@@ -85,7 +85,7 @@ export function ImportStudentsPanel({ existingNumbers, onImport, onCancel }: Imp
         <a
           href="/sample-students.csv"
           download
-          className="mt-1 inline-block text-sm font-medium text-blue-600 hover:underline"
+          className="mt-1 inline-block text-sm font-medium text-brand-600 hover:underline"
         >
           샘플 파일 다운로드
         </a>

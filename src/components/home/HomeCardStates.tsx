@@ -8,7 +8,7 @@ export function UnsetState({ message }: { message: string }) {
       <p className="max-w-xs text-sm text-gray-500">{message}</p>
       <Link
         to="/students/manage"
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+        className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
       >
         정보관리로 이동
       </Link>
