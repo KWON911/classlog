@@ -1,4 +1,4 @@
-import { MessageCircle, MessagesSquare, School, Shuffle, Timer } from 'lucide-react'
+import { BookOpen, MessageCircle, MessagesSquare, School, Shuffle, Timer } from 'lucide-react'
 import type { NavIcon } from './navItems'
 
 export type MyApp = {
@@ -19,4 +19,5 @@ export const MY_APPS: MyApp[] = [
     icon: Shuffle,
     integration: 'student-roster',
   },
+  { name: '독서록', url: 'https://k-book-report.vercel.app/', icon: BookOpen },
 ]
