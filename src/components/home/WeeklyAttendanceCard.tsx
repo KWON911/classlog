@@ -76,7 +76,7 @@ export function WeeklyAttendanceCard({
                       {day.entries.map((entry) => (
                         <li key={entry.student_id}>
                           <Link
-                            to={`/students/${entry.student_id}`}
+                            to={`/attendance?date=${day.date}&student=${entry.student_id}`}
                             className={`block rounded px-1.5 py-1 text-center text-[11px] font-medium ${ATTENDANCE_STATUS_COLOR_CLASS[entry.status]}`}
                           >
                             {entry.number}번 {entry.name} {entry.status}
