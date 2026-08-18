@@ -10,6 +10,7 @@ import {
   weekdaysOf,
   yyyymm,
   yyyymmdd,
+  yyyymmddDash,
 } from './date-utils'
 
 describe('yyyymm', () => {
@@ -21,6 +22,12 @@ describe('yyyymm', () => {
 describe('yyyymmdd', () => {
   it('pads single-digit months and days', () => {
     expect(yyyymmdd(new Date(2026, 7, 3))).toBe('20260803')
+  })
+})
+
+describe('yyyymmddDash', () => {
+  it('pads single-digit months and days with dashes', () => {
+    expect(yyyymmddDash(new Date(2026, 7, 3))).toBe('2026-08-03')
   })
 })
 
