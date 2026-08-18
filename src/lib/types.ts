@@ -60,6 +60,19 @@ export type WeeklyAttendanceDay = {
   entries: WeeklyAttendanceBadge[]
 }
 
+export type SearchRecord = Pick<StudentRecord, 'id' | 'student_id' | 'category' | 'content' | 'record_date'>
+export type SearchAttendanceEntry = Pick<AttendanceEntry, 'id' | 'student_id' | 'status' | 'reason_category' | 'note' | 'date'>
+
+export type StudentSearchResult = { student: Student; matchedLabel: string; matchedValue: string }
+export type RecordSearchResult = { record: SearchRecord; student: Student }
+export type AttendanceSearchResult = { entry: SearchAttendanceEntry; student: Student }
+
+export type SearchResults = {
+  students: StudentSearchResult[]
+  records: RecordSearchResult[]
+  attendance: AttendanceSearchResult[]
+}
+
 export type SeatStatus = 'available' | 'empty' | 'disabled'
 export type TeacherDirection = 'north' | 'south'
 export type SeatGender = 'male' | 'female'
