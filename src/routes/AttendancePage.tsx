@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useAttendance } from '../lib/hooks/useAttendance'
 import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
@@ -34,6 +35,14 @@ function firstWeekdayOfMonth(yearMonth: string) {
   return `${yearMonth}-01`
 }
 
+function parseDateParam(dateParam: string | null): { yearMonth: string; selectedDate: string } | null {
+  if (!dateParam || !/^\d{8}$/.test(dateParam)) return null
+  const year = dateParam.slice(0, 4)
+  const month = dateParam.slice(4, 6)
+  const day = dateParam.slice(6, 8)
+  return { yearMonth: `${year}-${month}`, selectedDate: `${year}-${month}-${day}` }
+}
+
 const tabButtonClass = (active: boolean) =>
   `rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
     active ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100'
@@ -62,9 +71,13 @@ function MonthNav({ yearMonth, onChange }: { yearMonth: string; onChange: (delta
 }
 
 export function AttendancePage() {
+  const [searchParams] = useSearchParams()
+  const dateFromQuery = parseDateParam(searchParams.get('date'))
+  const highlightStudentId = searchParams.get('student') ?? undefined
+
   const [activeTab, setActiveTab] = useState<Tab>('daily')
-  const [yearMonth, setYearMonth] = useState(todayYearMonth())
-  const [selectedDate, setSelectedDate] = useState(firstWeekdayOfMonth(todayYearMonth()))
+  const [yearMonth, setYearMonth] = useState(dateFromQuery?.yearMonth ?? todayYearMonth())
+  const [selectedDate, setSelectedDate] = useState(dateFromQuery?.selectedDate ?? firstWeekdayOfMonth(todayYearMonth()))
 
   const { students, error: studentsError } = useStudents()
   const { entries, loading, error, upsertEntry, clearEntry, deleteEntry } = useAttendance(yearMonth)
@@ -142,6 +155,7 @@ export function AttendancePage() {
               events={selectedDateEvents}
               upsertEntry={upsertEntry}
               clearEntry={clearEntry}
+              highlightStudentId={highlightStudentId}
             />
           </div>
         </div>
