@@ -3,6 +3,7 @@ import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
 import { WeeklyTimetableCard } from '../components/home/WeeklyTimetableCard'
 import { WeeklyMealCard } from '../components/home/WeeklyMealCard'
 import { WeeklyAttendanceCard } from '../components/home/WeeklyAttendanceCard'
+import { HomeSearchBar } from '../components/home/HomeSearchBar'
 import { PageContainer } from '../components/PageContainer'
 import { addDays, mondayOf, yyyymmdd } from '../lib/utils/date-utils'
 
@@ -80,6 +81,8 @@ export function HomePage() {
           {isRefreshing ? '새로고침 중...' : '↻ 새로고침'}
         </button>
       </div>
+
+      <HomeSearchBar />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,42fr)_minmax(0,58fr)]">
         <WeeklyTimetableCard
