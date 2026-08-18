@@ -19,6 +19,16 @@ type FetchResult<T> = { data: T; error: null } | { data: null; error: string }
 type NeisResultBlock = { CODE?: string; MESSAGE?: string }
 
 const timetableCache = new Map<string, TimetableByDate>()
+/**
+ * Keyed by `${school}_${grade}_${class}_${ay}_${defaultGuessSem}` → the
+ * semester actually confirmed to hold data for that scope. Once a mismatch
+ * between semesterOf()'s guess and NEIS's real data is resolved for a class,
+ * later months that hit the same guess reuse the resolved semester directly
+ * instead of re-probing the alternate semester on every blank week (which
+ * both wastes a request and, if the wrong semester ever has stray leftover
+ * content for the same dates, risks showing it during a genuine break).
+ */
+const semesterOverrideCache = new Map<string, string>()
 const mealCache = new Map<string, MealByDate>()
 const schoolEventCache = new Map<string, SchoolEventByDate>()
 
@@ -157,7 +167,9 @@ export async function fetchTimetable(
 ): Promise<FetchResult<TimetableByDate>> {
   const monthDate = new Date(parseInt(yearMonth.slice(0, 4), 10), parseInt(yearMonth.slice(4, 6), 10) - 1, 15)
   const ay = schoolYearOf(monthDate)
-  const sem = semesterOf(monthDate)
+  const defaultSem = semesterOf(monthDate)
+  const overrideKey = `${settings.school_code}_${settings.grade}_${settings.class_name}_${ay}_${defaultSem}`
+  const sem = semesterOverrideCache.get(overrideKey) ?? defaultSem
   const cacheKey = `${settings.school_code}_${settings.grade}_${settings.class_name}_${yearMonth}_${ay}_${sem}`
 
   if (!options?.force && timetableCache.has(cacheKey)) {
@@ -171,14 +183,40 @@ export async function fetchTimetable(
     return primary
   }
 
+  // Already probed this scope+guess before and found no override needed —
+  // this is a genuine blank week within the correct semester, not a wrong
+  // guess. Trust it instead of re-probing the other semester again.
+  if (semesterOverrideCache.has(overrideKey)) {
+    timetableCache.set(cacheKey, primary.data)
+    return primary
+  }
+
   // The 3~8월/9~2월 semester split is a heuristic — some schools register
   // their second semester earlier (observed: mid-August). NEIS returned
   // rows (slots exist) but every ITRT_CNTNT was blank — the actual content
-  // may simply be filed under the other semester.
+  // may simply be filed under the other semester. Probe it once; remember
+  // the outcome either way so later months in this scope don't re-probe.
   const altSem = sem === '1' ? '2' : '1'
   const fallback = await fetchTimetableForSemester(settings, yearMonth, ay, altSem)
-  if (fallback.error === null) timetableCache.set(cacheKey, fallback.data)
-  return fallback
+  if (fallback.error !== null) {
+    // Couldn't get a clean read on the alternate semester (e.g. transient
+    // network error) — don't lock in a permanent decision from this;  leave
+    // future calls free to probe again, and surface primary's blank result
+    // for this call.
+    timetableCache.set(cacheKey, primary.data)
+    return primary
+  }
+
+  if (Object.keys(fallback.data).length > 0) {
+    semesterOverrideCache.set(overrideKey, altSem)
+    const fallbackCacheKey = `${settings.school_code}_${settings.grade}_${settings.class_name}_${yearMonth}_${ay}_${altSem}`
+    timetableCache.set(fallbackCacheKey, fallback.data)
+    return fallback
+  }
+
+  semesterOverrideCache.set(overrideKey, sem)
+  timetableCache.set(cacheKey, primary.data)
+  return primary
 }
 
 export async function getTimetableForRange(

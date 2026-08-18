@@ -174,6 +174,57 @@ describe('fetchTimetable', () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1)
   })
+
+  it('resolves a semester mismatch once per class, then reuses it directly for a later month', async () => {
+    // 202806 and 202807 both compute a default semester of '1' via
+    // semesterOf, and share the same school year (2028) — a scope untouched
+    // by any other test in this file, so the module-level override cache
+    // can't interfere. Once the mismatch is discovered on the first month,
+    // the second month should go straight to semester '2' instead of
+    // probing semester '1' again first.
+    mockFetch.mockImplementation((input: string) => {
+      const url = new URL(input, 'http://localhost')
+      const sem = url.searchParams.get('SEM')
+      const from = url.searchParams.get('TI_FROM_YMD') ?? ''
+      if (sem === '1') {
+        return jsonResponse({
+          elsTimetable: [{}, { row: [{ ALL_TI_YMD: from.slice(0, 8), PERIO: '1', ITRT_CNTNT: null }] }],
+        })
+      }
+      return jsonResponse({
+        elsTimetable: [{}, { row: [{ ALL_TI_YMD: from.slice(0, 8), PERIO: '1', ITRT_CNTNT: '체육' }] }],
+      })
+    })
+
+    await fetchTimetable(settings, '202806')
+    const second = await fetchTimetable(settings, '202807')
+
+    expect(second.error).toBeNull()
+    expect(Object.keys(second.data ?? {}).length).toBeGreaterThan(0)
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+    const secondCallUrls = mockFetch.mock.calls.slice(2).map((c) => new URL(c[0], 'http://localhost').searchParams.get('SEM'))
+    expect(secondCallUrls).toEqual(['2'])
+  })
+
+  it('probes the alternate semester only once for a class where both semesters come back blank', async () => {
+    // 202904 and 202905 both default to semester '1', using school year
+    // 2029 (untouched elsewhere in this file). Every row on both semesters
+    // has a genuinely blank ITRT_CNTNT (e.g. a real school break spanning
+    // the boundary) — the second month must not re-probe semester '2' after
+    // the first month already established there's nothing there.
+    mockFetch.mockImplementation((input: string) => {
+      const url = new URL(input, 'http://localhost')
+      const from = url.searchParams.get('TI_FROM_YMD') ?? ''
+      return jsonResponse({
+        elsTimetable: [{}, { row: [{ ALL_TI_YMD: from.slice(0, 8), PERIO: '1', ITRT_CNTNT: null }] }],
+      })
+    })
+
+    await fetchTimetable(settings, '202904')
+    await fetchTimetable(settings, '202905')
+
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+  })
 })
 
 describe('getTimetableForRange', () => {
