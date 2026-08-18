@@ -109,7 +109,9 @@ export function searchAll(
   const attendanceResults: AttendanceSearchResult[] = []
   for (const entry of attendance) {
     if (attendanceResults.length >= MAX_PER_GROUP) break
-    if (!entry.note || !normalize(entry.note).includes(lowerQuery)) continue
+    const noteMatches = entry.note ? normalize(entry.note).includes(lowerQuery) : false
+    const reasonMatches = normalize(entry.reason_category).includes(lowerQuery)
+    if (!noteMatches && !reasonMatches) continue
     const student = studentById.get(entry.student_id)
     if (!student) continue
     attendanceResults.push({ entry, student })

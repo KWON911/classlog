@@ -47,6 +47,18 @@ describe('searchAll', () => {
     expect(result.students).toEqual([])
   })
 
+  it('matches a student text field by substring even for a digit-only query', () => {
+    // Digit-only queries must still substring-match student TEXT fields
+    // (e.g. 생년월일) via the normal text-field pass, not just the
+    // phone-suffix rule. A refactor that made the digits-only branch
+    // return early after checking only phone fields would break this.
+    const park = student({ id: 's-park', number: 9, name: '박지훈', birthdate: '240304' })
+
+    const result = searchAll('0304', [kim, lee, park], [], [])
+
+    expect(result.students).toEqual([{ student: park, matchedLabel: '생년월일', matchedValue: '240304' }])
+  })
+
   it('requires at least 2 characters before matching anything', () => {
     const result = searchAll('민', [kim, lee], [], [])
 

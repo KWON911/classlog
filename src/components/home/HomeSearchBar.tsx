@@ -16,8 +16,9 @@ const groupLabelClass = 'px-2 py-1 text-xs font-semibold text-gray-400'
 
 export function HomeSearchBar() {
   const navigate = useNavigate()
-  const { students } = useStudents()
-  const { records, attendance } = useSearchIndex()
+  const { students, loading: studentsLoading } = useStudents()
+  const { records, attendance, loading: indexLoading } = useSearchIndex()
+  const isLoading = studentsLoading || indexLoading
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -65,7 +66,9 @@ export function HomeSearchBar() {
 
       {isOpen && hasQuery && (
         <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
-          {!hasResults ? (
+          {isLoading ? (
+            <p className="px-3 py-2 text-sm text-gray-500">불러오는 중...</p>
+          ) : !hasResults ? (
             <p className="px-3 py-2 text-sm text-gray-500">검색 결과가 없습니다.</p>
           ) : (
             <>
@@ -111,7 +114,8 @@ export function HomeSearchBar() {
                       onClick={() => goTo(`/attendance?date=${r.entry.date.replace(/-/g, '')}&student=${r.student.id}`)}
                       className={resultButtonClass}
                     >
-                      {r.student.number}번 {r.student.name} · {formatAttendanceDate(r.entry.date)} {r.entry.status}
+                      {r.student.number}번 {r.student.name} · {formatAttendanceDate(r.entry.date)} {r.entry.status} ·{' '}
+                      {r.entry.reason_category}
                       {r.entry.note ? ` · ${r.entry.note}` : ''}
                     </button>
                   ))}
