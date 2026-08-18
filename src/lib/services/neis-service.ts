@@ -63,20 +63,14 @@ async function callNeis(endpoint: string, params: Record<string, string>): Promi
   return res.json()
 }
 
-export async function fetchTimetable(
+type SemesterFetchResult = FetchResult<TimetableByDate> & { rawRowCount: number }
+
+async function fetchTimetableForSemester(
   settings: SchoolSettings,
   yearMonth: string,
-  options?: { force?: boolean },
-): Promise<FetchResult<TimetableByDate>> {
-  const monthDate = new Date(parseInt(yearMonth.slice(0, 4), 10), parseInt(yearMonth.slice(4, 6), 10) - 1, 15)
-  const ay = schoolYearOf(monthDate)
-  const sem = semesterOf(monthDate)
-  const cacheKey = `${settings.school_code}_${settings.grade}_${settings.class_name}_${yearMonth}_${ay}_${sem}`
-
-  if (!options?.force && timetableCache.has(cacheKey)) {
-    return { data: timetableCache.get(cacheKey)!, error: null }
-  }
-
+  ay: string,
+  sem: string,
+): Promise<SemesterFetchResult> {
   const lastDay = lastDayOfMonth(yearMonth)
 
   try {
@@ -101,12 +95,11 @@ export async function fetchTimetable(
     if (result) {
       if (isNoDataResult(result)) {
         if (import.meta.env.DEV) {
-          console.debug('[neis-service] fetchTimetable: no data', { yearMonth, ay, sem, cacheKey })
+          console.debug('[neis-service] fetchTimetable: no data', { yearMonth, ay, sem })
         }
-        timetableCache.set(cacheKey, {})
-        return { data: {}, error: null }
+        return { data: {}, error: null, rawRowCount: 0 }
       }
-      return { data: null, error: result.MESSAGE ?? '시간표를 불러오지 못했습니다.' }
+      return { data: null, error: result.MESSAGE ?? '시간표를 불러오지 못했습니다.', rawRowCount: 0 }
     }
 
     const elsTimetable = json.elsTimetable as [{ head?: Record<string, unknown>[] }, { row?: Record<string, string>[] }] | undefined
@@ -151,11 +144,41 @@ export async function fetchTimetable(
       )
     }
 
-    timetableCache.set(cacheKey, map)
-    return { data: map, error: null }
+    return { data: map, error: null, rawRowCount: rows.length }
   } catch (e) {
-    return { data: null, error: e instanceof Error ? e.message : '시간표를 불러오지 못했습니다.' }
+    return { data: null, error: e instanceof Error ? e.message : '시간표를 불러오지 못했습니다.', rawRowCount: 0 }
   }
+}
+
+export async function fetchTimetable(
+  settings: SchoolSettings,
+  yearMonth: string,
+  options?: { force?: boolean },
+): Promise<FetchResult<TimetableByDate>> {
+  const monthDate = new Date(parseInt(yearMonth.slice(0, 4), 10), parseInt(yearMonth.slice(4, 6), 10) - 1, 15)
+  const ay = schoolYearOf(monthDate)
+  const sem = semesterOf(monthDate)
+  const cacheKey = `${settings.school_code}_${settings.grade}_${settings.class_name}_${yearMonth}_${ay}_${sem}`
+
+  if (!options?.force && timetableCache.has(cacheKey)) {
+    return { data: timetableCache.get(cacheKey)!, error: null }
+  }
+
+  const primary = await fetchTimetableForSemester(settings, yearMonth, ay, sem)
+  const primaryIsBlank = primary.error === null && primary.rawRowCount > 0 && Object.keys(primary.data ?? {}).length === 0
+  if (!primaryIsBlank) {
+    if (primary.error === null) timetableCache.set(cacheKey, primary.data)
+    return primary
+  }
+
+  // The 3~8월/9~2월 semester split is a heuristic — some schools register
+  // their second semester earlier (observed: mid-August). NEIS returned
+  // rows (slots exist) but every ITRT_CNTNT was blank — the actual content
+  // may simply be filed under the other semester.
+  const altSem = sem === '1' ? '2' : '1'
+  const fallback = await fetchTimetableForSemester(settings, yearMonth, ay, altSem)
+  if (fallback.error === null) timetableCache.set(cacheKey, fallback.data)
+  return fallback
 }
 
 export async function getTimetableForRange(

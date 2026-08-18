@@ -136,6 +136,44 @@ describe('fetchTimetable', () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(2)
   })
+
+  it('falls back to the other semester when the calculated semester has no content', async () => {
+    // Observed against real NEIS data: a school can register its second
+    // semester earlier than the app's 3~8월/9~2월 heuristic assumes (e.g.
+    // semester 2 starting mid-August). Querying the "wrong" semester still
+    // returns rows for the requested dates, but every ITRT_CNTNT is blank,
+    // while the actual content lives under the other semester value.
+    // Uses 202708 — not touched by any other timetableCache test in this
+    // file, so the module-level cache can't interfere.
+    mockFetch.mockImplementation((input: string) => {
+      const url = new URL(input, 'http://localhost')
+      const sem = url.searchParams.get('SEM')
+      if (sem === '1') {
+        return jsonResponse({
+          elsTimetable: [{}, { row: [{ ALL_TI_YMD: '20270817', PERIO: '1', ITRT_CNTNT: null }] }],
+        })
+      }
+      return jsonResponse({
+        elsTimetable: [{}, { row: [{ ALL_TI_YMD: '20270817', PERIO: '1', ITRT_CNTNT: '체육' }] }],
+      })
+    })
+
+    const result = await fetchTimetable(settings, '202708')
+
+    expect(result.error).toBeNull()
+    expect(result.data?.['20270817']).toEqual([{ period: 1, subject: '체육' }])
+  })
+
+  it('does not fall back to the other semester when NEIS genuinely has no rows for the month', async () => {
+    // A month with zero scheduled rows (not "rows with blank content") is a
+    // legitimate empty result — e.g. a school break — and must not trigger
+    // an extra request to the other semester.
+    mockFetch.mockReturnValue(jsonResponse({ elsTimetable: [{}, { row: [] }] }))
+
+    await fetchTimetable(settings, '202709')
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('getTimetableForRange', () => {
