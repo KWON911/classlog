@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AttendanceEntry, SchoolEvent, Student } from '../lib/types'
 import { gradeScopeLabel, isNonInstructionalDay } from '../lib/utils/schoolEvents'
 import { AttendanceStudentRow, type AttendanceDraftEntry } from './AttendanceStudentRow'
@@ -82,10 +82,15 @@ export function DailyStudentAttendance({
     setStatusMessage(null)
   }, [selectedDate, entryByStudent, students])
 
+  const scrolledForRef = useRef<string | null>(null)
   useEffect(() => {
-    if (!highlightStudentId) return
-    document.getElementById(`student-row-${highlightStudentId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [highlightStudentId])
+    if (!highlightStudentId || loading) return
+    if (scrolledForRef.current === highlightStudentId) return
+    const el = document.getElementById(`student-row-${highlightStudentId}`)
+    if (!el) return
+    scrolledForRef.current = highlightStudentId
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlightStudentId, loading, students])
 
   const updateDraft = (studentId: string, patch: Partial<AttendanceDraftEntry>) => {
     setDraft((prev) => {
