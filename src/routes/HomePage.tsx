@@ -71,18 +71,19 @@ export function HomePage() {
             </button>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="시간표·급식 새로고침"
-        >
-          {isRefreshing ? '새로고침 중...' : '↻ 새로고침'}
-        </button>
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <HomeSearchBar />
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="h-9 shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="시간표·급식 새로고침"
+          >
+            {isRefreshing ? '새로고침 중...' : '↻ 새로고침'}
+          </button>
+        </div>
       </div>
-
-      <HomeSearchBar />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,42fr)_minmax(0,58fr)]">
         <WeeklyTimetableCard

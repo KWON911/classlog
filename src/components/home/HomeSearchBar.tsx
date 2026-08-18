@@ -44,8 +44,8 @@ export function HomeSearchBar() {
   }
 
   return (
-    <div ref={containerRef} className="relative mb-5">
-      <div className="flex h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3">
+    <div ref={containerRef} className="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
+      <div className="flex h-9 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3">
         <Search size={16} className="text-gray-400" aria-hidden="true" />
         <input
           type="text"
@@ -65,7 +65,7 @@ export function HomeSearchBar() {
       </div>
 
       {isOpen && hasQuery && (
-        <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
+        <div className="absolute right-0 z-10 mt-1 w-full min-w-[280px] rounded-lg border border-gray-200 bg-white py-2 shadow-lg sm:w-96">
           {isLoading ? (
             <p className="px-3 py-2 text-sm text-gray-500">불러오는 중...</p>
           ) : !hasResults ? (
