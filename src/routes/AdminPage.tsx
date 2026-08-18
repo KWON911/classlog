@@ -26,6 +26,13 @@ export function AdminPage() {
   const [pending, setPending] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
 
+  function closeModal() {
+    if (pending) return
+    setTarget(null)
+    setConfirmation('')
+    setActionError(null)
+  }
+
   async function handleReset() {
     if (!target || confirmation !== '초기화') return
     setPending(true)
@@ -68,21 +75,25 @@ export function AdminPage() {
         <p className="mt-6 text-sm text-slate-500">계정 정보를 불러오는 중입니다.</p>
       ) : (
         <div className="mt-6 flex flex-col gap-3">
-          {accounts.map((account) => (
-            <section key={account.teacher_id} className={`${sectionCardClass} flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between`}>
-              <div>
-                <h2 className="font-semibold text-slate-900">{account.email}</h2>
-                <AccountCounts account={account} />
-              </div>
-              <button
-                type="button"
-                onClick={() => setTarget(account)}
-                className="h-10 shrink-0 rounded-lg border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
-              >
-                데이터 초기화
-              </button>
-            </section>
-          ))}
+          {accounts.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">초기화할 계정이 없습니다.</p>
+          ) : (
+            accounts.map((account) => (
+              <section key={account.teacher_id} className={`${sectionCardClass} flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between`}>
+                <div>
+                  <h2 className="font-semibold text-slate-900">{account.email}</h2>
+                  <AccountCounts account={account} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTarget(account)}
+                  className="h-10 shrink-0 rounded-lg border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+                >
+                  데이터 초기화
+                </button>
+              </section>
+            ))
+          )}
         </div>
       )}
 
@@ -90,13 +101,7 @@ export function AdminPage() {
         <Modal
           title="계정 데이터 초기화"
           description={`${target.email} 계정의 앱 데이터를 영구 삭제합니다.`}
-          onClose={() => {
-            if (!pending) {
-              setTarget(null)
-              setConfirmation('')
-              setActionError(null)
-            }
-          }}
+          onClose={closeModal}
           maxWidthClassName="max-w-md"
         >
           <p className="text-sm leading-6 text-slate-700">
@@ -116,7 +121,7 @@ export function AdminPage() {
             <button
               type="button"
               disabled={pending}
-              onClick={() => setTarget(null)}
+              onClick={closeModal}
               className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 disabled:opacity-50"
             >
               취소

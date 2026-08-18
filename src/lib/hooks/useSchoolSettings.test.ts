@@ -70,7 +70,14 @@ describe('useSchoolSettings', () => {
     const upsertBuilder = createQueryBuilder({ data: settingsRow, error: null })
     mockFrom.mockReturnValueOnce(upsertBuilder)
 
-    const { teacher_id, updated_at, ...input } = settingsRow
+    const input = {
+      office_code: settingsRow.office_code,
+      school_code: settingsRow.school_code,
+      school_name: settingsRow.school_name,
+      school_year: settingsRow.school_year,
+      grade: settingsRow.grade,
+      class_name: settingsRow.class_name,
+    }
     await act(async () => {
       await result.current.saveSettings(input)
     })
@@ -86,7 +93,14 @@ describe('useSchoolSettings', () => {
 
     mockGetUser.mockResolvedValue({ data: { user: null } })
 
-    const { teacher_id, updated_at, ...input } = settingsRow
+    const input = {
+      office_code: settingsRow.office_code,
+      school_code: settingsRow.school_code,
+      school_name: settingsRow.school_name,
+      school_year: settingsRow.school_year,
+      grade: settingsRow.grade,
+      class_name: settingsRow.class_name,
+    }
     const response = await act(async () => result.current.saveSettings(input))
 
     expect(response).toEqual({ error: '로그인이 필요합니다.' })

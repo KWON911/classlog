@@ -37,3 +37,7 @@ npm test        # useStudents, useStudentRecords 훅 단위 테스트
 npm run build   # 타입체크 + 프로덕션 빌드
 npm run lint    # oxlint
 ```
+
+## Applying database updates to an existing project
+
+Run the SQL files in `supabase/migrations/` in filename order in the Supabase SQL Editor. These migrations are for an already-created project; do not re-run the full schema baseline just to apply a later update.

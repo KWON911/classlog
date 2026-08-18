@@ -524,7 +524,7 @@ export function SeatingPage() {
       ? (assignments.get(activeTool.firstStudentId) ?? null)
       : null
 
-  const conditionRows = useMemo(() => {
+  const conditionRows = (() => {
     const rows: { key: string; title: string; detail: string; onRemove: () => void }[] = []
     for (const [studentId, seatId] of fixed) {
       const student = studentNameById.get(studentId)
@@ -564,7 +564,7 @@ export function SeatingPage() {
       }
     })
     return rows
-  }, [fixed, seats, separations, studentNameById])
+  })()
 
   return (
     <PageContainer size="full">

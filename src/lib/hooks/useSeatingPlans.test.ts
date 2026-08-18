@@ -85,7 +85,20 @@ describe('useSeatingPlans', () => {
     const insertBuilder = createQueryBuilder({ data: planA, error: null })
     mockFrom.mockReturnValueOnce(insertBuilder)
 
-    const { id, teacher_id, created_at, ...input } = planA
+    const input = {
+      title: planA.title,
+      plan_date: planA.plan_date,
+      rows: planA.rows,
+      columns: planA.columns,
+      teacher_direction: planA.teacher_direction,
+      seats: planA.seats,
+      assignments: planA.assignments,
+      separations: planA.separations,
+      gender_balance: planA.gender_balance,
+      avoid_past_neighbors: planA.avoid_past_neighbors,
+      avoid_previous_seats: planA.avoid_previous_seats,
+      previous_seat_history_scope: planA.previous_seat_history_scope,
+    }
     await act(async () => {
       await result.current.savePlan(null, input)
     })
@@ -104,7 +117,20 @@ describe('useSeatingPlans', () => {
     const updateBuilder = createQueryBuilder({ data: updated, error: null })
     mockFrom.mockReturnValueOnce(updateBuilder)
 
-    const { id, teacher_id, created_at, ...input } = updated
+    const input = {
+      title: updated.title,
+      plan_date: updated.plan_date,
+      rows: updated.rows,
+      columns: updated.columns,
+      teacher_direction: updated.teacher_direction,
+      seats: updated.seats,
+      assignments: updated.assignments,
+      separations: updated.separations,
+      gender_balance: updated.gender_balance,
+      avoid_past_neighbors: updated.avoid_past_neighbors,
+      avoid_previous_seats: updated.avoid_previous_seats,
+      previous_seat_history_scope: updated.previous_seat_history_scope,
+    }
     await act(async () => {
       await result.current.savePlan('p1', input)
     })
