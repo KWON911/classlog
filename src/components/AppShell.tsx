@@ -1,9 +1,10 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LogOut, ShieldAlert } from 'lucide-react'
 import { useAuth } from '../lib/hooks/useAuth'
 import { useSidebarCollapsed } from '../lib/hooks/useSidebarCollapsed'
 import { MORE_NAV_ITEMS, PRIMARY_NAV_ITEMS, isNavItemActive } from '../lib/navItems'
 import { MobileBottomNav } from './MobileBottomNav'
+import { isAdminEmail } from '../lib/admin'
 
 const tooltipClass =
   'pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100'
@@ -15,7 +16,7 @@ function itemLinkClass(active: boolean, collapsed: boolean) {
 }
 
 export function AppShell() {
-  const { signOut } = useAuth()
+  const { signOut, session } = useAuth()
   const { pathname } = useLocation()
   const { collapsed, toggle } = useSidebarCollapsed()
 
@@ -47,7 +48,7 @@ export function AppShell() {
         </div>
 
         <div className={`flex flex-col gap-[6px] ${collapsed ? 'px-3' : 'px-4'}`}>
-          {[...PRIMARY_NAV_ITEMS, ...MORE_NAV_ITEMS].map((item) => {
+          {[...PRIMARY_NAV_ITEMS, ...MORE_NAV_ITEMS, ...(isAdminEmail(session?.user.email) ? [{ to: '/admin', label: '관리자', mobileLabel: '관리자', icon: ShieldAlert }] : [])].map((item) => {
             const active = isNavItemActive(item.to, pathname)
             const Icon = item.icon
             return (

@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { Ellipsis, X } from 'lucide-react'
+import { Ellipsis, ShieldAlert, X } from 'lucide-react'
 import { MORE_NAV_ITEMS, PRIMARY_NAV_ITEMS, isNavItemActive } from '../lib/navItems'
+import { isAdminEmail } from '../lib/admin'
+import { useAuth } from '../lib/hooks/useAuth'
 
 export function MobileBottomNav() {
   const { pathname } = useLocation()
+  const { session } = useAuth()
   const [showMore, setShowMore] = useState(false)
+  const moreItems = [
+    ...MORE_NAV_ITEMS,
+    ...(isAdminEmail(session?.user.email) ? [{ to: '/admin', label: '관리자', mobileLabel: '관리자', icon: ShieldAlert }] : []),
+  ]
 
   // Close the sheet whenever navigation happens, whether via its own rows or elsewhere.
   useEffect(() => {
@@ -21,7 +28,7 @@ export function MobileBottomNav() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [showMore])
 
-  const moreActive = MORE_NAV_ITEMS.some((item) => isNavItemActive(item.to, pathname))
+  const moreActive = moreItems.some((item) => isNavItemActive(item.to, pathname))
 
   return (
     <>
@@ -50,7 +57,7 @@ export function MobileBottomNav() {
           </button>
         </div>
         <div className="flex flex-col gap-1 p-2 pb-[calc(env(safe-area-inset-bottom)+8px)]">
-          {MORE_NAV_ITEMS.map((item) => {
+          {moreItems.map((item) => {
             const active = isNavItemActive(item.to, pathname)
             const Icon = item.icon
             return (
