@@ -30,13 +30,13 @@ describe('searchAll', () => {
   it('matches a student by name substring', () => {
     const result = searchAll('민준', [kim, lee], [], [])
 
-    expect(result.students).toEqual([{ student: kim, matchedLabel: '이름', matchedValue: '김민준' }])
+    expect(result.students).toEqual([{ student: kim, matches: [{ label: '이름', value: '김민준' }] }])
   })
 
   it('matches a phone field by suffix when the query is digits-only', () => {
     const result = searchAll('4321', [kim, lee], [], [])
 
-    expect(result.students).toEqual([{ student: lee, matchedLabel: '모전번', matchedValue: '010-9999-4321' }])
+    expect(result.students).toEqual([{ student: lee, matches: [{ label: '모전번', value: '010-9999-4321' }] }])
   })
 
   it('excludes phone fields when the query mixes letters and digits', () => {
@@ -56,7 +56,7 @@ describe('searchAll', () => {
 
     const result = searchAll('0304', [kim, lee, park], [], [])
 
-    expect(result.students).toEqual([{ student: park, matchedLabel: '생년월일', matchedValue: '240304' }])
+    expect(result.students).toEqual([{ student: park, matches: [{ label: '생년월일', value: '240304' }] }])
   })
 
   it('requires at least 2 characters before matching anything', () => {
@@ -113,5 +113,24 @@ describe('searchAll', () => {
     expect(result.students).toHaveLength(5)
     expect(result.records).toHaveLength(3)
     expect(result.attendance).toHaveLength(0)
+  })
+
+  it('shows multiple matching fields for a single student', () => {
+    const gutae = student({
+      id: 's-gutae',
+      number: 1,
+      name: '구태리',
+      student_phone: '010-7679-5135',
+      father_phone: '010-5297-5135',
+    })
+
+    const result = searchAll('5135', [gutae], [], [])
+
+    // Should find both phone fields
+    expect(result.students).toHaveLength(1)
+    expect(result.students[0].student).toEqual(gutae)
+    expect(result.students[0].matches).toContainEqual({ label: '학생전번', value: '010-7679-5135' })
+    expect(result.students[0].matches).toContainEqual({ label: '부전번', value: '010-5297-5135' })
+    expect(result.students[0].matches).toHaveLength(2)
   })
 })

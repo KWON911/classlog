@@ -82,7 +82,7 @@ export function HomeSearchBar() {
                       onClick={() => goTo(`/students/${r.student.id}`)}
                       className={resultButtonClass}
                     >
-                      {r.student.number}번 {r.student.name} · {r.matchedLabel}: {r.matchedValue}
+                      {r.student.number}번 {r.student.name} · {r.matches.map((m) => `${m.label}: ${m.value}`).join(', ')}
                     </button>
                   ))}
                 </div>

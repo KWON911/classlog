@@ -38,24 +38,28 @@ function digitsOnly(value: string): string {
 }
 
 function matchStudent(student: Student, trimmedQuery: string, queryIsDigitsOnly: boolean): StudentSearchResult | null {
+  const matches: Array<{ label: string; value: string }> = []
+
   if (queryIsDigitsOnly) {
     for (const { key, label } of STUDENT_PHONE_FIELDS) {
       const value = student[key] as string | null
       if (value && digitsOnly(value).endsWith(trimmedQuery)) {
-        return { student, matchedLabel: label, matchedValue: value }
+        matches.push({ label, value })
       }
     }
   }
 
-  const lowerQuery = normalize(trimmedQuery)
-  for (const { key, label } of STUDENT_TEXT_FIELDS) {
-    const value = student[key] as string | null
-    if (value && normalize(value).includes(lowerQuery)) {
-      return { student, matchedLabel: label, matchedValue: value }
+  if (matches.length === 0) {
+    const lowerQuery = normalize(trimmedQuery)
+    for (const { key, label } of STUDENT_TEXT_FIELDS) {
+      const value = student[key] as string | null
+      if (value && normalize(value).includes(lowerQuery)) {
+        matches.push({ label, value })
+      }
     }
   }
 
-  return null
+  return matches.length > 0 ? { student, matches } : null
 }
 
 function capResults(results: SearchResults): SearchResults {

@@ -63,7 +63,7 @@ export type WeeklyAttendanceDay = {
 export type SearchRecord = Pick<StudentRecord, 'id' | 'student_id' | 'category' | 'content' | 'record_date'>
 export type SearchAttendanceEntry = Pick<AttendanceEntry, 'id' | 'student_id' | 'status' | 'reason_category' | 'note' | 'date'>
 
-export type StudentSearchResult = { student: Student; matchedLabel: string; matchedValue: string }
+export type StudentSearchResult = { student: Student; matches: Array<{ label: string; value: string }> }
 export type RecordSearchResult = { record: SearchRecord; student: Student }
 export type AttendanceSearchResult = { entry: SearchAttendanceEntry; student: Student }
 
