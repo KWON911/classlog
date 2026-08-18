@@ -19,6 +19,7 @@ export function AppShell() {
   const { signOut, session } = useAuth()
   const { pathname } = useLocation()
   const { collapsed, toggle } = useSidebarCollapsed()
+  const isAdmin = isAdminEmail(session?.user.email)
 
   return (
     <div className="flex min-h-dvh print:h-auto">
@@ -48,7 +49,7 @@ export function AppShell() {
         </div>
 
         <div className={`flex flex-col gap-[6px] ${collapsed ? 'px-3' : 'px-4'}`}>
-          {[...PRIMARY_NAV_ITEMS, ...MORE_NAV_ITEMS, ...(isAdminEmail(session?.user.email) ? [{ to: '/admin', label: '관리자', mobileLabel: '관리자', icon: ShieldAlert }] : [])].map((item) => {
+          {[...PRIMARY_NAV_ITEMS, ...MORE_NAV_ITEMS].map((item) => {
             const active = isNavItemActive(item.to, pathname)
             const Icon = item.icon
             return (
@@ -70,6 +71,30 @@ export function AppShell() {
         <div className="flex-1" />
 
         <div className={`border-t border-[#E5E9F2] pt-3 ${collapsed ? 'px-3' : 'px-4'}`}>
+          {isAdmin && (
+            <div className="group relative mb-2">
+              <NavLink
+                to="/admin"
+                aria-label="관리자"
+                aria-current={isNavItemActive('/admin', pathname) ? 'page' : undefined}
+                className={`flex h-[46px] items-center gap-3 rounded-[10px] text-base font-semibold transition-colors ${
+                  collapsed ? 'justify-center px-0' : 'px-[14px]'
+                } ${
+                  isNavItemActive('/admin', pathname)
+                    ? 'bg-red-600 text-white'
+                    : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                }`}
+              >
+                <ShieldAlert size={20} aria-hidden="true" />
+                {!collapsed && '관리자'}
+              </NavLink>
+              {collapsed && (
+                <span role="tooltip" className={tooltipClass}>
+                  관리자
+                </span>
+              )}
+            </div>
+          )}
           <div className="group relative">
             <button
               type="button"

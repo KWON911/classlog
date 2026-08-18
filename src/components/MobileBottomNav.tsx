@@ -9,10 +9,8 @@ export function MobileBottomNav() {
   const { pathname } = useLocation()
   const { session } = useAuth()
   const [showMore, setShowMore] = useState(false)
-  const moreItems = [
-    ...MORE_NAV_ITEMS,
-    ...(isAdminEmail(session?.user.email) ? [{ to: '/admin', label: '관리자', mobileLabel: '관리자', icon: ShieldAlert }] : []),
-  ]
+  const isAdmin = isAdminEmail(session?.user.email)
+  const moreItems = MORE_NAV_ITEMS
 
   // Close the sheet whenever navigation happens, whether via its own rows or elsewhere.
   useEffect(() => {
@@ -74,6 +72,22 @@ export function MobileBottomNav() {
               </Link>
             )
           })}
+          {isAdmin && (
+            <div className="mt-2 border-t border-slate-200 pt-2">
+              <Link
+                to="/admin"
+                aria-current={isNavItemActive('/admin', pathname) ? 'page' : undefined}
+                className={`flex h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-semibold transition-colors ${
+                  isNavItemActive('/admin', pathname)
+                    ? 'bg-red-50 text-red-600'
+                    : 'text-red-600 hover:bg-red-50'
+                }`}
+              >
+                <ShieldAlert size={20} aria-hidden="true" />
+                관리자
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
