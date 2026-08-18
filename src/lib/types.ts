@@ -42,6 +42,24 @@ export type AttendanceEntry = {
   created_at: string
 }
 
+export type AttendanceEntryWithStudent = AttendanceEntry & {
+  students: { number: number; name: string } | null
+}
+
+export type WeeklyAttendanceBadge = {
+  student_id: string
+  number: number
+  name: string
+  status: AttendanceStatus
+}
+
+/** date는 'YYYYMMDD' */
+export type WeeklyAttendanceDay = {
+  date: string
+  dayLabel: string
+  entries: WeeklyAttendanceBadge[]
+}
+
 export type SeatStatus = 'available' | 'empty' | 'disabled'
 export type TeacherDirection = 'north' | 'south'
 export type SeatGender = 'male' | 'female'
