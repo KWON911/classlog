@@ -23,20 +23,23 @@ const STATUS_ACCENT_CLASS: Record<AttendanceStatus, string> = {
 }
 
 type AttendanceStudentRowProps = {
+  studentId: string
   number: number
   name: string
   draft: AttendanceDraftEntry
   onChange: (patch: Partial<AttendanceDraftEntry>) => void
+  highlighted?: boolean
 }
 
-export function AttendanceStudentRow({ number, name, draft, onChange }: AttendanceStudentRowProps) {
+export function AttendanceStudentRow({ studentId, number, name, draft, onChange, highlighted }: AttendanceStudentRowProps) {
   const isPresent = draft.status === '출석'
 
   return (
     <div
+      id={`student-row-${studentId}`}
       className={`rounded-[10px] border border-gray-200 border-l-[3px] p-2.5 ${
         isPresent ? 'bg-white' : STATUS_ACCENT_CLASS[draft.status as AttendanceStatus]
-      } ${!isPresent ? 'col-span-full' : ''}`}
+      } ${!isPresent ? 'col-span-full' : ''} ${highlighted ? 'ring-2 ring-brand-500' : ''}`}
     >
       <div className="grid grid-cols-[36px_minmax(0,1fr)_92px] items-center gap-2">
         <span className="text-sm text-gray-500">{number}번</span>

@@ -18,6 +18,7 @@ type DailyStudentAttendanceProps = {
     input: { status: NonNullable<AttendanceEntry['status']>; reason_category: AttendanceEntry['reason_category']; note: string | null },
   ) => Promise<UpsertResult>
   clearEntry: (studentId: string, date: string) => Promise<UpsertResult>
+  highlightStudentId?: string
 }
 
 function formatSelectedDateTitle(dateStr: string) {
@@ -39,6 +40,7 @@ export function DailyStudentAttendance({
   events,
   upsertEntry,
   clearEntry,
+  highlightStudentId,
 }: DailyStudentAttendanceProps) {
   const entryByStudent = useMemo(() => {
     const map = new Map<string, AttendanceEntry>()
@@ -79,6 +81,11 @@ export function DailyStudentAttendance({
     setForceEnableInput(false)
     setStatusMessage(null)
   }, [selectedDate, entryByStudent, students])
+
+  useEffect(() => {
+    if (!highlightStudentId) return
+    document.getElementById(`student-row-${highlightStudentId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlightStudentId])
 
   const updateDraft = (studentId: string, patch: Partial<AttendanceDraftEntry>) => {
     setDraft((prev) => {
@@ -245,10 +252,12 @@ export function DailyStudentAttendance({
               {visibleStudents.map((student) => (
                 <AttendanceStudentRow
                   key={student.id}
+                  studentId={student.id}
                   number={student.number}
                   name={student.name}
                   draft={draft.get(student.id) ?? defaultDraft()}
                   onChange={(patch) => updateDraft(student.id, patch)}
+                  highlighted={student.id === highlightStudentId}
                 />
               ))}
             </div>
