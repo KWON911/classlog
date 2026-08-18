@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
 import { WeeklyTimetableCard } from '../components/home/WeeklyTimetableCard'
 import { WeeklyMealCard } from '../components/home/WeeklyMealCard'
+import { WeeklyAttendanceCard } from '../components/home/WeeklyAttendanceCard'
 import { PageContainer } from '../components/PageContainer'
 import { addDays, mondayOf, yyyymmdd } from '../lib/utils/date-utils'
 
@@ -18,9 +19,10 @@ export function HomePage() {
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
   const [timetableLoading, setTimetableLoading] = useState(false)
   const [mealLoading, setMealLoading] = useState(false)
+  const [attendanceLoading, setAttendanceLoading] = useState(false)
 
   const weekEnd = useMemo(() => addDays(weekStart, 4), [weekStart])
-  const isRefreshing = timetableLoading || mealLoading
+  const isRefreshing = timetableLoading || mealLoading || attendanceLoading
 
   // Compare Mondays, not "is today between Mon and Fri" — a weekend date
   // (Sat/Sun) numerically falls after Friday but still belongs to this same
@@ -93,6 +95,15 @@ export function HomePage() {
           refreshToken={refreshToken}
           isCurrentWeek={isCurrentWeek}
           onLoadingChange={setMealLoading}
+        />
+      </div>
+
+      <div className="mt-5">
+        <WeeklyAttendanceCard
+          weekStart={weekStart}
+          refreshToken={refreshToken}
+          isCurrentWeek={isCurrentWeek}
+          onLoadingChange={setAttendanceLoading}
         />
       </div>
     </PageContainer>
