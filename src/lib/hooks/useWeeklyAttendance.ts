@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { yyyymmddDash } from '../utils/date-utils'
 import type { AttendanceEntryWithStudent } from '../types'
@@ -8,7 +8,10 @@ export function useWeeklyAttendance(weekStart: Date, weekEnd: Date, refreshToken
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const fetchIdRef = useRef(0)
+
   const fetchEntries = useCallback(async () => {
+    const fetchId = ++fetchIdRef.current
     setLoading(true)
     setError(null)
     const { data, error } = await supabase
@@ -16,6 +19,8 @@ export function useWeeklyAttendance(weekStart: Date, weekEnd: Date, refreshToken
       .select('*, students(number, name)')
       .gte('date', yyyymmddDash(weekStart))
       .lte('date', yyyymmddDash(weekEnd))
+
+    if (fetchIdRef.current !== fetchId) return
 
     if (error) {
       setError(error.message)

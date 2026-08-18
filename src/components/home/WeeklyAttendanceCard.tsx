@@ -48,7 +48,7 @@ export function WeeklyAttendanceCard({
       ) : error ? (
         <ErrorState message={error} onRetry={refetch} />
       ) : isEmpty ? (
-        <EmptyState message="이번 주 출결 특이사항이 없습니다." />
+        <EmptyState message={isCurrentWeek ? '이번 주 출결 특이사항이 없습니다.' : '해당 주 출결 특이사항이 없습니다.'} />
       ) : (
         <div className="min-w-0 overflow-x-auto">
           <div className="grid min-w-[480px] grid-cols-5 gap-2 lg:min-w-0">
