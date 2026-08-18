@@ -215,6 +215,14 @@ export function DailyStudentAttendance({
               변경 학생만 보기
             </label>
             {dirtyIds.size > 0 && <span className="text-sm text-gray-500">변경 {dirtyIds.size}명</span>}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="ml-auto h-9 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+            >
+              {saving ? '저장 중...' : `출결 저장${dirtyIds.size > 0 ? ` (${dirtyIds.size}명 변경)` : ''}`}
+            </button>
           </div>
 
           {confirmingBulkPresent && (
@@ -267,17 +275,6 @@ export function DailyStudentAttendance({
               ))}
             </div>
           )}
-
-          <div className="sticky bottom-0 mt-4 border-t border-gray-200 bg-white/95 py-3 backdrop-blur-sm">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="h-11 w-full rounded-lg bg-brand-600 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50 sm:w-auto sm:px-6"
-            >
-              {saving ? '저장 중...' : `출결 저장${dirtyIds.size > 0 ? ` (${dirtyIds.size}명 변경)` : ''}`}
-            </button>
-          </div>
         </>
       )}
     </div>
