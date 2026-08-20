@@ -17,6 +17,11 @@ function todayYearMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
 
+function todayDateString() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
 function shiftMonth(yearMonth: string, delta: number) {
   const [year, month] = yearMonth.split('-').map(Number)
   const date = new Date(year, month - 1 + delta, 1)
@@ -77,7 +82,7 @@ export function AttendancePage() {
 
   const [activeTab, setActiveTab] = useState<Tab>('daily')
   const [yearMonth, setYearMonth] = useState(dateFromQuery?.yearMonth ?? todayYearMonth())
-  const [selectedDate, setSelectedDate] = useState(dateFromQuery?.selectedDate ?? firstWeekdayOfMonth(todayYearMonth()))
+  const [selectedDate, setSelectedDate] = useState(dateFromQuery?.selectedDate ?? todayDateString())
 
   const { students, error: studentsError } = useStudents()
   const { entries, loading, error, upsertEntry, clearEntry, deleteEntry } = useAttendance(yearMonth)
