@@ -3,6 +3,7 @@ import {
   addDays,
   dateFromYmd,
   dayName,
+  formatClockDisplay,
   lastDayOfMonth,
   mondayOf,
   schoolYearOf,
@@ -119,5 +120,24 @@ describe('weekdaysOf', () => {
     // 2026-08-31 is a Monday; the same week runs into September
     const days = weekdaysOf(new Date(2026, 7, 31))
     expect(days.map(yyyymmdd)).toEqual(['20260831', '20260901', '20260902', '20260903', '20260904'])
+  })
+})
+
+describe('formatClockDisplay', () => {
+  it('formats an afternoon time with the Korean weekday label', () => {
+    // 2026-08-20 is a Thursday
+    expect(formatClockDisplay(new Date(2026, 7, 20, 15, 42, 17))).toBe('2026년 8월 20일 (목) 오후 3:42:17')
+  })
+
+  it('pads single-digit minutes and seconds with a leading zero', () => {
+    expect(formatClockDisplay(new Date(2026, 7, 20, 9, 5, 3))).toBe('2026년 8월 20일 (목) 오전 9:05:03')
+  })
+
+  it('treats noon as 12 PM, not 0 PM', () => {
+    expect(formatClockDisplay(new Date(2026, 7, 20, 12, 0, 0))).toBe('2026년 8월 20일 (목) 오후 12:00:00')
+  })
+
+  it('treats midnight as 12 AM, not 0 AM', () => {
+    expect(formatClockDisplay(new Date(2026, 7, 20, 0, 0, 0))).toBe('2026년 8월 20일 (목) 오전 12:00:00')
   })
 })
