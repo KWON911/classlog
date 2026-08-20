@@ -13,3 +13,6 @@ export const ATTENDANCE_STATUS_COLOR_CLASS: Record<AttendanceStatus, string> = {
   조퇴: 'bg-purple-50 text-purple-700',
   결과: 'bg-teal-50 text-teal-700',
 }
+
+/** MonthlyAttendanceSummary의 0건 상태 뱃지용 — 실제 값이 있는 상태 색 옆에서 눈에 띄지 않도록 무채색으로 낮춤. */
+export const ATTENDANCE_ZERO_COUNT_BADGE_CLASS = 'bg-gray-50 text-gray-300'
