@@ -104,7 +104,7 @@ function StudentSummaryCardHeader({
           )}
         </div>
       ) : (
-        <span className="text-sm text-gray-300">기록 없음</span>
+        <span className="text-sm text-gray-500">기록 없음</span>
       )}
     </div>
   )
@@ -119,7 +119,7 @@ function StudentSummaryCardHeader({
       onClick={onToggle}
       aria-expanded={isExpanded}
       aria-controls={detailId}
-      className="w-full text-left"
+      className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
     >
       {content}
     </button>
@@ -146,12 +146,12 @@ function DetailRecord({ entry, studentName, onDeleteClick }: DetailRecordProps) 
       </button>
       <span className="w-12 shrink-0 text-gray-500">{formatMonthDay(entry.date)}</span>
       <span
-        className={`inline-flex h-[22px] w-fit items-center justify-center rounded-full px-2 text-[11px] font-semibold ${ATTENDANCE_STATUS_COLOR_CLASS[entry.status]}`}
+        className={`inline-flex h-[22px] items-center justify-center rounded-full px-2 text-[11px] font-semibold ${ATTENDANCE_STATUS_COLOR_CLASS[entry.status]}`}
       >
         {entry.status}
       </span>
       <span className="text-gray-700">{entry.reason_category}</span>
-      {entry.note && <span className="min-w-0 text-gray-600">· {entry.note}</span>}
+      {entry.note && <span className="text-gray-600">· {entry.note}</span>}
     </div>
   )
 }
@@ -321,8 +321,7 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
       <div className="flex flex-col gap-2">
         {visibleStudents.map((student) => {
           const counts = summaryByStudent.get(student.id) ?? { 결석: 0, 지각: 0, 조퇴: 0, 결과: 0 }
-          const recordCount = recordCountByStudent.get(student.id) ?? 0
-          const hasRecords = recordCount > 0
+          const hasRecords = (recordCountByStudent.get(student.id) ?? 0) > 0
           const isExpanded = expandedStudentIds.has(student.id)
           const studentEntries = entriesByStudent.get(student.id) ?? []
           const detailId = `attendance-detail-${student.id}`
