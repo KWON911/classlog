@@ -69,6 +69,9 @@ export function StudentDetailPage() {
       </button>
 
       <div className="mt-3 mb-4 flex flex-col items-center gap-1">
+        <h1 className="sr-only">
+          {student.number}. {student.name}
+        </h1>
         <div className="relative inline-block max-w-full">
           <select
             value={student.id}
