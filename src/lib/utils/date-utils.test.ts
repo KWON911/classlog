@@ -3,7 +3,9 @@ import {
   addDays,
   dateFromYmd,
   dayName,
+  formatClockDateLine,
   formatClockDisplay,
+  formatClockTimeLine,
   lastDayOfMonth,
   mondayOf,
   schoolYearOf,
@@ -139,5 +141,21 @@ describe('formatClockDisplay', () => {
 
   it('treats midnight as 12 AM, not 0 AM', () => {
     expect(formatClockDisplay(new Date(2026, 7, 20, 0, 0, 0))).toBe('2026년 8월 20일 (목) 오전 12:00:00')
+  })
+})
+
+describe('formatClockDateLine', () => {
+  it('formats the date and weekday without the time', () => {
+    expect(formatClockDateLine(new Date(2026, 7, 20, 15, 42, 17))).toBe('2026년 8월 20일 (목)')
+  })
+})
+
+describe('formatClockTimeLine', () => {
+  it('formats the AM/PM label together with the time', () => {
+    expect(formatClockTimeLine(new Date(2026, 7, 20, 15, 42, 17))).toBe('오후 3:42:17')
+  })
+
+  it('pads single-digit minutes and seconds with a leading zero', () => {
+    expect(formatClockTimeLine(new Date(2026, 7, 20, 9, 5, 3))).toBe('오전 9:05:03')
   })
 })

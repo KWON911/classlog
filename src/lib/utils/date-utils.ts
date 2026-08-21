@@ -58,12 +58,22 @@ export function weekdaysOf(referenceDate: Date): Date[] {
   return Array.from({ length: 5 }, (_, i) => addDays(monday, i))
 }
 
-/** 예: "2026년 8월 20일 (목) 오후 3:42:17" */
-export function formatClockDisplay(d: Date): string {
+/** 예: "2026년 8월 20일 (목)" */
+export function formatClockDateLine(d: Date): string {
   const weekday = `(${dayName(d)})`
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${weekday}`
+}
+
+/** 예: "오후 3:42:17" */
+export function formatClockTimeLine(d: Date): string {
   const ampm = d.getHours() < 12 ? '오전' : '오후'
   const hours12 = d.getHours() % 12 || 12
   const minutes = String(d.getMinutes()).padStart(2, '0')
   const seconds = String(d.getSeconds()).padStart(2, '0')
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${weekday} ${ampm} ${hours12}:${minutes}:${seconds}`
+  return `${ampm} ${hours12}:${minutes}:${seconds}`
+}
+
+/** 예: "2026년 8월 20일 (목) 오후 3:42:17" */
+export function formatClockDisplay(d: Date): string {
+  return `${formatClockDateLine(d)} ${formatClockTimeLine(d)}`
 }
