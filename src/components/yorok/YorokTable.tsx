@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type DragEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { GripVertical, Pencil, X } from 'lucide-react'
 import { useYorokColumns } from '../../lib/hooks/useYorokColumns'
 import { useYorokEntries } from '../../lib/hooks/useYorokEntries'
@@ -11,6 +11,28 @@ import { AddYorokColumnControl } from './AddYorokColumnControl'
 type YorokTableProps = {
   students: Student[]
   studentsLoading: boolean
+}
+
+// 빈 칸일 땐 한 줄 높이만 차지하고, 내용이 길어져 줄바꿈되면 스크롤 없이 높이가 함께 늘어난다.
+function AutoResizeCell({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      rows={1}
+      className={`w-full min-w-[200px] resize-none overflow-hidden ${textareaClass}`}
+    />
+  )
 }
 
 export function YorokTable({ students, studentsLoading }: YorokTableProps) {
@@ -268,13 +290,16 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
                       const rowValues = draft.get(student.id) ?? {}
                       const cellValue = rowValues[column.id]
                       return (
-                        <td key={column.id} className="border-b border-r border-gray-100 px-3 py-2 align-top">
+                        <td
+                          key={column.id}
+                          className={`border-b border-r border-gray-100 px-3 py-2 ${
+                            column.type === 'checkbox' ? 'align-middle' : 'align-top'
+                          }`}
+                        >
                           {column.type === 'text' ? (
-                            <textarea
+                            <AutoResizeCell
                               value={(cellValue as string) ?? ''}
-                              onChange={(e) => updateCell(student.id, column.id, e.target.value)}
-                              rows={2}
-                              className={`w-full min-w-[200px] resize-y ${textareaClass}`}
+                              onChange={(value) => updateCell(student.id, column.id, value)}
                             />
                           ) : (
                             <div className="flex justify-center">
