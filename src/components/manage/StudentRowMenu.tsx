@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 
 type StudentRowMenuProps = {
   studentName: string
+  onViewDetails: () => void
   onEdit: () => void
   onDelete: () => void
 }
 
-export function StudentRowMenu({ studentName, onEdit, onDelete }: StudentRowMenuProps) {
+export function StudentRowMenu({ studentName, onViewDetails, onEdit, onDelete }: StudentRowMenuProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -56,6 +57,17 @@ export function StudentRowMenu({ studentName, onEdit, onDelete }: StudentRowMenu
           className="absolute right-0 z-20 mt-1 w-40 rounded-lg border border-gray-200 bg-white py-1 text-sm"
           style={{ boxShadow: '0 12px 30px -8px rgba(15, 23, 42, 0.18)' }}
         >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              onViewDetails()
+            }}
+            className="block w-full px-3 py-2 text-left text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            상세정보 보기
+          </button>
           <button
             type="button"
             role="menuitem"
