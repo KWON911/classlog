@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - 이 프로젝트의 페이지 배경색은 `src/index.css`의 `--color-canvas: #f2f0eb`이며 `body`에 적용된다 (`page-container`엔 배경이 없음) — 표가 이 색과 시각적으로 구분되지 않는 것이 이번 수정의 근본 원인.
-- 이 코드베이스의 기존 "카드" 관례는 `rounded-[14px] border border-gray-200 bg-white` (예: `YorokTable.tsx`의 빈 상태 블록들, `sectionCardClass`) — 새 스타일을 발명하지 말고 이 값을 그대로 사용한다.
+- 이 코드베이스의 기존 "카드" 관례는 `rounded-[14px] border border-gray-200 bg-white` (예: `YorokTable.tsx`의 빈 상태 블록들) — 새 스타일을 발명하지 말고 이 값을 그대로 사용한다.
 - 컬럼 고정(sticky) 동작, 컬럼 추가/삭제/이름변경/드래그 재정렬, 가로 스크롤(`overflow-x-auto`) 동작은 이번 수정으로 바뀌지 않아야 한다 — 순수 배경색 변경.
 
 ---
