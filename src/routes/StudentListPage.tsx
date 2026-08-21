@@ -25,7 +25,7 @@ export function StudentListPage() {
   const [activeTab, setActiveTab] = useState<Tab>('yorok')
   const { fetchAllRecords, loading: exportingRecords } = useAllRecords()
   const [exportError, setExportError] = useState<string | null>(null)
-  const { counts: recordCounts, loading: countsLoading } = useRecordCounts()
+  const { counts: recordCounts, loading: countsLoading, error: countsError } = useRecordCounts()
 
   const handleExportRecords = async () => {
     setExportError(null)
@@ -117,7 +117,7 @@ export function StudentListPage() {
                 <StudentListItem
                   key={student.id}
                   student={student}
-                  recordCount={countsLoading ? undefined : recordCounts.get(student.id) ?? 0}
+                  recordCount={countsLoading || countsError ? undefined : (recordCounts.get(student.id) ?? 0)}
                 />
               ))}
             </div>
