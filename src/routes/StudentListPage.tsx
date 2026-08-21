@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Download } from 'lucide-react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useAllRecords } from '../lib/hooks/useAllRecords'
+import { useRecordCounts } from '../lib/hooks/useRecordCounts'
 import { StudentListItem } from '../components/StudentListItem'
 import { PageContainer } from '../components/PageContainer'
 import { YorokTable } from '../components/yorok/YorokTable'
@@ -24,6 +25,7 @@ export function StudentListPage() {
   const [activeTab, setActiveTab] = useState<Tab>('yorok')
   const { fetchAllRecords, loading: exportingRecords } = useAllRecords()
   const [exportError, setExportError] = useState<string | null>(null)
+  const { counts: recordCounts, loading: countsLoading } = useRecordCounts()
 
   const handleExportRecords = async () => {
     setExportError(null)
@@ -112,7 +114,11 @@ export function StudentListPage() {
           {!loading && !error && students.length > 0 && (
             <div className={GRID_CLASS}>
               {students.map((student) => (
-                <StudentListItem key={student.id} student={student} />
+                <StudentListItem
+                  key={student.id}
+                  student={student}
+                  recordCount={countsLoading ? undefined : recordCounts.get(student.id) ?? 0}
+                />
               ))}
             </div>
           )}
