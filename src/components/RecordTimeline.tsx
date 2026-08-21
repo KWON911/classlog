@@ -27,6 +27,14 @@ export function RecordTimeline({ records, onEdit, onDelete }: RecordTimelineProp
     [records, filter],
   )
 
+  const hasNoRecordsAtAll = records.length === 0
+  const emptyTitle = hasNoRecordsAtAll
+    ? '아직 등록된 생활기록이 없습니다.'
+    : `"${filter}" 카테고리에 해당하는 기록이 없습니다.`
+  const emptyHint = hasNoRecordsAtAll
+    ? '위의 "기록 추가" 버튼을 눌러 첫 기록을 남겨보세요.'
+    : '다른 카테고리를 선택하거나 위의 "기록 추가" 버튼으로 새 기록을 남겨보세요.'
+
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
@@ -48,37 +56,43 @@ export function RecordTimeline({ records, onEdit, onDelete }: RecordTimelineProp
         ))}
       </div>
 
-      <ul className="flex flex-col gap-3">
-        {filtered.map((record) => (
-          <li key={record.id} className="rounded-[14px] border border-gray-200 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm text-gray-500">
-                {record.record_date} · {record.category}
-              </span>
-              <div className="flex shrink-0 gap-1">
-                <button
-                  onClick={() => onEdit(record)}
-                  aria-label="기록 수정"
-                  title="기록 수정"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-brand-50 hover:text-brand-600"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  onClick={() => setDeleteTarget(record)}
-                  aria-label="기록 삭제"
-                  title="기록 삭제"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
+      {filtered.length > 0 ? (
+        <ul className="flex flex-col gap-3">
+          {filtered.map((record) => (
+            <li key={record.id} className="rounded-[14px] border border-gray-200 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-gray-500">
+                  {record.record_date} · {record.category}
+                </span>
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    onClick={() => onEdit(record)}
+                    aria-label="기록 수정"
+                    title="기록 수정"
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-brand-50 hover:text-brand-600"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteTarget(record)}
+                    aria-label="기록 삭제"
+                    title="기록 삭제"
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-            </div>
-            <p className="mt-1 whitespace-pre-wrap text-gray-900">{record.content}</p>
-          </li>
-        ))}
-        {filtered.length === 0 && <p className="text-sm text-gray-500">기록이 없습니다.</p>}
-      </ul>
+              <p className="mt-1 whitespace-pre-wrap text-gray-900">{record.content}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="flex flex-col items-center gap-2 rounded-[14px] border border-gray-200 bg-white px-6 py-14 text-center">
+          <p className="text-sm font-medium text-gray-700">{emptyTitle}</p>
+          <p className="text-sm text-gray-500">{emptyHint}</p>
+        </div>
+      )}
 
       {deleteTarget && (
         <ConfirmDialog
