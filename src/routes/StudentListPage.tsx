@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Download } from 'lucide-react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useAllRecords } from '../lib/hooks/useAllRecords'
@@ -22,7 +22,9 @@ const tabButtonClass = (active: boolean) =>
 
 export function StudentListPage() {
   const { students, loading, error, refetch } = useStudents()
-  const [activeTab, setActiveTab] = useState<Tab>('yorok')
+  const location = useLocation()
+  const initialTab: Tab = (location.state as { tab?: Tab } | null)?.tab === 'roster' ? 'roster' : 'yorok'
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const { fetchAllRecords, loading: exportingRecords } = useAllRecords()
   const [exportError, setExportError] = useState<string | null>(null)
   const { counts: recordCounts, loading: countsLoading, error: countsError } = useRecordCounts()

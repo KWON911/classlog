@@ -61,8 +61,8 @@ export function StudentDetailPage() {
     <PageContainer size="standard" maxWidth="1200px">
       <button
         type="button"
-        onClick={() => navigate('/students')}
-        className="text-sm font-medium text-brand-600 transition-colors hover:text-brand-700"
+        onClick={() => navigate('/students', { state: { tab: 'roster' } })}
+        className="-mx-2 -my-1 rounded-md px-2 py-1 text-sm font-medium text-brand-600 transition-colors hover:bg-brand-50 hover:text-brand-700"
       >
         ← 학생 목록으로 돌아가기
       </button>
