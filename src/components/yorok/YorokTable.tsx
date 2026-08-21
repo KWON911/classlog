@@ -194,7 +194,7 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
             <table className="border-collapse text-sm">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 w-[92px] max-w-[92px] border-b border-r border-gray-200 bg-white px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="sticky left-0 z-10 min-w-[92px] whitespace-nowrap border-b border-r border-gray-200 bg-white px-3 py-2 text-left font-semibold text-gray-700">
                     학생
                   </th>
                   {columns.map((column) => (
@@ -261,10 +261,7 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
               <tbody>
                 {orderedStudents.map((student) => (
                   <tr key={student.id}>
-                    <td
-                      className="sticky left-0 z-10 w-[92px] max-w-[92px] truncate border-b border-r border-gray-100 bg-white px-3 py-2 font-medium text-gray-900"
-                      title={`${student.number}번 ${student.name}`}
-                    >
+                    <td className="sticky left-0 z-10 min-w-[92px] whitespace-nowrap border-b border-r border-gray-100 bg-white px-3 py-2 font-medium text-gray-900">
                       {student.number}번 {student.name}
                     </td>
                     {columns.map((column) => {
