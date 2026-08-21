@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useStudentRecords } from '../lib/hooks/useStudentRecords'
 import { useAttendanceSummary } from '../lib/hooks/useAttendanceSummary'
@@ -30,8 +30,6 @@ export function StudentDetailPage() {
 
   const student = students.find((s) => s.id === id)
   const currentIndex = students.findIndex((s) => s.id === id)
-  const prevStudent = currentIndex > 0 ? students[currentIndex - 1] : null
-  const nextStudent = currentIndex >= 0 && currentIndex < students.length - 1 ? students[currentIndex + 1] : null
 
   if (!student) {
     if (studentsLoading) {
@@ -70,37 +68,29 @@ export function StudentDetailPage() {
         ← 학생 목록으로 돌아가기
       </button>
 
-      <div className="mt-3 mb-4 grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-4">
-        <button
-          type="button"
-          onClick={() => prevStudent && navigate(`/students/${prevStudent.id}`)}
-          disabled={!prevStudent}
-          aria-label="이전 학생 보기"
-          className="flex h-10 min-w-10 shrink-0 items-center justify-center gap-1 rounded-lg border border-gray-300 px-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-        >
-          <ChevronLeft size={18} />
-          <span className="hidden sm:inline">이전 학생</span>
-        </button>
-
-        <div className="min-w-0 text-center">
-          <h1 className="truncate text-2xl font-bold text-gray-900">
-            {student.number}. {student.name}
-          </h1>
-          <p className="mt-0.5 text-xs text-gray-400">
-            {currentIndex + 1} / {students.length}
-          </p>
+      <div className="mt-3 mb-4 flex flex-col items-center gap-1">
+        <div className="relative inline-block max-w-full">
+          <select
+            value={student.id}
+            onChange={(e) => navigate(`/students/${e.target.value}`)}
+            aria-label="학생 선택"
+            className="w-full appearance-none truncate rounded-lg bg-transparent py-1 pl-8 pr-8 text-center text-2xl font-bold text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-300"
+          >
+            {students.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.number}. {s.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={20}
+            aria-hidden="true"
+            className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-gray-400"
+          />
         </div>
-
-        <button
-          type="button"
-          onClick={() => nextStudent && navigate(`/students/${nextStudent.id}`)}
-          disabled={!nextStudent}
-          aria-label="다음 학생 보기"
-          className="flex h-10 min-w-10 shrink-0 items-center justify-center gap-1 rounded-lg border border-gray-300 px-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-        >
-          <span className="hidden sm:inline">다음 학생</span>
-          <ChevronRight size={18} />
-        </button>
+        <p className="text-xs text-gray-400">
+          {currentIndex + 1} / {students.length}
+        </p>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-1.5">
