@@ -5,6 +5,7 @@ import { ConfirmDialog } from '../ConfirmDialog'
 import { ImportStudentsPanel } from '../ImportStudentsPanel'
 import { StudentForm, type StudentFormValues } from '../StudentForm'
 import { StudentRowMenu } from './StudentRowMenu'
+import { StudentDetailModal } from './StudentDetailModal'
 import { QuickAddFab } from '../QuickAddFab'
 import { mapGender } from '../../lib/seating'
 import {
@@ -57,6 +58,7 @@ export function StudentListCard({
 }: StudentListCardProps) {
   const [showAdd, setShowAdd] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [viewingStudent, setViewingStudent] = useState<Student | null>(null)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null)
   const [deletingOne, setDeletingOne] = useState(false)
@@ -246,6 +248,7 @@ export function StudentListCard({
                     <span className="flex justify-center">
                       <StudentRowMenu
                         studentName={student.name}
+                        onViewDetails={() => setViewingStudent(student)}
                         onEdit={() => setEditingStudent(student)}
                         onDelete={() => setDeleteTarget(student)}
                       />
@@ -291,6 +294,10 @@ export function StudentListCard({
             onCancel={() => setShowAdd(false)}
           />
         </Modal>
+      )}
+
+      {viewingStudent && (
+        <StudentDetailModal student={viewingStudent} onClose={() => setViewingStudent(null)} />
       )}
 
       {editingStudent && (
