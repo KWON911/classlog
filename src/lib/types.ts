@@ -182,3 +182,29 @@ export type SchoolEvent = {
 
 /** date는 'YYYYMMDD' */
 export type SchoolEventByDate = Record<string, SchoolEvent[]>
+
+export type YorokColumnType = 'text' | 'checkbox'
+
+export type YorokColumn = {
+  id: string
+  teacher_id: string
+  label: string
+  type: YorokColumnType
+  position: number
+  created_at: string
+}
+
+/**
+ * `values`의 키는 YorokColumn.id — 컴파일 타임에 알 수 없는 런타임 정의 키셋이라
+ * 이 파일의 다른 타입들과 달리 느슨하다. 텍스트 컬럼은 string, 체크박스 컬럼은
+ * boolean. 학생이 아직 값을 입력하지 않은 컬럼은 키 자체가 없음(null이 아님).
+ * 컴포넌트는 반드시 `values[column.id] ?? (column.type === 'checkbox' ? false : '')`
+ * 형태로 접근해야 한다 — 컬럼이 사용자 정의라 생기는 의도된 트레이드오프.
+ */
+export type YorokEntry = {
+  id: string
+  student_id: string
+  teacher_id: string
+  values: Record<string, string | boolean>
+  created_at: string
+}

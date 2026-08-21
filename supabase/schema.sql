@@ -48,6 +48,45 @@ create policy "teachers manage own records" on records
     )
   );
 
+create table if not exists yorok_columns (
+  id uuid primary key default gen_random_uuid(),
+  teacher_id uuid not null references auth.users(id) default auth.uid(),
+  label text not null,
+  type text not null check (type in ('text', 'checkbox')),
+  position integer not null,
+  created_at timestamptz not null default now()
+);
+
+alter table yorok_columns enable row level security;
+
+create policy "teachers manage own yorok columns" on yorok_columns
+  for all
+  using (teacher_id = auth.uid())
+  with check (teacher_id = auth.uid());
+
+create table if not exists yorok_entries (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  teacher_id uuid not null references auth.users(id) default auth.uid(),
+  values jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  unique (student_id)
+);
+
+alter table yorok_entries enable row level security;
+
+create policy "teachers manage own yorok entries" on yorok_entries
+  for all
+  using (teacher_id = auth.uid())
+  with check (
+    teacher_id = auth.uid()
+    and exists (
+      select 1 from students s
+      where s.id = student_id
+        and s.teacher_id = auth.uid()
+    )
+  );
+
 create table if not exists attendance (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null references students(id) on delete cascade,
