@@ -65,4 +65,41 @@ describe('useAllRecords', () => {
     expect(response).toEqual({ error: '네트워크 오류' })
     expect(result.current.error).toBe('네트워크 오류')
   })
+
+  it('pages through more than one page of results and accumulates them all', async () => {
+    const page1 = Array.from({ length: 1000 }, (_, i) => ({
+      id: `r${i}`,
+      student_id: 's-1',
+      teacher_id: 't1',
+      category: '학습',
+      content: `record ${i}`,
+      record_date: '2026-01-01',
+      created_at: '2026-01-01T00:00:00Z',
+    }))
+    const page2 = [
+      {
+        id: 'r-last',
+        student_id: 's-1',
+        teacher_id: 't1',
+        category: '학습',
+        content: 'last record',
+        record_date: '2026-01-02',
+        created_at: '2026-01-02T00:00:00Z',
+      },
+    ]
+    const builder1 = createQueryBuilder({ data: page1, error: null })
+    const builder2 = createQueryBuilder({ data: page2, error: null })
+    mockFrom.mockReturnValueOnce(builder1).mockReturnValueOnce(builder2)
+
+    const { result } = renderHook(() => useAllRecords())
+
+    let response: { data?: unknown[]; error?: string } | undefined
+    await act(async () => {
+      response = await result.current.fetchAllRecords()
+    })
+
+    expect(builder1.range).toHaveBeenCalledWith(0, 999)
+    expect(builder2.range).toHaveBeenCalledWith(1000, 1999)
+    expect(response?.data).toHaveLength(1001)
+  })
 })
