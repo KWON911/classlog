@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { useEffect, useMemo, useState, type DragEvent } from 'react'
+import { GripVertical, Pencil, X } from 'lucide-react'
 import { useYorokColumns } from '../../lib/hooks/useYorokColumns'
 import { useYorokEntries } from '../../lib/hooks/useYorokEntries'
 import type { Student, YorokColumn, YorokEntry } from '../../lib/types'
-import { textareaClass } from '../../lib/ui/classNames'
+import { fieldClass, textareaClass } from '../../lib/ui/classNames'
 import { UnsetState } from '../home/HomeCardStates'
 import { ConfirmDialog } from '../ConfirmDialog'
 import { AddYorokColumnControl } from './AddYorokColumnControl'
@@ -14,7 +14,15 @@ type YorokTableProps = {
 }
 
 export function YorokTable({ students, studentsLoading }: YorokTableProps) {
-  const { columns, loading: columnsLoading, error: columnsError, addColumn, deleteColumn } = useYorokColumns()
+  const {
+    columns,
+    loading: columnsLoading,
+    error: columnsError,
+    addColumn,
+    deleteColumn,
+    renameColumn,
+    reorderColumns,
+  } = useYorokColumns()
   const { entries, loading: entriesLoading, error: entriesError, saveEntryValues } = useYorokEntries()
 
   const entryByStudent = useMemo(() => {
@@ -30,6 +38,10 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
   const [messageIsError, setMessageIsError] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<YorokColumn | null>(null)
   const [deletingColumn, setDeletingColumn] = useState(false)
+  const [editingColumnId, setEditingColumnId] = useState<string | null>(null)
+  const [editingLabel, setEditingLabel] = useState('')
+  const [draggedColumnId, setDraggedColumnId] = useState<string | null>(null)
+  const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null)
 
   // entries/students가 바뀌면(최초 로드, 저장 후 등) draft를 저장된 값으로 재시딩.
   useEffect(() => {
@@ -69,6 +81,48 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
     setDirtyIds(new Set())
     setMessage('변경사항을 저장했습니다.')
     setMessageIsError(false)
+  }
+
+  const startRename = (column: YorokColumn) => {
+    setEditingColumnId(column.id)
+    setEditingLabel(column.label)
+  }
+
+  const commitRename = async () => {
+    const id = editingColumnId
+    if (!id) return
+    const trimmed = editingLabel.trim()
+    setEditingColumnId(null)
+    if (!trimmed) return
+    const result = await renameColumn(id, trimmed)
+    if (result.error) {
+      setMessage('컬럼 이름 변경에 실패했습니다. 다시 시도해 주세요.')
+      setMessageIsError(true)
+    }
+  }
+
+  const handleDragStart = (columnId: string) => {
+    setDraggedColumnId(columnId)
+  }
+
+  const handleDragOver = (e: DragEvent, columnId: string) => {
+    e.preventDefault()
+    if (columnId !== draggedColumnId) setDragOverColumnId(columnId)
+  }
+
+  const handleDrop = (targetId: string) => {
+    setDragOverColumnId(null)
+    if (!draggedColumnId || draggedColumnId === targetId) {
+      setDraggedColumnId(null)
+      return
+    }
+    const order = columns.map((c) => c.id)
+    const fromIndex = order.indexOf(draggedColumnId)
+    order.splice(fromIndex, 1)
+    const toIndex = order.indexOf(targetId)
+    order.splice(toIndex, 0, draggedColumnId)
+    setDraggedColumnId(null)
+    reorderColumns(order)
   }
 
   const handleConfirmDeleteColumn = async () => {
@@ -140,16 +194,56 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
                   {columns.map((column) => (
                     <th
                       key={column.id}
-                      className="min-w-[220px] border-b border-gray-200 bg-white px-3 py-2 text-left font-semibold text-gray-700"
+                      draggable
+                      onDragStart={() => handleDragStart(column.id)}
+                      onDragOver={(e) => handleDragOver(e, column.id)}
+                      onDragLeave={() => setDragOverColumnId((prev) => (prev === column.id ? null : prev))}
+                      onDrop={() => handleDrop(column.id)}
+                      onDragEnd={() => {
+                        setDraggedColumnId(null)
+                        setDragOverColumnId(null)
+                      }}
+                      className={`min-w-[220px] border-b px-3 py-2 text-left font-semibold text-gray-700 transition-colors ${
+                        dragOverColumnId === column.id ? 'border-b-brand-500 bg-brand-50' : 'border-gray-200 bg-white'
+                      } ${draggedColumnId === column.id ? 'opacity-40' : ''}`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span>{column.label}</span>
+                      <div className="flex items-center gap-2">
+                        <GripVertical size={14} className="shrink-0 cursor-grab text-gray-300" />
+                        {editingColumnId === column.id ? (
+                          <input
+                            type="text"
+                            value={editingLabel}
+                            onChange={(e) => setEditingLabel(e.target.value)}
+                            onBlur={commitRename}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                e.currentTarget.blur()
+                              }
+                              if (e.key === 'Escape') {
+                                setEditingColumnId(null)
+                              }
+                            }}
+                            autoFocus
+                            className={`h-7 min-w-0 flex-1 px-2 py-0 text-sm ${fieldClass}`}
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => startRename(column)}
+                            title="컬럼 이름 수정"
+                            className="flex min-w-0 flex-1 items-center gap-1 rounded px-1 py-0.5 text-left hover:bg-gray-100"
+                          >
+                            <span className="truncate">{column.label}</span>
+                            <Pencil size={12} className="shrink-0 text-gray-300" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(column)}
                           aria-label={`${column.label} 컬럼 삭제`}
                           title="컬럼 삭제"
-                          className="flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
                         >
                           <X size={14} />
                         </button>

@@ -69,5 +69,44 @@ export function useYorokColumns() {
     return {}
   }, [])
 
-  return { columns, loading, error, addColumn, deleteColumn, refetch: fetchColumns }
+  const renameColumn = useCallback(async (id: string, label: string) => {
+    const { data, error } = await supabase.from('yorok_columns').update({ label }).eq('id', id).select().single()
+
+    if (error) {
+      setError(error.message)
+      return { error: error.message }
+    }
+
+    setColumns((prev) => prev.map((c) => (c.id === id ? data : c)))
+    return { data }
+  }, [])
+
+  /**
+   * `orderedIds`는 새 순서대로 나열된 전체 컬럼 id 목록 — 각 컬럼을 배열 내
+   * 인덱스를 새 position으로 개별 update한다. label/type처럼 NOT NULL인
+   * 다른 필드까지 함께 보내야 하는 upsert 대신 position 하나만 patch하는
+   * 이유: 값이 없는 컬럼까지 실어 보내면 그 컬럼들의 NOT NULL 제약을
+   * 건드리게 되므로, 순수 update가 더 안전하다.
+   */
+  const reorderColumns = useCallback(async (orderedIds: string[]) => {
+    const results = await Promise.all(
+      orderedIds.map((id, index) =>
+        supabase.from('yorok_columns').update({ position: index }).eq('id', id).select().single(),
+      ),
+    )
+
+    const failed = results.find((r) => r.error)
+    if (failed?.error) {
+      setError(failed.error.message)
+      return { error: failed.error.message }
+    }
+
+    const updatedById = new Map(results.map((r) => [r.data.id, r.data]))
+    setColumns((prev) =>
+      prev.map((c) => updatedById.get(c.id) ?? c).sort((a, b) => a.position - b.position),
+    )
+    return {}
+  }, [])
+
+  return { columns, loading, error, addColumn, deleteColumn, renameColumn, reorderColumns, refetch: fetchColumns }
 }

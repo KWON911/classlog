@@ -102,4 +102,61 @@ describe('useYorokColumns', () => {
 
     expect(result.current.error).toBe('네트워크 오류')
   })
+
+  it('renames a column by id', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [colA, colB], error: null }))
+    const { result } = renderHook(() => useYorokColumns())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    const renamedColA = { ...colA, label: '장래희망' }
+    const updateBuilder = createQueryBuilder({ data: renamedColA, error: null })
+    mockFrom.mockReturnValueOnce(updateBuilder)
+
+    await act(async () => {
+      await result.current.renameColumn('c1', '장래희망')
+    })
+
+    expect(updateBuilder.update).toHaveBeenCalledWith({ label: '장래희망' })
+    expect(updateBuilder.eq).toHaveBeenCalledWith('id', 'c1')
+    // colB (untouched column) must survive unchanged.
+    expect(result.current.columns).toEqual([renamedColA, colB])
+  })
+
+  it('reorders columns by writing sequential positions in the given order', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [colA, colB], error: null }))
+    const { result } = renderHook(() => useYorokColumns())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // Swap: colB should move to position 0, colA to position 1.
+    const movedColB = { ...colB, position: 0 }
+    const movedColA = { ...colA, position: 1 }
+    const updateBuilderB = createQueryBuilder({ data: movedColB, error: null })
+    const updateBuilderA = createQueryBuilder({ data: movedColA, error: null })
+    mockFrom.mockReturnValueOnce(updateBuilderB)
+    mockFrom.mockReturnValueOnce(updateBuilderA)
+
+    await act(async () => {
+      await result.current.reorderColumns(['c2', 'c1'])
+    })
+
+    expect(updateBuilderB.update).toHaveBeenCalledWith({ position: 0 })
+    expect(updateBuilderB.eq).toHaveBeenCalledWith('id', 'c2')
+    expect(updateBuilderA.update).toHaveBeenCalledWith({ position: 1 })
+    expect(updateBuilderA.eq).toHaveBeenCalledWith('id', 'c1')
+    expect(result.current.columns).toEqual([movedColB, movedColA])
+  })
+
+  it('surfaces the error message when reordering fails', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [colA, colB], error: null }))
+    const { result } = renderHook(() => useYorokColumns())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: null, error: { message: '네트워크 오류' } }))
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: { ...colA, position: 1 }, error: null }))
+
+    const response = await act(async () => result.current.reorderColumns(['c2', 'c1']))
+
+    expect(response).toEqual({ error: '네트워크 오류' })
+    expect(result.current.error).toBe('네트워크 오류')
+  })
 })
