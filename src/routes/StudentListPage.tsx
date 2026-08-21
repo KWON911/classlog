@@ -17,7 +17,7 @@ const tabButtonClass = (active: boolean) =>
 
 export function StudentListPage() {
   const { students, loading, error, refetch } = useStudents()
-  const [activeTab, setActiveTab] = useState<Tab>('roster')
+  const [activeTab, setActiveTab] = useState<Tab>('yorok')
 
   return (
     <PageContainer size="wide">
@@ -25,11 +25,11 @@ export function StudentListPage() {
       <p className="mb-5 text-sm text-gray-500">우리 반 학생 {students.length}명</p>
 
       <div className="mb-6 flex gap-2 border-b border-gray-200 pb-2">
-        <button type="button" onClick={() => setActiveTab('roster')} className={tabButtonClass(activeTab === 'roster')}>
-          학생목록
-        </button>
         <button type="button" onClick={() => setActiveTab('yorok')} className={tabButtonClass(activeTab === 'yorok')}>
           학급요록
+        </button>
+        <button type="button" onClick={() => setActiveTab('roster')} className={tabButtonClass(activeTab === 'roster')}>
+          누가기록
         </button>
       </div>
 
