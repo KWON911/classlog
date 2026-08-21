@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Maximize2 } from 'lucide-react'
 import { useWeeklyMeal } from '../../lib/hooks/useWeeklyMeal'
 import { stripAllergyCode } from '../../lib/services/neis-service'
 import { yyyymmdd } from '../../lib/utils/date-utils'
@@ -92,11 +93,15 @@ export function WeeklyMealCard({
                   type="button"
                   onClick={() => setOpenDayIndex(i)}
                   aria-label={`${day.dayLabel}요일 식단표 크게 보기`}
-                  className={`box-border min-w-0 rounded-lg border p-2.5 text-left transition-colors hover:border-brand-400 hover:bg-brand-50/30 ${
+                  className={`group relative box-border min-w-0 rounded-lg border p-2.5 text-left transition-colors hover:border-brand-400 hover:bg-brand-50/30 ${
                     isToday ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-gray-200'
                   }`}
                 >
                   {cellContent}
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg bg-white/90 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Maximize2 size={18} className="text-brand-600" />
+                    <span className="text-xs font-semibold text-brand-700">크게 보기</span>
+                  </div>
                 </button>
               ) : (
                 <div
