@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
 import { WeeklyTimetableCard } from '../components/home/WeeklyTimetableCard'
 import { WeeklyMealCard } from '../components/home/WeeklyMealCard'
@@ -77,10 +78,11 @@ export function HomePage() {
             type="button"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="h-9 shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="시간표·급식 새로고침"
+            title="새로고침"
           >
-            {isRefreshing ? '새로고침 중...' : '↻ 새로고침'}
+            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : undefined} />
           </button>
         </div>
       </div>
