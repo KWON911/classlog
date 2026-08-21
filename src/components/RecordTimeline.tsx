@@ -60,7 +60,7 @@ export function RecordTimeline({ records, loading = false, onEdit, onDelete }: R
       {filtered.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {filtered.map((record) => (
-            <li key={record.id} className="rounded-[14px] border border-gray-200 p-4">
+            <li key={record.id} className="rounded-[14px] border border-gray-200 bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm text-gray-500">
                   {record.record_date} · {record.category}
