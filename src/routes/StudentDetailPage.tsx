@@ -280,6 +280,7 @@ export function StudentDetailPage() {
 
       <RecordTimeline
         records={records}
+        loading={loading}
         onEdit={(record) => {
           setShowRecordForm(false)
           setEditingRecord(record)

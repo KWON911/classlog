@@ -7,6 +7,7 @@ const CATEGORIES: RecordCategory[] = ['생활지도', '학습', '진로', '학�
 
 type RecordTimelineProps = {
   records: StudentRecord[]
+  loading?: boolean
   onEdit: (record: StudentRecord) => void
   onDelete: (id: string) => Promise<unknown> | void
 }
@@ -17,7 +18,7 @@ function filterPillClass(active: boolean) {
   }`
 }
 
-export function RecordTimeline({ records, onEdit, onDelete }: RecordTimelineProps) {
+export function RecordTimeline({ records, loading = false, onEdit, onDelete }: RecordTimelineProps) {
   const [filter, setFilter] = useState<RecordCategory | 'all'>('all')
   const [deleteTarget, setDeleteTarget] = useState<StudentRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -87,7 +88,7 @@ export function RecordTimeline({ records, onEdit, onDelete }: RecordTimelineProp
             </li>
           ))}
         </ul>
-      ) : (
+      ) : loading ? null : (
         <div className="flex flex-col items-center gap-2 rounded-[14px] border border-gray-200 bg-white px-6 py-14 text-center">
           <p className="text-sm font-medium text-gray-700">{emptyTitle}</p>
           <p className="text-sm text-gray-500">{emptyHint}</p>
