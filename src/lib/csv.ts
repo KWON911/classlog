@@ -1,3 +1,5 @@
+import type { Student, StudentRecord } from './types'
+
 function parseCsvLine(line: string): string[] {
   const fields: string[] = []
   let current = ''
@@ -115,6 +117,39 @@ export function buildStudentsCsv(students: ExportableStudent[]): string {
       .join(','),
   )
   return [CSV_HEADER.join(','), ...rows].join('\r\n')
+}
+
+const RECORDS_CSV_HEADER = ['번호', '이름', '날짜', '구분', '내용']
+
+export type RecordExportStudent = Pick<Student, 'id' | 'number' | 'name'>
+
+/** 학년말 행동발달상황 작성 등에 참고하기 위한 전체 학생 생활기록 내보내기.
+ *  학생 번호 오름차순, 같은 학생 안에서는 기록 날짜 오름차순(과거→최근)으로
+ *  정렬해 한 해 동안의 흐름을 순서대로 읽을 수 있게 한다 — RecordTimeline의
+ *  "최신순" 정렬과는 의도적으로 반대 방향. students 목록에 없는 student_id를
+ *  가진 기록은 조용히 제외한다(정상 데이터에서는 발생하지 않지만 방어적으로). */
+export function buildRecordsCsv(records: StudentRecord[], students: RecordExportStudent[]): string {
+  const studentById = new Map(students.map((s) => [s.id, s]))
+
+  const rows = records
+    .flatMap((r) => {
+      const student = studentById.get(r.student_id)
+      return student ? [{ student, record: r }] : []
+    })
+    .sort((a, b) => {
+      if (a.student.number !== b.student.number) return a.student.number - b.student.number
+      return (
+        a.record.record_date.localeCompare(b.record.record_date) ||
+        a.record.created_at.localeCompare(b.record.created_at)
+      )
+    })
+    .map(({ student, record }) =>
+      [String(student.number), student.name, record.record_date, record.category, record.content]
+        .map(escapeCsvField)
+        .join(','),
+    )
+
+  return [RECORDS_CSV_HEADER.join(','), ...rows].join('\r\n')
 }
 
 export function parseStudentsCsv(

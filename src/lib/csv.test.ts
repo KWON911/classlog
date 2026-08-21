@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildStudentsCsv, decodeCsvBytes, parseStudentsCsv } from './csv'
+import { buildRecordsCsv, buildStudentsCsv, decodeCsvBytes, parseStudentsCsv } from './csv'
+import type { StudentRecord } from './types'
 
 function csvRow(fields: string[]): string {
   return fields.join(',')
@@ -204,5 +205,100 @@ describe('buildStudentsCsv', () => {
     const header = ['번호', '성명', '성별', '생년월일', '학생전번', '주소', '부성명', '부전번', '모성명', '모전번', '비상연락처', '비고']
     expect(skipped).toEqual([{ raw: header, reason: '헤더로 판단해 제외' }])
     expect(valid).toEqual([student])
+  })
+})
+
+describe('buildRecordsCsv', () => {
+  const studentA = { id: 's-1', number: 3, name: '김민준' }
+  const studentB = { id: 's-2', number: 1, name: '이서연' }
+
+  it('sorts by student number ascending, then by record date ascending within a student', () => {
+    const records: StudentRecord[] = [
+      {
+        id: 'r1',
+        student_id: 's-1',
+        teacher_id: 't1',
+        category: '학습',
+        content: '나중 기록',
+        record_date: '2026-06-01',
+        created_at: '2026-06-01T00:00:00Z',
+      },
+      {
+        id: 'r2',
+        student_id: 's-2',
+        teacher_id: 't1',
+        category: '생활지도',
+        content: 'B학생 기록',
+        record_date: '2026-03-01',
+        created_at: '2026-03-01T00:00:00Z',
+      },
+      {
+        id: 'r3',
+        student_id: 's-1',
+        teacher_id: 't1',
+        category: '진로',
+        content: '먼저 기록',
+        record_date: '2026-01-01',
+        created_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+
+    const csv = buildRecordsCsv(records, [studentA, studentB])
+
+    expect(csv).toBe(
+      [
+        '번호,이름,날짜,구분,내용',
+        '1,이서연,2026-03-01,생활지도,B학생 기록',
+        '3,김민준,2026-01-01,진로,먼저 기록',
+        '3,김민준,2026-06-01,학습,나중 기록',
+      ].join('\r\n'),
+    )
+  })
+
+  it('escapes commas, quotes, and newlines in record content', () => {
+    const records: StudentRecord[] = [
+      {
+        id: 'r1',
+        student_id: 's-1',
+        teacher_id: 't1',
+        category: '기타',
+        content: '문장, 안에 "인용구"와\n줄바꿈이 있음',
+        record_date: '2026-01-01',
+        created_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+
+    const csv = buildRecordsCsv(records, [studentA])
+
+    expect(csv).toBe(
+      ['번호,이름,날짜,구분,내용', '3,김민준,2026-01-01,기타,"문장, 안에 ""인용구""와\n줄바꿈이 있음"'].join('\r\n'),
+    )
+  })
+
+  it('skips records whose student_id is not in the given students list', () => {
+    const records: StudentRecord[] = [
+      {
+        id: 'r1',
+        student_id: 's-1',
+        teacher_id: 't1',
+        category: '학습',
+        content: '유효 기록',
+        record_date: '2026-01-01',
+        created_at: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: 'r2',
+        student_id: 's-missing',
+        teacher_id: 't1',
+        category: '학습',
+        content: '고아 기록',
+        record_date: '2026-01-01',
+        created_at: '2026-01-01T00:00:00Z',
+      },
+    ]
+
+    const csv = buildRecordsCsv(records, [studentA])
+
+    expect(csv).toBe(['번호,이름,날짜,구분,내용', '3,김민준,2026-01-01,학습,유효 기록'].join('\r\n'))
   })
 })
