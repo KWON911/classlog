@@ -190,7 +190,7 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
             </p>
           )}
 
-          <div className="mt-3 overflow-x-auto">
+          <div className="mt-3 overflow-x-auto rounded-[14px] border border-gray-200 bg-white">
             <table className="border-collapse text-sm">
               <thead>
                 <tr>
