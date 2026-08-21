@@ -140,9 +140,27 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
 
   const loading = studentsLoading || columnsLoading || entriesLoading
 
+  const showSaveRow = !loading && students.length > 0 && columns.length > 0
+
   return (
     <div>
-      <AddYorokColumnControl onAdd={addColumn} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <AddYorokColumnControl onAdd={addColumn} />
+
+        {showSaveRow && (
+          <div className="flex items-center gap-2">
+            {dirtyIds.size > 0 && <span className="text-sm text-gray-500">변경 {dirtyIds.size}명</span>}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || dirtyIds.size === 0}
+              className="h-9 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving ? '저장 중...' : '변경사항 저장'}
+            </button>
+          </div>
+        )}
+      </div>
 
       {(columnsError || entriesError) && (
         <p className="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -161,18 +179,6 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
         </div>
       ) : (
         <>
-          <div className="mt-4 flex items-center gap-2">
-            {dirtyIds.size > 0 && <span className="text-sm text-gray-500">변경 {dirtyIds.size}명</span>}
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || dirtyIds.size === 0}
-              className="ml-auto h-9 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving ? '저장 중...' : '변경사항 저장'}
-            </button>
-          </div>
-
           {message && (
             <p
               className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
@@ -184,11 +190,11 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
             </p>
           )}
 
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-3 overflow-x-auto">
             <table className="border-collapse text-sm">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 w-[140px] max-w-[140px] border-b border-r border-gray-200 bg-white px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="sticky left-0 z-10 w-[92px] max-w-[92px] border-b border-r border-gray-200 bg-white px-3 py-2 text-left font-semibold text-gray-700">
                     학생
                   </th>
                   {columns.map((column) => (
@@ -256,7 +262,7 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
                 {orderedStudents.map((student) => (
                   <tr key={student.id}>
                     <td
-                      className="sticky left-0 z-10 w-[140px] max-w-[140px] truncate border-b border-r border-gray-100 bg-white px-3 py-2 font-medium text-gray-900"
+                      className="sticky left-0 z-10 w-[92px] max-w-[92px] truncate border-b border-r border-gray-100 bg-white px-3 py-2 font-medium text-gray-900"
                       title={`${student.number}번 ${student.name}`}
                     >
                       {student.number}번 {student.name}
