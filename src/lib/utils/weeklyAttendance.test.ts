@@ -12,6 +12,8 @@ function entry(overrides: Partial<AttendanceEntryWithStudent>): AttendanceEntryW
     reason_category: '기타',
     note: null,
     created_at: '2026-08-03',
+    neis_entered: false,
+    document_received: false,
     students: { number: 1, name: '학생' },
     ...overrides,
   }

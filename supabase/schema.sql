@@ -56,6 +56,8 @@ create table if not exists attendance (
   status text not null check (status in ('결석', '지각', '조퇴', '결과')),
   reason_category text not null check (reason_category in ('질병', '미인정', '인정', '기타')),
   note text,
+  neis_entered boolean not null default false,
+  document_received boolean not null default false,
   created_at timestamptz not null default now(),
   unique (student_id, date)
 );
@@ -73,6 +75,19 @@ create policy "teachers manage own attendance" on attendance
         and s.teacher_id = auth.uid()
     )
   );
+
+-- Migration for a project where attendance already existed before the NEIS
+-- 입력 여부 / 증빙서류 수령 여부 tracking feature: the create table above is a
+-- no-op there (create table if not exists doesn't add columns to an
+-- existing table), so run this separately in the Supabase SQL editor. Safe
+-- to re-run and safe against existing data — both columns are NOT NULL
+-- with a DEFAULT, so existing rows are backfilled automatically, no data
+-- is dropped.
+alter table attendance
+  add column if not exists neis_entered boolean not null default false;
+
+alter table attendance
+  add column if not exists document_received boolean not null default false;
 
 create table if not exists seating_plans (
   id uuid primary key default gen_random_uuid(),

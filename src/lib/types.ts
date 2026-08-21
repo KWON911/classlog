@@ -40,6 +40,8 @@ export type AttendanceEntry = {
   reason_category: AttendanceReasonCategory
   note: string | null
   created_at: string
+  neis_entered: boolean
+  document_received: boolean
 }
 
 export type AttendanceEntryWithStudent = AttendanceEntry & {

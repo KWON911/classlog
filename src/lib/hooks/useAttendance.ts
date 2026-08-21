@@ -114,5 +114,33 @@ export function useAttendance(yearMonth: string) {
     return { data: data[0] }
   }, [])
 
-  return { entries, loading, error, upsertEntry, clearEntry, deleteEntry, refetch: fetchEntries }
+  /**
+   * Partial update of the NEIS/증빙서류 flags on one record, identified by
+   * its primary key. Same RLS-aware "zero rows affected → error" handling
+   * as deleteEntry, since a plain .update() is silently scoped by the
+   * "teachers manage own attendance" policy's teacher_id = auth.uid()
+   * clause — a foreign or stale id matches zero rows rather than erroring.
+   */
+  const updateEntryFlags = useCallback(
+    async (recordId: string, patch: Partial<{ neis_entered: boolean; document_received: boolean }>) => {
+      const { data, error } = await supabase.from('attendance').update(patch).eq('id', recordId).select()
+
+      if (error) {
+        setError(error.message)
+        return { error: error.message }
+      }
+      if (!data || data.length === 0) {
+        const message = '기록을 찾을 수 없거나 수정 권한이 없습니다.'
+        setError(message)
+        return { error: message }
+      }
+
+      const updated = data[0]
+      setEntries((prev) => prev.map((e) => (e.id === recordId ? updated : e)))
+      return { data: updated }
+    },
+    [],
+  )
+
+  return { entries, loading, error, upsertEntry, clearEntry, deleteEntry, updateEntryFlags, refetch: fetchEntries }
 }

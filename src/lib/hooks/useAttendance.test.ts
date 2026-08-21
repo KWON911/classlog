@@ -23,6 +23,8 @@ const entryA = {
   reason_category: '질병' as const,
   note: null,
   created_at: '2026-08-05',
+  neis_entered: false,
+  document_received: false,
 }
 
 // Same student (s1) as entryA, but a different date — must survive a
@@ -36,6 +38,8 @@ const entryBSameStudentDifferentDate = {
   reason_category: '기타' as const,
   note: null,
   created_at: '2026-08-10',
+  neis_entered: false,
+  document_received: false,
 }
 
 // Different student (s2), same date as entryA — must survive a
@@ -49,6 +53,8 @@ const entryCDifferentStudentSameDate = {
   reason_category: '기타' as const,
   note: null,
   created_at: '2026-08-05',
+  neis_entered: false,
+  document_received: false,
 }
 
 beforeEach(() => {
@@ -187,5 +193,80 @@ describe('useAttendance', () => {
     expect(response).toEqual({ error: '기록을 찾을 수 없거나 삭제 권한이 없습니다.' })
     // entryA must survive untouched since nothing was actually deleted.
     expect(result.current.entries).toEqual([entryA])
+  })
+
+  it('updates neis_entered and document_received flags by record id', async () => {
+    mockFrom.mockReturnValueOnce(
+      createQueryBuilder({
+        data: [entryA, entryBSameStudentDifferentDate, entryCDifferentStudentSameDate],
+        error: null,
+      }),
+    )
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    const updatedEntryA = { ...entryA, neis_entered: true, document_received: true }
+    const updateBuilder = createQueryBuilder({ data: [updatedEntryA], error: null })
+    mockFrom.mockReturnValueOnce(updateBuilder)
+
+    const response = await act(async () =>
+      result.current.updateEntryFlags('a1', { neis_entered: true, document_received: true }),
+    )
+
+    expect(updateBuilder.update).toHaveBeenCalledWith({ neis_entered: true, document_received: true })
+    expect(updateBuilder.eq).toHaveBeenCalledWith('id', 'a1')
+    expect(response).toEqual({ data: updatedEntryA })
+    // Only entryA is replaced in place; near-miss rows for the same student
+    // (different date) and same date (different student) are untouched.
+    expect(result.current.entries).toEqual([
+      updatedEntryA,
+      entryBSameStudentDifferentDate,
+      entryCDifferentStudentSameDate,
+    ])
+  })
+
+  it('supports a partial patch — updating only neis_entered', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [entryA], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    const updatedEntryA = { ...entryA, neis_entered: true }
+    const updateBuilder = createQueryBuilder({ data: [updatedEntryA], error: null })
+    mockFrom.mockReturnValueOnce(updateBuilder)
+
+    await act(async () => result.current.updateEntryFlags('a1', { neis_entered: true }))
+
+    expect(updateBuilder.update).toHaveBeenCalledWith({ neis_entered: true })
+    expect(result.current.entries).toEqual([updatedEntryA])
+  })
+
+  it('reports an error instead of a silent no-op when zero rows are updated (foreign or stale id)', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [entryA], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // RLS silently excludes rows the caller doesn't own — an update on
+    // someone else's record resolves with an empty array, not an error.
+    const updateBuilder = createQueryBuilder({ data: [], error: null })
+    mockFrom.mockReturnValueOnce(updateBuilder)
+
+    const response = await act(async () => result.current.updateEntryFlags('not-mine', { neis_entered: true }))
+
+    expect(response).toEqual({ error: '기록을 찾을 수 없거나 수정 권한이 없습니다.' })
+    // entryA must survive untouched since nothing was actually updated.
+    expect(result.current.entries).toEqual([entryA])
+  })
+
+  it('surfaces the error message when the update itself fails', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [entryA], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: null, error: { message: '네트워크 오류' } }))
+
+    const response = await act(async () => result.current.updateEntryFlags('a1', { neis_entered: true }))
+
+    expect(response).toEqual({ error: '네트워크 오류' })
+    expect(result.current.error).toBe('네트워크 오류')
   })
 })

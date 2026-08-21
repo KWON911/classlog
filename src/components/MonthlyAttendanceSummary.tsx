@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
+import { CheckSquare, ChevronDown, ChevronRight, Square, Trash2 } from 'lucide-react'
 import type { AttendanceEntry, AttendanceStatus, Student } from '../lib/types'
 import { AttendanceDeleteConfirmModal } from './AttendanceDeleteConfirmModal'
 import { ATTENDANCE_STATUS_COLOR_CLASS, ATTENDANCE_ZERO_COUNT_BADGE_CLASS } from '../lib/utils/attendanceStatusColors'
 
 const STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 
-type FilterMode = 'all' | 'withRecords'
+type FilterMode = 'all' | 'withRecords' | 'neisNotEntered'
 
 function formatMonthDay(date: string) {
   const [, month, day] = date.split('-')
@@ -24,6 +24,10 @@ type MonthlyAttendanceSummaryProps = {
   students: Student[]
   entries: AttendanceEntry[]
   deleteEntry: (recordId: string) => Promise<{ error?: string }>
+  updateEntryFlags: (
+    recordId: string,
+    patch: Partial<{ neis_entered: boolean; document_received: boolean }>,
+  ) => Promise<{ error?: string }>
 }
 
 type CountRow = Record<AttendanceStatus, number>
@@ -130,9 +134,19 @@ type DetailRecordProps = {
   entry: AttendanceEntry
   studentName: string
   onDeleteClick: () => void
+  onToggleNeisEntered: () => void
+  onToggleDocumentReceived: () => void
+  togglingField: 'neis_entered' | 'document_received' | null
 }
 
-function DetailRecord({ entry, studentName, onDeleteClick }: DetailRecordProps) {
+function DetailRecord({
+  entry,
+  studentName,
+  onDeleteClick,
+  onToggleNeisEntered,
+  onToggleDocumentReceived,
+  togglingField,
+}: DetailRecordProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 border-t border-brand-100 py-2 text-sm first:border-t-0">
       <button
@@ -152,15 +166,59 @@ function DetailRecord({ entry, studentName, onDeleteClick }: DetailRecordProps) 
       </span>
       <span className="text-gray-700">{entry.reason_category}</span>
       {entry.note && <span className="text-gray-600">· {entry.note}</span>}
+
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onToggleNeisEntered}
+          disabled={togglingField === 'neis_entered'}
+          title={entry.neis_entered ? 'NEIS 입력 완료 (클릭 시 취소)' : 'NEIS 미입력 (클릭 시 완료 처리)'}
+          aria-pressed={entry.neis_entered}
+          aria-label={`${studentName} 학생 ${formatMonthDay(entry.date)} ${entry.status} 기록 NEIS 입력 여부`}
+          className={`flex h-7 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+            entry.neis_entered
+              ? 'bg-brand-50 text-brand-700 hover:bg-brand-100'
+              : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+          }`}
+        >
+          {entry.neis_entered ? <CheckSquare size={14} /> : <Square size={14} />}
+          NEIS
+        </button>
+
+        {entry.status === '결석' && (
+          <button
+            type="button"
+            onClick={onToggleDocumentReceived}
+            disabled={togglingField === 'document_received'}
+            title={entry.document_received ? '증빙서류 수령 완료 (클릭 시 취소)' : '증빙서류 미수령 (클릭 시 수령 처리)'}
+            aria-pressed={entry.document_received}
+            aria-label={`${studentName} 학생 ${formatMonthDay(entry.date)} 결석 기록 증빙서류 수령 여부`}
+            className={`flex h-7 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              entry.document_received
+                ? 'bg-brand-50 text-brand-700 hover:bg-brand-100'
+                : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+            }`}
+          >
+            {entry.document_received ? <CheckSquare size={14} /> : <Square size={14} />}
+            증빙서류
+          </button>
+        )}
+      </div>
     </div>
   )
 }
 
-export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: MonthlyAttendanceSummaryProps) {
+export function MonthlyAttendanceSummary({
+  students,
+  entries,
+  deleteEntry,
+  updateEntryFlags,
+}: MonthlyAttendanceSummaryProps) {
   const [filterMode, setFilterMode] = useState<FilterMode>('all')
   const [expandedStudentIds, setExpandedStudentIds] = useState<Set<string>>(new Set())
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [togglingKey, setTogglingKey] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [messageIsError, setMessageIsError] = useState(false)
 
@@ -212,13 +270,30 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
     [students, recordCountByStudent],
   )
 
-  const visibleStudents = useMemo(
-    () =>
-      filterMode === 'withRecords'
-        ? students.filter((s) => (recordCountByStudent.get(s.id) ?? 0) > 0)
-        : students,
-    [students, filterMode, recordCountByStudent],
+  const neisNotEnteredCountByStudent = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const entry of entries) {
+      if (!entry.neis_entered) {
+        map.set(entry.student_id, (map.get(entry.student_id) ?? 0) + 1)
+      }
+    }
+    return map
+  }, [entries])
+
+  const studentsWithNeisNotEnteredCount = useMemo(
+    () => students.filter((s) => (neisNotEnteredCountByStudent.get(s.id) ?? 0) > 0).length,
+    [students, neisNotEnteredCountByStudent],
   )
+
+  const visibleStudents = useMemo(() => {
+    if (filterMode === 'withRecords') {
+      return students.filter((s) => (recordCountByStudent.get(s.id) ?? 0) > 0)
+    }
+    if (filterMode === 'neisNotEntered') {
+      return students.filter((s) => (neisNotEnteredCountByStudent.get(s.id) ?? 0) > 0)
+    }
+    return students
+  }, [students, filterMode, recordCountByStudent, neisNotEnteredCountByStudent])
 
   const expandableVisibleIds = useMemo(
     () => visibleStudents.filter((s) => (recordCountByStudent.get(s.id) ?? 0) > 0).map((s) => s.id),
@@ -267,6 +342,28 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
     setMessageIsError(false)
   }
 
+  const handleToggleFlag = async (
+    recordId: string,
+    field: 'neis_entered' | 'document_received',
+    nextValue: boolean,
+  ) => {
+    const key = `${recordId}:${field}`
+    setTogglingKey(key)
+    const result = await updateEntryFlags(recordId, { [field]: nextValue })
+    setTogglingKey(null)
+
+    if (result.error) {
+      setMessage(
+        field === 'neis_entered'
+          ? 'NEIS 입력 여부를 변경하지 못했습니다. 다시 시도해 주세요.'
+          : '증빙서류 수령 여부를 변경하지 못했습니다. 다시 시도해 주세요.',
+      )
+      setMessageIsError(true)
+      return
+    }
+    setMessage(null)
+  }
+
   return (
     <div className="w-full">
       <ClassTotalsCards totals={classTotals} />
@@ -294,6 +391,15 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
               }`}
             >
               기록 있음 {studentsWithRecordsCount}
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterMode('neisNotEntered')}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                filterMode === 'neisNotEntered' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              NEIS 미입력 {studentsWithNeisNotEnteredCount}
             </button>
           </div>
           <button
@@ -359,6 +465,17 @@ export function MonthlyAttendanceSummary({ students, entries, deleteEntry }: Mon
                           date: entry.date,
                           status: entry.status,
                         })
+                      }
+                      onToggleNeisEntered={() => handleToggleFlag(entry.id, 'neis_entered', !entry.neis_entered)}
+                      onToggleDocumentReceived={() =>
+                        handleToggleFlag(entry.id, 'document_received', !entry.document_received)
+                      }
+                      togglingField={
+                        togglingKey === `${entry.id}:neis_entered`
+                          ? 'neis_entered'
+                          : togglingKey === `${entry.id}:document_received`
+                            ? 'document_received'
+                            : null
                       }
                     />
                   ))}
