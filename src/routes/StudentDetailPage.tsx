@@ -29,7 +29,6 @@ export function StudentDetailPage() {
   }, [id])
 
   const student = students.find((s) => s.id === id)
-  const currentIndex = students.findIndex((s) => s.id === id)
 
   if (!student) {
     if (studentsLoading) {
@@ -72,12 +71,12 @@ export function StudentDetailPage() {
         <h1 className="sr-only">
           {student.number}. {student.name}
         </h1>
-        <div className="relative inline-block max-w-full">
+        <div className="relative inline-flex max-w-full items-center">
           <select
             value={student.id}
             onChange={(e) => navigate(`/students/${e.target.value}`)}
             aria-label="학생 선택"
-            className="w-full appearance-none truncate rounded-lg bg-transparent py-1 pl-8 pr-8 text-center text-2xl font-bold text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-300"
+            className="max-w-full appearance-none rounded-lg bg-transparent py-1 pl-3 pr-8 text-center text-2xl font-bold text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-300"
           >
             {students.map((s) => (
               <option key={s.id} value={s.id}>
@@ -91,9 +90,6 @@ export function StudentDetailPage() {
             className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-gray-400"
           />
         </div>
-        <p className="text-xs text-gray-400">
-          {currentIndex + 1} / {students.length}
-        </p>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-1.5">
