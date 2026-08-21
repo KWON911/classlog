@@ -185,10 +185,10 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
           )}
 
           <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full border-collapse text-sm">
+            <table className="border-collapse text-sm">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 w-[140px] max-w-[140px] border-b border-gray-200 bg-white px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="sticky left-0 z-10 w-[140px] max-w-[140px] border-b border-r border-gray-200 bg-white px-3 py-2 text-left font-semibold text-gray-700">
                     학생
                   </th>
                   {columns.map((column) => (
@@ -203,8 +203,8 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
                         setDraggedColumnId(null)
                         setDragOverColumnId(null)
                       }}
-                      className={`min-w-[220px] border-b px-3 py-2 text-left font-semibold text-gray-700 transition-colors ${
-                        dragOverColumnId === column.id ? 'border-b-brand-500 bg-brand-50' : 'border-gray-200 bg-white'
+                      className={`min-w-[220px] border-b border-r border-r-gray-200 px-3 py-2 text-left font-semibold text-gray-700 transition-colors ${
+                        dragOverColumnId === column.id ? 'border-b-brand-500 bg-brand-50' : 'border-b-gray-200 bg-white'
                       } ${draggedColumnId === column.id ? 'opacity-40' : ''}`}
                     >
                       <div className="flex items-center gap-2">
@@ -256,7 +256,7 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
                 {orderedStudents.map((student) => (
                   <tr key={student.id}>
                     <td
-                      className="sticky left-0 z-10 w-[140px] max-w-[140px] truncate border-b border-gray-100 bg-white px-3 py-2 font-medium text-gray-900"
+                      className="sticky left-0 z-10 w-[140px] max-w-[140px] truncate border-b border-r border-gray-100 bg-white px-3 py-2 font-medium text-gray-900"
                       title={`${student.number}번 ${student.name}`}
                     >
                       {student.number}번 {student.name}
@@ -265,7 +265,7 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
                       const rowValues = draft.get(student.id) ?? {}
                       const cellValue = rowValues[column.id]
                       return (
-                        <td key={column.id} className="border-b border-gray-100 px-3 py-2 align-top">
+                        <td key={column.id} className="border-b border-r border-gray-100 px-3 py-2 align-top">
                           {column.type === 'text' ? (
                             <textarea
                               value={(cellValue as string) ?? ''}
