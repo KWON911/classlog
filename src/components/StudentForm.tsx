@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { fieldClass, labelClass, primaryButtonClass, secondaryButtonClass } from '../lib/ui/classNames'
 
 export type StudentFormValues = {
@@ -21,12 +21,9 @@ type StudentFormProps = {
   onSubmit: (values: StudentFormValues) => Promise<void> | void
   onCancel: () => void
   submitLabel: string
-  /** Called whenever the form's current values differ from initialValues — lets a
-   *  parent warn before discarding an in-progress edit of an existing student. */
-  onDirtyChange?: (dirty: boolean) => void
 }
 
-export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel, onDirtyChange }: StudentFormProps) {
+export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: StudentFormProps) {
   const [number, setNumber] = useState(String(initialValues?.number ?? ''))
   const [name, setName] = useState(initialValues?.name ?? '')
   const [gender, setGender] = useState(initialValues?.gender ?? '')
@@ -74,10 +71,6 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel, on
       initialValues,
     ],
   )
-
-  useEffect(() => {
-    onDirtyChange?.(isDirty)
-  }, [isDirty, onDirtyChange])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()

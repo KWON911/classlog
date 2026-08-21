@@ -15,12 +15,6 @@ export const primaryButtonClass =
 export const secondaryButtonClass =
   'h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
 
-export const secondaryActiveButtonClass =
-  'h-11 rounded-lg border border-brand-200 bg-brand-50 px-4 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-100'
-
-export const dangerButtonClass =
-  'h-11 rounded-lg border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100'
-
 export const sectionCardClass =
   'rounded-[12px] border border-gray-200 bg-white p-5 shadow-[0_0_0.5px_rgba(0,0,0,0.14),0_1px_1px_rgba(0,0,0,0.24)] sm:p-6'
 
