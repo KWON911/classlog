@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useWeeklyMeal } from '../../lib/hooks/useWeeklyMeal'
 import { stripAllergyCode } from '../../lib/services/neis-service'
 import { yyyymmdd } from '../../lib/utils/date-utils'
 import type { SchoolSettings } from '../../lib/types'
 import { EmptyState, ErrorState, LoadingState, UnsetState } from './HomeCardStates'
+import { MealTvDisplayModal } from './MealTvDisplayModal'
 
 type WeeklyMealCardProps = {
   settings: SchoolSettings | null
@@ -28,6 +29,7 @@ export function WeeklyMealCard({
 }: WeeklyMealCardProps) {
   const { status, days, error, retry } = useWeeklyMeal(settings, weekStart, refreshToken)
   const todayStr = yyyymmdd(new Date())
+  const [openDayIndex, setOpenDayIndex] = useState<number | null>(null)
 
   useEffect(() => {
     onLoadingChange?.(status === 'loading')
@@ -36,7 +38,8 @@ export function WeeklyMealCard({
   const isEmpty = days.every((d) => d.menus.length === 0)
 
   return (
-    <section className="min-w-0 rounded-[14px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+    <>
+      <section className="min-w-0 rounded-[14px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-gray-900">
         주간 식단표
         {isCurrentWeek && (
@@ -55,15 +58,10 @@ export function WeeklyMealCard({
       ) : (
         <div className="min-w-0 overflow-x-auto">
           <div className="grid min-w-[480px] grid-cols-5 gap-2 lg:min-w-0">
-            {days.map((day) => {
+            {days.map((day, i) => {
               const isToday = day.date === todayStr
-              return (
-                <div
-                  key={day.date}
-                  className={`box-border min-w-0 rounded-lg border p-2.5 ${
-                    isToday ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-gray-200'
-                  }`}
-                >
+              const cellContent = (
+                <>
                   <div className="mb-2 text-center">
                     <div className={`text-xs font-semibold ${isToday ? 'text-brand-700' : 'text-gray-700'}`}>
                       {day.dayLabel}
@@ -76,8 +74,8 @@ export function WeeklyMealCard({
                     <p className="text-center text-xs text-gray-400">급식 없음</p>
                   ) : (
                     <ul className="flex flex-col gap-1">
-                      {day.menus.map((menu, i) => (
-                        <li key={i} className={`text-center text-[13px] text-gray-700 ${cellTextClass}`}>
+                      {day.menus.map((menu, mi) => (
+                        <li key={mi} className={`text-center text-[13px] text-gray-700 ${cellTextClass}`}>
                           {stripAllergyCode(menu)}
                         </li>
                       ))}
@@ -85,12 +83,40 @@ export function WeeklyMealCard({
                   )}
 
                   {day.calorie && <p className="mt-2 text-center text-[10px] text-gray-400">{day.calorie}</p>}
+                </>
+              )
+
+              return day.menus.length > 0 ? (
+                <button
+                  key={day.date}
+                  type="button"
+                  onClick={() => setOpenDayIndex(i)}
+                  aria-label={`${day.dayLabel}요일 식단표 크게 보기`}
+                  className={`box-border min-w-0 rounded-lg border p-2.5 text-left transition-colors hover:border-brand-400 hover:bg-brand-50/30 ${
+                    isToday ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-gray-200'
+                  }`}
+                >
+                  {cellContent}
+                </button>
+              ) : (
+                <div
+                  key={day.date}
+                  className={`box-border min-w-0 rounded-lg border p-2.5 ${
+                    isToday ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-gray-200'
+                  }`}
+                >
+                  {cellContent}
                 </div>
               )
             })}
           </div>
         </div>
       )}
-    </section>
+      </section>
+
+      {openDayIndex !== null && (
+        <MealTvDisplayModal days={days} initialIndex={openDayIndex} onClose={() => setOpenDayIndex(null)} />
+      )}
+    </>
   )
 }
