@@ -1,10 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Download } from 'lucide-react'
 import { useStudents } from '../lib/hooks/useStudents'
+import { useAllRecords } from '../lib/hooks/useAllRecords'
 import { StudentListItem } from '../components/StudentListItem'
 import { PageContainer } from '../components/PageContainer'
 import { YorokTable } from '../components/yorok/YorokTable'
-import { secondaryButtonClass } from '../lib/ui/classNames'
+import { buildRecordsCsv } from '../lib/csv'
+import { yyyymmdd } from '../lib/utils/date-utils'
+import { csvButtonClass, secondaryButtonClass } from '../lib/ui/classNames'
 
 const GRID_CLASS = 'grid grid-cols-2 gap-2.5 @sm:grid-cols-3 @4xl:grid-cols-4 @6xl:grid-cols-5'
 
@@ -18,6 +22,27 @@ const tabButtonClass = (active: boolean) =>
 export function StudentListPage() {
   const { students, loading, error, refetch } = useStudents()
   const [activeTab, setActiveTab] = useState<Tab>('yorok')
+  const { fetchAllRecords, loading: exportingRecords } = useAllRecords()
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  const handleExportRecords = async () => {
+    setExportError(null)
+    const result = await fetchAllRecords()
+    if (result.error || !result.data) {
+      setExportError(result.error ?? '생활기록을 불러오지 못했습니다.')
+      return
+    }
+    const csv = buildRecordsCsv(result.data, students)
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `생활기록_전체_${yyyymmdd(new Date())}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <PageContainer size="wide">
@@ -44,6 +69,26 @@ export function StudentListPage() {
 
       {activeTab === 'roster' ? (
         <div className="@container">
+          {!loading && !error && students.length > 0 && (
+            <div className="mb-3 flex justify-end">
+              <button
+                type="button"
+                onClick={handleExportRecords}
+                disabled={exportingRecords}
+                className={csvButtonClass}
+              >
+                <Download size={16} />
+                {exportingRecords ? '내보내는 중...' : '생활기록 전체 내보내기'}
+              </button>
+            </div>
+          )}
+
+          {exportError && (
+            <p className="mb-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {exportError}
+            </p>
+          )}
+
           {loading && (
             <div className={GRID_CLASS}>
               {Array.from({ length: 10 }).map((_, i) => (
