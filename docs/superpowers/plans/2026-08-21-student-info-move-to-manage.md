@@ -1,3 +1,7 @@
+---
+render_with_liquid: false
+---
+
 # 학생 상세정보/삭제를 정보관리로 일원화 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

@@ -1,3 +1,7 @@
+---
+render_with_liquid: false
+---
+
 # CSV 학생 명부 가져오기 설계
 
 ## 배경

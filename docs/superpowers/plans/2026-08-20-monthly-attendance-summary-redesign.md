@@ -1,3 +1,7 @@
+---
+render_with_liquid: false
+---
+
 # 출결관리 월간요약 UI 재설계 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
