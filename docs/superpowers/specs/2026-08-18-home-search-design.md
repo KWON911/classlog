@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 홈화면 기록 찾기(검색) — 설계
 
 ## 배경

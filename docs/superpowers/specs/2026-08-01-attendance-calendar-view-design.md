@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 출결 월간 캘린더 뷰 설계
 
 ## 배경

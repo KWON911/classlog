@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 홈화면 주간 출결 캘린더 카드 — 설계
 
 ## 배경

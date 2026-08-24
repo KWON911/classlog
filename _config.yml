@@ -1,0 +1,9 @@
+# GitHub Pages' automatic Jekyll build treats every .md file in this repo as
+# site content and runs it through the Liquid template engine. The planning
+# docs under docs/superpowers/ are implementation plans/specs full of JS/TS
+# code examples (template literals, object literals) that use {{ }} — Jekyll
+# misparses that as Liquid syntax and the build fails. These files were never
+# meant to be rendered as pages of a website, so exclude them from the build
+# entirely rather than trying to make Liquid tolerate their contents.
+exclude:
+  - docs/superpowers

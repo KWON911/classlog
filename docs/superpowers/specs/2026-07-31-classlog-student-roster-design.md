@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # Classlog MVP: 학생 명부 + 생활기록/상담 기록 설계
 
 ## 배경

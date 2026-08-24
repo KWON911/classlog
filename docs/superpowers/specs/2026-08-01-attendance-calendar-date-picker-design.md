@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 출결 날짜 선택을 캘린더로 통합 설계
 
 ## 배경

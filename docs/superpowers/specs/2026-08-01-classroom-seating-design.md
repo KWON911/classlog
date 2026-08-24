@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 학급 자리 배치 설계
 
 ## 배경

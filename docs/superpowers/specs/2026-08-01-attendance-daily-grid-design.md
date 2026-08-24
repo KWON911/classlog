@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 출결 일별 입력 목록을 그리드로 전환 설계
 
 ## 배경

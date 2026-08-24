@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 학급요록 학생 이름 컬럼 고정 너비 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

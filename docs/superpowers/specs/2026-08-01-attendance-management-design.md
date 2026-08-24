@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 출결 관리 및 사이드바 네비게이션 설계
 
 ## 배경

@@ -1,7 +1,3 @@
----
-render_with_liquid: false
----
-
 # 출결관리 - 월간요약 UI 재설계
 
 ## 배경
