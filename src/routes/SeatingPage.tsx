@@ -46,10 +46,6 @@ function todayDate() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
-function todayYearMonth() {
-  return todayDate().slice(0, 7)
-}
-
 const dangerButtonClass =
   'rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100'
 const toolbarPrimaryButtonClass =
@@ -87,7 +83,6 @@ export function SeatingPage() {
   const [manuallyMoved, setManuallyMoved] = useState<Set<string>>(new Set())
   const [title, setTitle] = useState('')
   const [planDate, setPlanDate] = useState(todayDate())
-  const [recordMonth, setRecordMonth] = useState(todayYearMonth())
   const [savedPlanId, setSavedPlanId] = useState<string | null>(null)
   const [avoidPastNeighbors, setAvoidPastNeighbors] = useState(false)
   const [avoidPreviousSeats, setAvoidPreviousSeats] = useState(false)
@@ -100,9 +95,9 @@ export function SeatingPage() {
   // single source, so saving a new plan updates every view immediately
   // without a page reload.
   const { plans: allPlans, loading: plansLoading, error: plansError, savePlan, deletePlan } = useSeatingPlans('all')
-  const archivePlans = useMemo(
-    () => allPlans.filter((plan) => plan.plan_date.slice(0, 7) === recordMonth),
-    [allPlans, recordMonth],
+  const sortedAllPlans = useMemo(
+    () => [...allPlans].sort((a, b) => b.plan_date.localeCompare(a.plan_date) || b.created_at.localeCompare(a.created_at)),
+    [allPlans],
   )
   const noPreviousSeatHistory = !plansLoading && allPlans.length === 0
 
@@ -370,13 +365,16 @@ export function SeatingPage() {
       return
     }
     try {
-      const avoidPairs = avoidPastNeighbors ? derivePastNeighborPairs(archivePlans) : new Set<string>()
+      // "지난 짝 피하기"와 "이전에 앉았던 자리 피하기"는 같은 기록 범위(previousSeatHistoryScope)를 공유한다.
+      const scopedPlans =
+        avoidPastNeighbors || avoidPreviousSeats ? filterPlansByScope(allPlans, previousSeatHistoryScope, todayDate()) : []
+
+      const avoidPairs = avoidPastNeighbors ? derivePastNeighborPairs(scopedPlans) : new Set<string>()
 
       let pastSeatsByStudent = new Map<string, Map<string, number>>()
       let excludedRecordCount = 0
       if (avoidPreviousSeats) {
         const currentSeatIds = new Set(seats.map((s) => s.id))
-        const scopedPlans = filterPlansByScope(allPlans, previousSeatHistoryScope, todayDate())
         const derived = derivePastSeatsByStudent(scopedPlans, currentSeatIds)
         pastSeatsByStudent = derived.pastSeatsByStudent
         excludedRecordCount = derived.excludedRecordCount
@@ -393,7 +391,7 @@ export function SeatingPage() {
 
       const parts: string[] = [
         avoidPastNeighbors
-          ? `기록 월의 지난 짝 ${avoidPairs.size}쌍을 피하면서 새 자리표를 만들었습니다.`
+          ? `${PREVIOUS_SEAT_SCOPE_LABELS[previousSeatHistoryScope]} 기록의 지난 짝 ${avoidPairs.size}쌍을 피하면서 새 자리표를 만들었습니다.`
           : '필수 조건을 지키면서 새 자리표를 만들었습니다.',
       ]
 
@@ -751,21 +749,27 @@ export function SeatingPage() {
                   />
                   성별을 고려해 가능한 고르게 배치
                 </label>
-
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={avoidPastNeighbors}
-                    onChange={(e) => setAvoidPastNeighbors(e.target.checked)}
-                    className="accent-brand-600"
-                  />
-                  지난 짝 피하기 (아래 기록 월에 저장된 자리표 기준)
-                </label>
               </div>
 
               <div className="mt-4 rounded-[11px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
                 <h4 className="mb-2 text-sm font-semibold text-gray-800">기록 기반 규칙</h4>
                 <label className="flex items-start gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={avoidPastNeighbors}
+                    onChange={(e) => setAvoidPastNeighbors(e.target.checked)}
+                    className="mt-0.5 accent-brand-600"
+                  />
+                  <span>
+                    <span className="font-medium text-gray-800">지난 짝 피하기</span>
+                    <span className="block text-xs text-gray-500">
+                      아래 기록 범위에 저장된 자리표를 기준으로 최근에 짝이었던 학생끼리는 다시 옆자리에 배치하지
+                      않습니다.
+                    </span>
+                  </span>
+                </label>
+
+                <label className="mt-3 flex items-start gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
                     checked={avoidPreviousSeats}
@@ -781,7 +785,7 @@ export function SeatingPage() {
                   </span>
                 </label>
 
-                {avoidPreviousSeats && (
+                {(avoidPastNeighbors || avoidPreviousSeats) && (
                   <div className="mt-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <label htmlFor="previous-seat-scope" className="text-sm font-medium text-gray-700">
@@ -892,7 +896,7 @@ export function SeatingPage() {
               <h3 className="text-xs font-bold uppercase tracking-wide text-brand-700">Archive</h3>
               <p className="mb-4 mt-1 text-sm text-gray-500">자리표를 저장하고 이전 기록을 불러올 수 있습니다.</p>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-end">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
                 <label className={labelClass}>
                   제목
                   <input
@@ -913,15 +917,6 @@ export function SeatingPage() {
                     className={fieldClass}
                   />
                 </label>
-                <label className={labelClass}>
-                  기록 월
-                  <input
-                    type="month"
-                    value={recordMonth}
-                    onChange={(e) => setRecordMonth(e.target.value)}
-                    className={fieldClass}
-                  />
-                </label>
                 <button onClick={handleSave} className={primaryButtonClass}>
                   현재 자리표 저장
                 </button>
@@ -932,11 +927,11 @@ export function SeatingPage() {
 
               <h4 className="mb-3 mt-6 text-sm font-semibold text-gray-800">자리바꾸기 목록</h4>
               {plansLoading && <p className="text-sm text-gray-500">불러오는 중...</p>}
-              {!plansLoading && archivePlans.length === 0 && (
-                <p className="text-sm text-gray-500">선택한 달에 저장된 자리표가 없습니다.</p>
+              {!plansLoading && sortedAllPlans.length === 0 && (
+                <p className="text-sm text-gray-500">저장된 자리표가 없습니다.</p>
               )}
               <ul className="flex flex-col gap-2">
-                {archivePlans.map((plan) => (
+                {sortedAllPlans.map((plan) => (
                   <li
                     key={plan.id}
                     className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 sm:flex-row sm:items-center sm:justify-between"
