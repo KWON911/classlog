@@ -243,7 +243,8 @@ export function SeatingPage() {
         return
       }
       if (activeTool.firstStudentId === studentId) {
-        setMessage('서로 다른 두 학생을 선택해 주세요.')
+        setActiveTool({ type: 'swap', firstStudentId: null })
+        setMessage('학생 선택을 취소했습니다.')
         return
       }
       const firstId = activeTool.firstStudentId
@@ -567,38 +568,37 @@ export function SeatingPage() {
   return (
     <PageContainer size="full">
       <div className="mb-4 flex flex-col gap-3 rounded-[14px] border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between print:hidden">
-        <h1 className="text-2xl font-semibold text-brand-700">우리 반 자리 배치</h1>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowSettings(true)} className={toolbarSecondaryButtonClass}>
-              설정
-            </button>
-            <button onClick={generate} className={toolbarPrimaryButtonClass}>
-              자리 배치 시작
-            </button>
-          </div>
+        <div className="flex items-center justify-between gap-3 sm:contents">
+          <h1 className="shrink-0 text-2xl font-semibold text-brand-700">우리 반 자리 배치</h1>
+          <button onClick={generate} className={`${toolbarPrimaryButtonClass} sm:hidden`}>
+            자리 배치 시작
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
+          <button onClick={() => setShowSettings(true)} className={toolbarSecondaryButtonClass}>
+            설정
+          </button>
+          <button onClick={generate} className={`${toolbarPrimaryButtonClass} hidden sm:block`}>
+            자리 배치 시작
+          </button>
           <div className="hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
-          <div className="flex items-center gap-2">
-            <button onClick={generate} className={toolbarSecondaryButtonClass}>
-              재배치하기
-            </button>
-            <button onClick={clearPlacement} className={toolbarNeutralButtonClass}>
-              초기화
-            </button>
-          </div>
+          <button onClick={generate} className={toolbarSecondaryButtonClass}>
+            재배치하기
+          </button>
+          <button onClick={clearPlacement} className={toolbarNeutralButtonClass}>
+            초기화
+          </button>
           <div className="hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleViewMode}
-              className={viewMode === 'back' ? toolbarSecondaryActiveClass : toolbarSecondaryButtonClass}
-              aria-pressed={viewMode === 'back'}
-            >
-              보기 전환
-            </button>
-            <button onClick={() => window.print()} className={toolbarNeutralButtonClass}>
-              인쇄
-            </button>
-          </div>
+          <button
+            onClick={toggleViewMode}
+            className={viewMode === 'back' ? toolbarSecondaryActiveClass : toolbarSecondaryButtonClass}
+            aria-pressed={viewMode === 'back'}
+          >
+            보기 전환
+          </button>
+          <button onClick={() => window.print()} className={`${toolbarNeutralButtonClass} hidden sm:block`}>
+            인쇄
+          </button>
         </div>
       </div>
 

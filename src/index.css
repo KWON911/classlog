@@ -34,9 +34,17 @@ body {
   min-width: 0;
 }
 
+.seat-layout-grid {
+  --seat-min-width: 104px;
+}
+
 @media (max-width: 767px) {
   .page-container {
     padding-inline: 16px;
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  .seat-layout-grid {
+    --seat-min-width: 78px;
   }
 }

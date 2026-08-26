@@ -26,12 +26,14 @@ function seatClassName(
   const classes = [
     'relative',
     'flex',
-    'min-h-[82px]',
+    'min-h-[58px]',
+    'sm:min-h-[82px]',
     'items-center',
     'justify-center',
     'rounded-lg',
     'border',
-    'px-2',
+    'px-1',
+    'sm:px-2',
     'py-1',
     'transition-transform',
     'duration-150',
@@ -93,7 +95,7 @@ export function SeatingGrid({
   const deskStart = Math.max(1, Math.floor((columns - deskSpan) / 2) + 1)
 
   const desk = (
-    <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(104px, 1fr))` }}>
+    <div className="seat-layout-grid grid gap-1.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(var(--seat-min-width), 1fr))` }}>
       <div
         className="rounded-lg bg-slate-700 py-2 text-center text-sm font-bold text-white"
         style={{ gridColumn: `${deskStart} / span ${deskSpan}` }}
@@ -104,12 +106,12 @@ export function SeatingGrid({
   )
 
   return (
-    <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
-      <div className="mb-4 flex flex-wrap gap-2 print:hidden">
+    <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm md:p-6">
+      <div className="mb-3 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 print:hidden md:mb-4 md:flex-wrap md:px-0 md:pb-0">
         {LEGEND_ITEMS.map((item) => (
           <span
             key={item.label}
-            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] text-gray-600"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] text-gray-600"
           >
             {item.icon ? (
               <span className="text-xs leading-none">{item.icon}</span>
@@ -123,7 +125,7 @@ export function SeatingGrid({
 
       <div className="overflow-x-auto">
         {!deskAtBottom && <div className="mb-3">{desk}</div>}
-        <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(104px, 1fr))` }}>
+        <div className="seat-layout-grid grid gap-1.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(var(--seat-min-width), 1fr))` }}>
           {sortedSeats.map((seat) => {
             const pos = displayPosition(seat, rows, columns, viewMode)
             const student = studentBySeatId.get(seat.id)
@@ -159,7 +161,7 @@ export function SeatingGrid({
                 ) : student ? (
                   <strong
                     className="w-full truncate px-1"
-                    style={{ fontSize: 'clamp(26px, 2.1vw, 34px)', fontWeight: 800, lineHeight: 1.1, whiteSpace: 'nowrap' }}
+                    style={{ fontSize: 'clamp(18px, 4vw, 34px)', fontWeight: 800, lineHeight: 1.1, whiteSpace: 'nowrap' }}
                   >
                     {student.name}
                   </strong>
