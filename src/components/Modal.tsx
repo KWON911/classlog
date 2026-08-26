@@ -11,6 +11,13 @@ type ModalProps = {
 
 export function Modal({ title, description, onClose, children, maxWidthClassName = 'max-w-3xl' }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
+  // Read via ref inside the mount-only effect below so a caller passing a
+  // fresh inline `onClose` on every render (the common case) doesn't churn
+  // that effect — it previously re-ran on every keystroke of any field that
+  // lives in the caller's own state, stealing focus back into the dialog
+  // after every character and making typing feel broken.
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
@@ -18,7 +25,7 @@ export function Modal({ title, description, onClose, children, maxWidthClassName
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key !== 'Tab' || !dialogRef.current) return
@@ -41,8 +48,7 @@ export function Modal({ title, description, onClose, children, maxWidthClassName
       document.removeEventListener('keydown', handleKeyDown)
       previouslyFocused?.focus()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onClose])
+  }, [])
 
   return (
     <div
