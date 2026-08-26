@@ -89,6 +89,7 @@ export function SeatingPage() {
   const [previousSeatHistoryScope, setPreviousSeatHistoryScope] = useState<PreviousSeatHistoryScope>('latest3')
   const [saveMessage, setSaveMessage] = useState('')
   const [showSettings, setShowSettings] = useState(false)
+  const [showSaveChoice, setShowSaveChoice] = useState(false)
 
   // Fetched once, unfiltered — the Archive list (this month only) and the
   // "지난 짝 피하기"/"이전에 앉았던 자리 피하기" history both derive from this
@@ -442,9 +443,9 @@ export function SeatingPage() {
     setMessage('현재 배치를 초기화했습니다.')
   }
 
-  function buildPayload(): SeatingPlanInput {
+  function buildPayload(planTitle = title): SeatingPlanInput {
     return {
-      title,
+      title: planTitle,
       plan_date: planDate,
       rows: seats.reduce((max, s) => Math.max(max, s.row), 0),
       columns,
@@ -464,16 +465,20 @@ export function SeatingPage() {
     }
   }
 
-  async function handleSave() {
+  function validateSave() {
     if (!title.trim()) {
       setSaveMessage('자리표 제목을 입력해 주세요.')
-      return
+      return false
     }
     if (!assignments.size) {
       setSaveMessage('학생 명단을 불러와 자리 배치한 뒤 저장해 주세요.')
-      return
+      return false
     }
-    const result = await savePlan(savedPlanId, buildPayload())
+    return true
+  }
+
+  async function saveCurrentPlan(id: string | null, planTitle = title, successMessage = '현재 자리표를 저장했습니다.') {
+    const result = await savePlan(id, buildPayload(planTitle))
     if (result.error) {
       setSaveMessage(result.error)
       return
@@ -481,7 +486,30 @@ export function SeatingPage() {
     if (result.data) {
       setSavedPlanId(result.data.id)
     }
-    setSaveMessage('현재 자리표를 저장했습니다.')
+    setSaveMessage(successMessage)
+  }
+
+  async function handleSave() {
+    if (!validateSave()) return
+    if (savedPlanId) {
+      setShowSaveChoice(true)
+      return
+    }
+    await saveCurrentPlan(null)
+  }
+
+  async function handleSaveAsNew() {
+    const suffix = ' (수정본)'
+    const copiedTitle = `${title.trim().slice(0, 80 - suffix.length)}${suffix}`
+    setShowSaveChoice(false)
+    setTitle(copiedTitle)
+    await saveCurrentPlan(null, copiedTitle, '새 자리표로 저장했습니다. 원본은 그대로 보존됩니다.')
+  }
+
+  async function handleOverwrite() {
+    if (!window.confirm('기존 자리표가 현재 내용으로 바뀝니다. 덮어쓸까요?')) return
+    setShowSaveChoice(false)
+    await saveCurrentPlan(savedPlanId, title, '기존 자리표를 덮어썼습니다.')
   }
 
   function handleLoad(plan: SeatingPlan, duplicate = false) {
@@ -953,7 +981,7 @@ export function SeatingPage() {
                         onClick={() => handleLoad(plan, true)}
                         className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
                       >
-                        복제
+                        복제 후 수정
                       </button>
                       <button onClick={() => handleDelete(plan.id)} className={dangerButtonClass}>
                         삭제
@@ -963,6 +991,32 @@ export function SeatingPage() {
                 ))}
               </ul>
             </section>
+          </div>
+        </Modal>
+      )}
+
+      {showSaveChoice && (
+        <Modal
+          title="저장 방법 선택"
+          description="불러온 자리표를 수정했습니다. 원본을 보존할지, 수정할지 선택해 주세요."
+          onClose={() => setShowSaveChoice(false)}
+          maxWidthClassName="max-w-md"
+        >
+          <div className="space-y-3">
+            <button onClick={handleSaveAsNew} className={`${primaryButtonClass} h-auto w-full py-3 text-left`}>
+              <span className="block">새 자리표로 저장</span>
+              <span className="mt-1 block text-xs font-normal text-white/85">제목에 '수정본'을 붙여 원본을 그대로 남겨 둡니다.</span>
+            </button>
+            <button
+              onClick={handleOverwrite}
+              className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-left text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
+            >
+              <span className="block">기존 자리표 덮어쓰기</span>
+              <span className="mt-1 block text-xs font-normal text-red-600">원본 내용이 현재 자리표로 바뀌어 돌릴 수 없습니다.</span>
+            </button>
+            <button onClick={() => setShowSaveChoice(false)} className={`${secondaryButtonClass} w-full`}>
+              취소
+            </button>
           </div>
         </Modal>
       )}
