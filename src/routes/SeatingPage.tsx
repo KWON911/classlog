@@ -646,9 +646,6 @@ export function SeatingPage() {
           <button onClick={clearAssignments} className={toolbarSecondaryButtonClass}>
             배치 비우기
           </button>
-          <button onClick={resetAll} className={toolbarNeutralButtonClass}>
-            초기화
-          </button>
           <div className="hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
           <button
             onClick={toggleViewMode}
@@ -1023,6 +1020,17 @@ export function SeatingPage() {
                   </li>
                 ))}
               </ul>
+            </section>
+
+            <section className="rounded-xl border border-red-200 bg-red-50 p-4">
+              <h3 className="text-sm font-semibold text-red-800">전체 초기화</h3>
+              <p className="mt-1 text-sm text-red-700">현재 편집 중인 자리표와 설정을 기본 상태로 돌립니다. 저장된 자리표 목록은 삭제되지 않습니다.</p>
+              <button
+                onClick={resetAll}
+                className="mt-3 rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
+              >
+                전체 초기화
+              </button>
             </section>
           </div>
         </Modal>
