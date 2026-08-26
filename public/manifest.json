@@ -1,6 +1,6 @@
 {
-  "name": "학급 대시보드",
-  "short_name": "학급대시보드",
+  "name": "클래스로그",
+  "short_name": "클래스로그",
   "description": "우리 반 학생 기록, 출결, 자리배치를 관리하는 학급 대시보드",
   "start_url": "/",
   "scope": "/",
