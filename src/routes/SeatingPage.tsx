@@ -103,6 +103,7 @@ export function SeatingPage() {
   const noPreviousSeatHistory = !plansLoading && allPlans.length === 0
 
   const columns = useMemo(() => seats.reduce((max, s) => Math.max(max, s.column), 0), [seats])
+  const placementButtonLabel = assignments.size ? '재배치하기' : '자리 배치 시작'
   const studentGenderById = useMemo(
     () => new Map(students.map((s) => [s.id, mapGender(s.gender)])),
     [students],
@@ -436,11 +437,43 @@ export function SeatingPage() {
     }
   }
 
-  function clearPlacement() {
+  function clearAssignments() {
     setSavedPlanId(null)
     setActiveTool(null)
     setAssignments(new Map())
-    setMessage('현재 배치를 초기화했습니다.')
+    setManuallyMoved(new Set())
+    setMessage('학생 배치를 비웠습니다. 좌석 구조와 조건은 유지됩니다.')
+  }
+
+  function resetAll() {
+    if (!window.confirm('현재 편집 내용을 모두 삭제하고 기본 상태로 돌리시겠습니까? 저장된 자리표 목록은 삭제되지 않습니다.')) return
+    setRowsInput(5)
+    setColumnsInput(6)
+    setTeacherDirection('north')
+    setViewMode('teacher')
+    setSeats(createSeats(5, 6))
+    setAssignments(new Map())
+    setSeatEditMode(null)
+    setActiveTool(null)
+    setFixed(new Map())
+    setSeparations([])
+    setGenderBalance(false)
+    setSelectedFixedStudentId('')
+    setSeparationStudentA('')
+    setSeparationStudentB('')
+    setSeparationType('orthogonal')
+    setConditionMessage('')
+    setManuallyMoved(new Set())
+    setTitle('')
+    setPlanDate(todayDate())
+    setSavedPlanId(null)
+    setAvoidPastNeighbors(false)
+    setAvoidPreviousSeats(false)
+    setPreviousSeatHistoryScope('latest3')
+    setSaveMessage('')
+    setErrorMessage('')
+    setShowSaveChoice(false)
+    setMessage('기본 상태로 전체 초기화했습니다. 저장된 자리표 목록은 유지됩니다.')
   }
 
   function buildPayload(planTitle = title): SeatingPlanInput {
@@ -599,7 +632,7 @@ export function SeatingPage() {
         <div className="flex items-center justify-between gap-3 sm:contents">
           <h1 className="shrink-0 text-2xl font-semibold text-brand-700">우리 반 자리 배치</h1>
           <button onClick={generate} className={`${toolbarPrimaryButtonClass} sm:hidden`}>
-            자리 배치 시작
+            {placementButtonLabel}
           </button>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
@@ -607,13 +640,13 @@ export function SeatingPage() {
             설정
           </button>
           <button onClick={generate} className={`${toolbarPrimaryButtonClass} hidden sm:block`}>
-            자리 배치 시작
+            {placementButtonLabel}
           </button>
           <div className="hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
-          <button onClick={generate} className={toolbarSecondaryButtonClass}>
-            재배치하기
+          <button onClick={clearAssignments} className={toolbarSecondaryButtonClass}>
+            배치 비우기
           </button>
-          <button onClick={clearPlacement} className={toolbarNeutralButtonClass}>
+          <button onClick={resetAll} className={toolbarNeutralButtonClass}>
             초기화
           </button>
           <div className="hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
