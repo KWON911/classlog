@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSchoolSettings } from '../../lib/hooks/useSchoolSettings'
 import { searchSchools } from '../../lib/services/neis-service'
 import { schoolYearOf } from '../../lib/utils/date-utils'
@@ -25,11 +25,31 @@ export function SchoolSettingsSection() {
 
   const [grade, setGrade] = useState(settings?.grade ?? '1')
   const [className, setClassName] = useState(settings?.class_name ?? '1')
+  const [isEditingClass, setIsEditingClass] = useState(false)
   const [savingClass, setSavingClass] = useState(false)
   const [selectingSchoolCode, setSelectingSchoolCode] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   const hasSchool = Boolean(settings?.school_code)
+
+  useEffect(() => {
+    if (settings && !isEditingClass) {
+      setGrade(settings.grade)
+      setClassName(settings.class_name)
+    }
+  }, [settings, isEditingClass])
+
+  const startEditingClass = () => {
+    setGrade(settings?.grade ?? '1')
+    setClassName(settings?.class_name ?? '1')
+    setIsEditingClass(true)
+  }
+
+  const cancelEditingClass = () => {
+    setGrade(settings?.grade ?? '1')
+    setClassName(settings?.class_name ?? '1')
+    setIsEditingClass(false)
+  }
 
   const handleSearch = async () => {
     if (!query.trim()) return
@@ -76,6 +96,7 @@ export function SchoolSettingsSection() {
     })
     setSavingClass(false)
     if (!response.error) {
+      setIsEditingClass(false)
       setMessage('학급 정보를 저장했습니다.')
     }
   }
@@ -156,38 +177,55 @@ export function SchoolSettingsSection() {
         <h2 className={`mb-1 ${cardTitleClass}`}>학급 정보</h2>
         <p className={`mb-4 ${cardDescriptionClass}`}>시간표 조회에 필요한 학년·반입니다.</p>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
-            학년
-            <select value={grade} onChange={(e) => setGrade(e.target.value)} className={fieldClass}>
-              {GRADES.map((g) => (
-                <option key={g} value={g}>
-                  {g}학년
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
-            반
-            <input
-              type="text"
-              value={className}
-              onChange={(e) => setClassName(e.target.value)}
-              className={fieldClass}
-            />
-          </label>
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={handleSaveClass}
-              disabled={!hasSchool || savingClass}
-              className={`${primaryButtonClass} w-full`}
-            >
-              {savingClass ? '저장 중...' : '저장'}
+        {hasSchool && !isEditingClass ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-base font-medium text-gray-900">
+              {settings?.grade}학년 {settings?.class_name}반
+            </p>
+            <button type="button" onClick={startEditingClass} className={secondaryButtonClass}>
+              학급 정보 수정
             </button>
           </div>
-        </div>
-        {!hasSchool && <p className="mt-2 text-xs text-gray-400">먼저 위에서 학교를 설정해 주세요.</p>}
+        ) : hasSchool ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              학년
+              <select value={grade} onChange={(e) => setGrade(e.target.value)} className={fieldClass}>
+                {GRADES.map((g) => (
+                  <option key={g} value={g}>
+                    {g}학년
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              반
+              <input
+                type="text"
+                value={className}
+                onChange={(e) => setClassName(e.target.value)}
+                className={fieldClass}
+              />
+            </label>
+            <div className="flex items-end">
+              <button type="button" onClick={cancelEditingClass} className={`${secondaryButtonClass} w-full`}>
+                취소
+              </button>
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={handleSaveClass}
+                disabled={savingClass}
+                className={`${primaryButtonClass} w-full`}
+              >
+                {savingClass ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">먼저 위에서 학교를 설정해 주세요.</p>
+        )}
       </div>
 
       {error && (
