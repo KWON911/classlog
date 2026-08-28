@@ -6,7 +6,6 @@ import { ImportStudentsPanel } from '../ImportStudentsPanel'
 import { StudentForm, type StudentFormValues } from '../StudentForm'
 import { StudentRowMenu } from './StudentRowMenu'
 import { StudentDetailModal } from './StudentDetailModal'
-import { QuickAddFab } from '../QuickAddFab'
 import { mapGender } from '../../lib/seating'
 import {
   addButtonClass,
@@ -144,7 +143,6 @@ export function StudentListCard({
   }
 
   return (
-    <>
     <div className={`${sectionCardClass} @container`}>
       <div className="flex flex-col gap-3 border-b border-gray-100 pb-4">
         <div className="min-w-0">
@@ -163,7 +161,7 @@ export function StudentListCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 @sm:flex-nowrap @sm:justify-end">
-          <div className="order-2 flex shrink-0 items-center gap-2 @sm:order-1">
+          <div className="order-2 hidden shrink-0 items-center gap-2 sm:flex @sm:order-1">
             <button type="button" onClick={() => setShowImport(true)} className={csvButtonClass}>
               <Upload size={16} />
               CSV 가져오기
@@ -211,10 +209,17 @@ export function StudentListCard({
             <UsersRound size={28} className="text-gray-300" />
             <div>
               <p className="text-sm font-medium text-gray-700">등록된 학생이 없습니다.</p>
-              <p className="mt-1 text-sm text-gray-500">학생을 직접 추가하거나 CSV 파일로 가져오세요.</p>
+              <p className="mt-1 text-sm text-gray-500">
+                <span className="sm:hidden">학생을 추가해 보세요.</span>
+                <span className="hidden sm:inline">학생을 직접 추가하거나 CSV 파일로 가져오세요.</span>
+              </p>
             </div>
             <div className="mt-1 flex gap-2">
-              <button type="button" onClick={() => setShowImport(true)} className={secondaryButtonClass}>
+              <button
+                type="button"
+                onClick={() => setShowImport(true)}
+                className={`hidden sm:inline-block ${secondaryButtonClass}`}
+              >
                 CSV 가져오기
               </button>
               <button type="button" onClick={() => setShowAdd(true)} className={primaryButtonClass}>
@@ -381,7 +386,5 @@ export function StudentListCard({
         />
       )}
     </div>
-    <QuickAddFab onClick={() => setShowAdd(true)} label="학생 추가" />
-    </>
   )
 }
