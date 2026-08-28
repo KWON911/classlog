@@ -68,39 +68,43 @@ export function AppsPage() {
 
   return (
     <PageContainer size="wide">
-      <div className="mb-5 flex items-end justify-between gap-3">
-        <div>
-          <h1 className="mb-1 text-2xl font-semibold text-brand-700">앱보관함</h1>
-          <p className="text-sm text-gray-500">
-            {isReordering ? '카드를 드래그하거나 화살표로 순서를 바꾸세요.' : '직접 만든 다른 앱들을 바로 열어볼 수 있습니다.'}
-          </p>
-        </div>
+      <div className="mb-4">
+        <h1 className="mb-1 text-2xl font-semibold text-brand-700">앱보관함</h1>
+        <p className="text-sm text-gray-500">
+          {isReordering ? '카드를 드래그하거나 화살표로 순서를 바꾸세요.' : '직접 만든 다른 앱들을 바로 열어볼 수 있습니다.'}
+        </p>
+      </div>
+
+      {/* 검색창과 순서 변경 버튼을 한 줄에 — 검색창은 모바일에서 남는 폭을 모두
+          차지하고(flex-1), sm 이상에서는 max-w-xs로 멈춰서 버튼과 함께 자연스럽게
+          정렬된다. 재정렬 중엔 검색창이 숨는데(인덱스 꼬임 방지), 이때도 버튼은
+          ml-auto로 항상 같은 오른쪽 자리를 지킨다. */}
+      <div className="mb-4 flex items-center gap-2">
+        {!isReordering && (
+          <div className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 sm:max-w-xs sm:flex-none">
+            <Search size={16} className="shrink-0 text-gray-400" aria-hidden="true" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="앱 이름 검색..."
+              aria-label="앱 검색"
+              className="w-full min-w-0 text-sm text-gray-900 outline-none placeholder:text-gray-400"
+            />
+          </div>
+        )}
         <button
           type="button"
           onClick={() => {
             setIsReordering((previous) => !previous)
             setQuery('')
           }}
-          className={`${secondaryButtonClass} inline-flex shrink-0 items-center gap-1.5 px-3`}
+          className={`${secondaryButtonClass} ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3`}
         >
           {isReordering && <Check size={16} aria-hidden="true" />}
           {isReordering ? '완료' : '순서 변경'}
         </button>
       </div>
-
-      {!isReordering && (
-        <div className="mb-4 flex h-9 max-w-xs items-center gap-2 rounded-lg border border-gray-300 bg-white px-3">
-          <Search size={16} className="text-gray-400" aria-hidden="true" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="앱 이름 검색..."
-            aria-label="앱 검색"
-            className="w-full text-sm text-gray-900 outline-none placeholder:text-gray-400"
-          />
-        </div>
-      )}
 
       {!isReordering && query.trim() && visibleApps.length === 0 && (
         <p className="mb-4 text-sm text-gray-500">'{query.trim()}'와(과) 일치하는 앱이 없습니다.</p>
