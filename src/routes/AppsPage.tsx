@@ -152,7 +152,15 @@ export function AppsPage() {
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">
                 <app.icon size={18} aria-hidden="true" />
               </span>
-              <span className="w-full truncate text-xs font-medium text-gray-900">{app.name}</span>
+              {/* 2줄까지 줄바꿈 허용 — 앱 이름이 계속 늘어날 걸 감안해 잘려서 안 보이는 것보단 카드가
+                  살짝 높아지는 편이 낫다. min-h로 짧은 이름 카드도 높이를 맞춰 그리드가 고르게 보이게 하고,
+                  title로 2줄을 넘는 이름도 (데스크톱에서는) 마우스오버로 전체를 확인할 수 있게 한다. */}
+              <span
+                title={app.name}
+                className="line-clamp-2 min-h-[2.1em] w-full text-xs font-medium leading-tight text-gray-900"
+              >
+                {app.name}
+              </span>
             </a>
             {isReordering && (
               <div className="absolute right-2 top-2 flex gap-1">
