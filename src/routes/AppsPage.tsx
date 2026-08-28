@@ -151,17 +151,19 @@ export function AppsPage() {
                 event.preventDefault()
                 if (!loading) openRandomDrawWithRoster(students)
               }}
-              className="flex flex-col items-center gap-1.5 px-2 py-3 text-center"
+              className="flex flex-col items-center gap-1.5 px-2 py-3 text-center md:gap-2 md:px-3 md:py-4"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-                <app.icon size={18} aria-hidden="true" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600 md:h-11 md:w-11">
+                <app.icon size={18} className="md:h-5 md:w-5" aria-hidden="true" />
               </span>
               {/* 2줄까지 줄바꿈 허용 — 앱 이름이 계속 늘어날 걸 감안해 잘려서 안 보이는 것보단 카드가
-                  살짝 높아지는 편이 낫다. min-h로 짧은 이름 카드도 높이를 맞춰 그리드가 고르게 보이게 하고,
-                  title로 2줄을 넘는 이름도 (데스크톱에서는) 마우스오버로 전체를 확인할 수 있게 한다. */}
+                  살짝 높아지는 편이 낫다. min-h(em 단위라 폰트 크기에 맞춰 함께 커짐)로 짧은 이름 카드도
+                  높이를 맞춰 그리드가 고르게 보이게 하고, title로 2줄을 넘는 이름도 (데스크톱에서는)
+                  마우스오버로 전체를 확인할 수 있게 한다. 모바일 3열에서도 안 잘리는 걸 확인한 크기라
+                  breakpoint 구분 없이 text-sm 하나로 통일. */}
               <span
                 title={app.name}
-                className="line-clamp-2 min-h-[2.1em] w-full text-xs font-medium leading-tight text-gray-900"
+                className="line-clamp-2 min-h-[2.1em] w-full text-sm font-medium leading-tight text-gray-900"
               >
                 {app.name}
               </span>
