@@ -282,6 +282,47 @@ describe('generatePlacement', () => {
     )
     expect(result.size).toBe(3)
   })
+
+  it(
+    'still returns a full placement when individual placeStudents attempts intermittently exceed their backtracking budget',
+    () => {
+      // A dense-but-solvable separation graph: each of 16 students is
+      // separated from 4 specific others (a circulant graph), filling every
+      // seat of a 4x4 grid with zero slack. Confirmed by manual reproduction
+      // during code review that individual placeStudents() calls throw on a
+      // meaningful fraction of random orderings here (the 30000-node search
+      // budget), which used to make generatePlacement's un-guarded 60-try
+      // loop abort entirely the moment any single attempt hit that budget —
+      // even though most attempts, and therefore generatePlacement as a
+      // whole, are perfectly capable of succeeding.
+      const rows = 4
+      const columns = 4
+      const seats = createSeats(rows, columns)
+      const ids = Array.from({ length: rows * columns }, (_, i) => `S${i}`)
+      const students = ids.map((id) => ({ id, gender: 'unspecified' as const }))
+      const offsets = [1, 2, 3, 5]
+      const seen = new Set<string>()
+      const separations = []
+      for (let i = 0; i < ids.length; i++) {
+        for (const offset of offsets) {
+          const j = (i + offset) % ids.length
+          const key = [i, j].sort((a, b) => a - b).join('-')
+          if (seen.has(key)) continue
+          seen.add(key)
+          separations.push({ student_a: ids[i], student_b: ids[j], type: 'orthogonal' as const })
+        }
+      }
+
+      const result = generatePlacement(
+        students,
+        seats,
+        { fixed: new Map(), separations, avoidPairs: new Set() },
+        { genderBalance: false, previousAssignments: new Map() },
+      )
+      expect(result.size).toBe(ids.length)
+    },
+    10000,
+  )
 })
 
 describe('derivePastNeighborPairs', () => {

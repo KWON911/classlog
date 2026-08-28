@@ -169,6 +169,7 @@ export function SeatingPage() {
       return
     }
     setActiveTool({ type: 'fixed', studentId: selectedFixedStudentId })
+    setSeatEditMode(null)
     setMessage(
       `${studentNameById.get(selectedFixedStudentId) ?? '선택한 학생'}의 자리를 자리표에서 직접 클릭해 주세요.`,
     )
@@ -181,6 +182,7 @@ export function SeatingPage() {
       return
     }
     setActiveTool({ type: 'gender', gender })
+    setSeatEditMode(null)
     setMessage(
       `${gender === 'male' ? '남학생' : '여학생'} 전용으로 할 자리를 직접 클릭해 주세요. 같은 자리를 다시 누르면 해제됩니다.`,
     )
@@ -350,6 +352,16 @@ export function SeatingPage() {
     }
 
     if (seatEditMode) {
+      const fixedStudentId = [...fixed.entries()].find(([, assignedSeatId]) => assignedSeatId === seatId)?.[0]
+      if (fixedStudentId) {
+        // conditionMessage only renders inside the settings modal, but
+        // seatEditMode toggling on the grid always happens with that modal
+        // closed — use the on-page message banner so this is actually seen.
+        setMessage(
+          `${studentNameById.get(fixedStudentId) ?? '해당 학생'}이 고정된 좌석입니다. 먼저 고정을 해제한 뒤 지정해 주세요.`,
+        )
+        return
+      }
       const mode = seatEditMode
       setSeats((prev) =>
         prev.map((s) =>
@@ -394,7 +406,9 @@ export function SeatingPage() {
 
       const parts: string[] = [
         avoidPastNeighbors
-          ? `${PREVIOUS_SEAT_SCOPE_LABELS[previousSeatHistoryScope]} 기록의 지난 짝 ${avoidPairs.size}쌍을 피하면서 새 자리표를 만들었습니다.`
+          ? scopedPlans.length > 0
+            ? `${PREVIOUS_SEAT_SCOPE_LABELS[previousSeatHistoryScope]} 기록의 지난 짝 ${avoidPairs.size}쌍을 피하면서 새 자리표를 만들었습니다.`
+            : `선택한 범위(${PREVIOUS_SEAT_SCOPE_LABELS[previousSeatHistoryScope]})에 해당하는 저장 기록이 없어 지난 짝 피하기가 적용되지 않았습니다.`
           : '필수 조건을 지키면서 새 자리표를 만들었습니다.',
       ]
 
@@ -665,6 +679,22 @@ export function SeatingPage() {
       </p>
 
       {errorMessage && <p className="mb-4 text-red-600 print:hidden">{errorMessage}</p>}
+
+      {seatEditMode && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 print:hidden">
+          <span>
+            {seatEditMode === 'empty' ? '빈자리 지정' : '사용 안 함 지정'} 모드입니다. 자리표에서 좌석을 클릭하면 상태가
+            바뀝니다.
+          </span>
+          <button
+            type="button"
+            onClick={() => setSeatEditMode(null)}
+            className="shrink-0 rounded-md border border-amber-300 bg-white px-2 py-1 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100"
+          >
+            모드 끄기
+          </button>
+        </div>
+      )}
 
       <SeatingGrid
         seats={seats}

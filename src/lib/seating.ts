@@ -216,8 +216,20 @@ export function generatePlacement(
 ): Map<string, string> {
   let best: Map<string, string> | null = null
   let bestScore = Infinity
+  let lastError: unknown = null
   for (let i = 0; i < 60; i++) {
-    const candidate = placeStudents(students, seats, constraints)
+    // placeStudents can throw when a single attempt's backtracking search
+    // exceeds its node budget on an unlucky random ordering — that doesn't
+    // mean the constraints are unsatisfiable, just that this one attempt
+    // didn't find a solution in time. Skip it and keep trying rather than
+    // letting one bad attempt discard every valid placement already found.
+    let candidate: Map<string, string>
+    try {
+      candidate = placeStudents(students, seats, constraints)
+    } catch (error) {
+      lastError = error
+      continue
+    }
     const candidateScore = scorePlacement(candidate, students, seats, {
       ...options,
       avoidPairs: constraints.avoidPairs,
@@ -227,7 +239,13 @@ export function generatePlacement(
       bestScore = candidateScore
     }
   }
-  return best!
+  if (!best) {
+    if (lastError instanceof Error) throw lastError
+    throw new Error(
+      '현재 고정·분리·성별 자리 조건을 동시에 만족하는 자리를 찾지 못했습니다. 조건이나 좌석 수를 확인해 주세요.',
+    )
+  }
+  return best
 }
 
 export function derivePastNeighborPairs(plans: SeatingPlan[]): Set<string> {
