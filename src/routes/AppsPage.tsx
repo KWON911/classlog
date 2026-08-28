@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, GripVertical, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { MY_APPS, type MyApp } from '../lib/myApps'
 import { PageContainer } from '../components/PageContainer'
@@ -28,10 +28,21 @@ export function AppsPage() {
   const [isReordering, setIsReordering] = useState(false)
   const [draggedUrl, setDraggedUrl] = useState<string | null>(null)
   const [orderedUrls, setOrderedUrls] = useState(storedAppOrder)
+  const [query, setQuery] = useState('')
   const orderedApps = useMemo(
     () => orderedUrls.map((url) => appByUrl.get(url)).filter((app): app is MyApp => Boolean(app)),
     [orderedUrls],
   )
+  // Reordering always drags within the full list — moveApp/moveAppBy resolve
+  // positions against `orderedApps`' own index, which a search filter would
+  // desync from `orderedUrls`' real positions. So search is simply unavailable
+  // while reordering, rather than left on to silently corrupt drag targets.
+  const visibleApps = useMemo(() => {
+    if (isReordering) return orderedApps
+    const trimmed = query.trim().toLowerCase()
+    if (!trimmed) return orderedApps
+    return orderedApps.filter((app) => app.name.toLowerCase().includes(trimmed))
+  }, [orderedApps, isReordering, query])
 
   useEffect(() => {
     window.localStorage.setItem(APP_ORDER_STORAGE_KEY, JSON.stringify(orderedUrls))
@@ -56,7 +67,7 @@ export function AppsPage() {
   }
 
   return (
-    <PageContainer size="standard">
+    <PageContainer size="wide">
       <div className="mb-5 flex items-end justify-between gap-3">
         <div>
           <h1 className="mb-1 text-2xl font-semibold text-brand-700">앱보관함</h1>
@@ -66,7 +77,10 @@ export function AppsPage() {
         </div>
         <button
           type="button"
-          onClick={() => setIsReordering((previous) => !previous)}
+          onClick={() => {
+            setIsReordering((previous) => !previous)
+            setQuery('')
+          }}
           className={`${secondaryButtonClass} inline-flex shrink-0 items-center gap-1.5 px-3`}
         >
           {isReordering && <Check size={16} aria-hidden="true" />}
@@ -74,8 +88,26 @@ export function AppsPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {orderedApps.map((app, index) => (
+      {!isReordering && (
+        <div className="mb-4 flex h-9 max-w-xs items-center gap-2 rounded-lg border border-gray-300 bg-white px-3">
+          <Search size={16} className="text-gray-400" aria-hidden="true" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="앱 이름 검색..."
+            aria-label="앱 검색"
+            className="w-full text-sm text-gray-900 outline-none placeholder:text-gray-400"
+          />
+        </div>
+      )}
+
+      {!isReordering && query.trim() && visibleApps.length === 0 && (
+        <p className="mb-4 text-sm text-gray-500">'{query.trim()}'와(과) 일치하는 앱이 없습니다.</p>
+      )}
+
+      <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-8">
+        {visibleApps.map((app, index) => (
           <div
             key={app.url}
             draggable={isReordering}
@@ -115,12 +147,12 @@ export function AppsPage() {
                 event.preventDefault()
                 if (!loading) openRandomDrawWithRoster(students)
               }}
-              className="flex flex-col items-center gap-2 px-5 py-6 text-center"
+              className="flex flex-col items-center gap-1.5 px-2 py-3 text-center"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-                <app.icon size={24} aria-hidden="true" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+                <app.icon size={18} aria-hidden="true" />
               </span>
-              <span className="text-sm font-medium text-gray-900">{app.name}</span>
+              <span className="w-full truncate text-xs font-medium text-gray-900">{app.name}</span>
             </a>
             {isReordering && (
               <div className="absolute right-2 top-2 flex gap-1">
