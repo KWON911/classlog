@@ -208,3 +208,22 @@ export type YorokEntry = {
   values: Record<string, string | boolean>
   created_at: string
 }
+
+/**
+ * 학급 성장정원(/apps/growth-garden)의 상점/벌점 기록 한 건.
+ * 지금은 mock 서비스가 localStorage에 같은 모양으로 저장하고, 나중에
+ * `growth_points` 테이블이 그대로 이 shape을 갖는다 (supabase/schema.sql 참고).
+ */
+export type GrowthPointType = 'merit' | 'demerit'
+
+export type GrowthPointEntry = {
+  id: string
+  student_id: string
+  teacher_id: string
+  /** merit=상점, demerit=벌점 */
+  type: GrowthPointType
+  /** 항상 양수 크기 — 부호는 `type`이 결정한다(합산 로직 한 곳에만 부호가 존재). */
+  amount: number
+  reason: string
+  created_at: string
+}

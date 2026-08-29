@@ -38,6 +38,28 @@ body {
   --seat-min-width: 104px;
 }
 
+/* 성장정원의 '정원 보기' 자리 배치.
+   열 수·간격·지그재그 오프셋은 GardenView가 화면 크기와 학생 수로 계산해
+   CSS 변수로 내려준다(gardenLayout.ts). 변수가 없을 때를 대비한 기본값을 둔다. */
+.garden-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--garden-columns, 6), minmax(0, 1fr));
+  gap: var(--garden-gap, 8px);
+  align-items: end;
+}
+
+/* 짝수 번째 자리를 조금 내려 심어 줄이 딱 떨어지지 않는 정원 느낌을 낸다
+   (자유 배치가 아니라 순서는 그대로라 학생 찾기가 어렵지 않다). */
+.garden-grid > *:nth-child(even) {
+  transform: translateY(var(--garden-stagger, 10px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garden-grid > *:nth-child(even) {
+    transform: none;
+  }
+}
+
 @media (max-width: 767px) {
   .page-container {
     padding-inline: 16px;

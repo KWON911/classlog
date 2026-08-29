@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Ellipsis, ShieldAlert, X } from 'lucide-react'
 import { MORE_NAV_ITEMS, PRIMARY_NAV_ITEMS, isNavItemActive } from '../lib/navItems'
 import { isAdminEmail } from '../lib/admin'
@@ -103,7 +103,7 @@ export function MobileBottomNav() {
           const active = isNavItemActive(item.to, pathname)
           const Icon = item.icon
           return (
-            <NavLink
+            <Link
               key={item.to}
               to={item.to}
               aria-label={item.label}
@@ -114,7 +114,7 @@ export function MobileBottomNav() {
             >
               <Icon size={22} aria-hidden="true" />
               <span>{item.mobileLabel}</span>
-            </NavLink>
+            </Link>
           )
         })}
         <button

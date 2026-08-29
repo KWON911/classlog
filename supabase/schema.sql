@@ -282,3 +282,36 @@ $$;
 revoke all on function public.reset_managed_account(uuid) from public;
 revoke all on function public.reset_managed_account(uuid) from anon;
 grant execute on function public.reset_managed_account(uuid) to authenticated;
+
+-- 학급 성장정원(/apps/growth-garden)의 상점/벌점 기록.
+-- 앱은 기본적으로 mock(localStorage)으로 동작하므로, 이 블록을 실행한 뒤
+-- src/lib/growth-garden/constants.ts의 GROWTH_GARDEN_DATA_SOURCE를 'supabase'로
+-- 바꿔야 실제로 이 테이블을 쓰기 시작한다.
+create table if not exists growth_points (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  teacher_id uuid not null references auth.users(id) default auth.uid(),
+  -- 상점/벌점. TS의 GrowthPointType 유니온과 항상 함께 바꿀 것.
+  type text not null check (type in ('merit', 'demerit')),
+  -- 항상 양수. 부호는 type이 결정한다(집계 로직은 src/lib/growth-garden/growth.ts).
+  amount integer not null check (amount > 0),
+  reason text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists growth_points_student_created_idx
+  on growth_points (student_id, created_at desc);
+
+alter table growth_points enable row level security;
+
+create policy "teachers manage own growth points" on growth_points
+  for all
+  using (teacher_id = auth.uid())
+  with check (
+    teacher_id = auth.uid()
+    and exists (
+      select 1 from students s
+      where s.id = student_id
+        and s.teacher_id = auth.uid()
+    )
+  );

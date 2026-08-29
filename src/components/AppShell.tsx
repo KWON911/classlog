@@ -1,4 +1,7 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+// NavLink가 아니라 Link를 쓴다 — NavLink는 내부 prefix 매칭으로 자기 aria-current를
+// 붙여서, /students/garden 같은 하위 경로에서 부모 항목까지 현재 페이지로 표시된다.
+// active 계산은 isNavItemActive가 이미 하고 있으므로 여기서 그대로 쓴다.
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, LogOut, ShieldAlert } from 'lucide-react'
 import { useAuth } from '../lib/hooks/useAuth'
 import { useSidebarCollapsed } from '../lib/hooks/useSidebarCollapsed'
@@ -54,10 +57,10 @@ export function AppShell() {
             const Icon = item.icon
             return (
               <div key={item.to} className="group relative">
-                <NavLink to={item.to} aria-label={item.label} aria-current={active ? 'page' : undefined} className={itemLinkClass(active, collapsed)}>
+                <Link to={item.to} aria-label={item.label} aria-current={active ? 'page' : undefined} className={itemLinkClass(active, collapsed)}>
                   <Icon size={20} aria-hidden="true" />
                   {!collapsed && item.label}
-                </NavLink>
+                </Link>
                 {collapsed && (
                   <span role="tooltip" className={tooltipClass}>
                     {item.label}
@@ -73,7 +76,7 @@ export function AppShell() {
         <div className={`border-t border-[#E5E9F2] pt-3 ${collapsed ? 'px-3' : 'px-4'}`}>
           {isAdmin && (
             <div className="group relative mb-2">
-              <NavLink
+              <Link
                 to="/admin"
                 aria-label="관리자"
                 aria-current={isNavItemActive('/admin', pathname) ? 'page' : undefined}
@@ -87,7 +90,7 @@ export function AppShell() {
               >
                 <ShieldAlert size={20} aria-hidden="true" />
                 {!collapsed && '관리자'}
-              </NavLink>
+              </Link>
               {collapsed && (
                 <span role="tooltip" className={tooltipClass}>
                   관리자
