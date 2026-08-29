@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildClassMonthlyReport,
+  buildMonthlyGrowthRanking,
   buildStudentMonthlyReport,
   currentYearMonth,
   isFutureMonth,
@@ -164,5 +165,76 @@ describe('buildStudentMonthlyReport', () => {
     expect(report.scoreStart).toBe(0)
     expect(report.scoreEnd).toBe(0)
     expect(report.entries).toEqual([])
+  })
+})
+
+describe('buildMonthlyGrowthRanking', () => {
+  // 요구사항 예시: A(+18/-2=16), B(+16/-3=13), C(+16/-0=16) → A와 C가 동점.
+  const entries = [
+    entry('a1', 'A', 'merit', 18, [2026, 8, 5], '친구를 도왔어요'),
+    entry('a2', 'A', 'demerit', 2, [2026, 8, 6]),
+    entry('b1', 'B', 'merit', 16, [2026, 8, 5], '발표를 잘했어요'),
+    entry('b2', 'B', 'demerit', 3, [2026, 8, 6]),
+    entry('c1', 'C', 'merit', 16, [2026, 8, 5], '친구를 도왔어요'),
+    // 지난달·다음달 기록은 이번 달 성장에 섞이면 안 된다.
+    entry('past', 'B', 'merit', 99, [2026, 7, 5]),
+    entry('future', 'B', 'merit', 99, [2026, 9, 5]),
+  ]
+  const students = ['A', 'B', 'C']
+
+  it('월간 성장은 그 달 상점 - 벌점이다(누적 점수와 별개)', () => {
+    const rows = buildMonthlyGrowthRanking(entries, AUG, students)
+    const byId = Object.fromEntries(rows.map((row) => [row.studentId, row]))
+    expect(byId.A.monthlyGrowth).toBe(16)
+    expect(byId.B.monthlyGrowth).toBe(13)
+    expect(byId.C.monthlyGrowth).toBe(16)
+  })
+
+  it('성장 높은 순으로 정렬한다', () => {
+    const rows = buildMonthlyGrowthRanking(entries, AUG, students)
+    expect(rows[rows.length - 1].studentId).toBe('B')
+    expect(rows.slice(0, 2).map((row) => row.studentId).sort()).toEqual(['A', 'C'])
+  })
+
+  it('상점 총점이 같으면 상점 횟수로 가른다', () => {
+    const tie = [
+      entry('x1', 'X', 'merit', 5, [2026, 8, 2]),
+      entry('y1', 'Y', 'merit', 3, [2026, 8, 2]),
+      entry('y2', 'Y', 'merit', 2, [2026, 8, 3]),
+    ]
+    const rows = buildMonthlyGrowthRanking(tie, AUG, ['X', 'Y'])
+    // 둘 다 +5지만 Y가 두 번에 걸쳐 받았으므로 Y가 앞선다.
+    expect(rows[0].studentId).toBe('Y')
+    expect(rows[0].tied).toBe(false)
+  })
+
+  it('모든 기준이 같으면 순위를 나누지 않고 공동으로 둔다', () => {
+    const same = [
+      entry('p1', 'P', 'merit', 4, [2026, 8, 2], '친구를 도왔어요'),
+      entry('q1', 'Q', 'merit', 4, [2026, 8, 3], '친구를 도왔어요'),
+    ]
+    const rows = buildMonthlyGrowthRanking(same, AUG, ['P', 'Q'])
+    expect(rows[0].rank).toBe(1)
+    expect(rows[1].rank).toBe(1)
+    expect(rows.every((row) => row.tied)).toBe(true)
+  })
+
+  it('기록이 없는 학생도 0점으로 포함한다', () => {
+    const rows = buildMonthlyGrowthRanking(entries, AUG, [...students, 'Z'])
+    const zero = rows.find((row) => row.studentId === 'Z')
+    expect(zero?.monthlyGrowth).toBe(0)
+    expect(zero?.topMeritReasons).toEqual([])
+  })
+
+  it('대표 긍정 행동을 많은 순으로 모은다', () => {
+    const many = [
+      entry('m1', 'A', 'merit', 1, [2026, 8, 2], '친구를 도왔어요'),
+      entry('m2', 'A', 'merit', 1, [2026, 8, 3], '친구를 도왔어요'),
+      entry('m3', 'A', 'merit', 1, [2026, 8, 4], '발표를 잘했어요'),
+      entry('m4', 'A', 'demerit', 1, [2026, 8, 5], '준비물 미준비'),
+    ]
+    const [row] = buildMonthlyGrowthRanking(many, AUG, ['A'])
+    expect(row.topMeritReasons.map((r) => r.reason)).toEqual(['친구를 도왔어요', '발표를 잘했어요'])
+    expect(row.reasonKinds).toBe(2)
   })
 })

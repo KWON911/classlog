@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { growthGardenService } from '../growth-garden/services'
 import {
   buildClassMonthlyReport,
+  buildMonthlyGrowthRanking,
   buildStudentMonthlyReport,
   monthRange,
   type ClassMonthlyReport,
+  type MonthlyGrowthRow,
   type StudentMonthlyReport,
   type YearMonth,
 } from '../growth-garden/monthlyReport'
@@ -46,10 +48,15 @@ export function useMonthlyReport(yearMonth: YearMonth, studentIds: string[]) {
     [entries, yearMonth.year, yearMonth.month, studentKey], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
+  const growthRanking: MonthlyGrowthRow[] = useMemo(
+    () => buildMonthlyGrowthRanking(entries, yearMonth, studentKey ? studentKey.split(',') : []),
+    [entries, yearMonth.year, yearMonth.month, studentKey], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
   const studentReportFor = useCallback(
     (studentId: string): StudentMonthlyReport => buildStudentMonthlyReport(entries, yearMonth, studentId),
     [entries, yearMonth],
   )
 
-  return { loading, error, classReport, studentReportFor, refetch: fetchEntries }
+  return { loading, error, classReport, growthRanking, studentReportFor, refetch: fetchEntries }
 }

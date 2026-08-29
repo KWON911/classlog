@@ -250,3 +250,25 @@ export type Reward = {
   awarded_on: string
   created_at: string
 }
+
+/**
+ * 월간 성장상 — 교사가 그 달의 성장 기록을 보고 직접 선정한 수상 기록.
+ * 보상(Reward)과 마찬가지로 상벌점·성장 포인트와 완전히 분리돼 있다.
+ * 한 달에 여러 명을 선정할 수 있고, 학생 이름은 저장하지 않고 id만 참조한다.
+ */
+export type MonthlyAward = {
+  id: string
+  teacher_id: string
+  student_id: string
+  year: number
+  month: number
+  /** 선정 시점의 월간 성장값 — 나중에 기록이 바뀌어도 그때의 수상 근거를 남긴다. */
+  monthly_growth: number
+  /** 수상명, 예: '9월 성장의 꽃' */
+  title: string
+  reward_title: string
+  reward_description: string | null
+  /** 'YYYY-MM-DD' */
+  awarded_on: string
+  created_at: string
+}

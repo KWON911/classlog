@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { sectionCardClass } from '../../../lib/ui/classNames'
 import type { ClassMonthlyReport } from '../../../lib/growth-garden/monthlyReport'
@@ -9,6 +10,8 @@ import type { Reward } from '../../../lib/types'
 
 type ClassMonthlyReportViewProps = {
   report: ClassMonthlyReport
+  /** 이번 달 수상자 목록 — 개인 탭에서 선정한 결과를 여기서 다시 확인한다. */
+  awardList: ReactNode
   rewards: Reward[]
   rewardsLoading: boolean
   rewardSaving: boolean
@@ -19,6 +22,7 @@ type ClassMonthlyReportViewProps = {
 /** 학급 월간 리포트 — 요약 → 정원 변화 → 추이 → 행동 → 보상 순서. */
 export function ClassMonthlyReportView({
   report,
+  awardList,
   rewards,
   rewardsLoading,
   rewardSaving,
@@ -88,6 +92,8 @@ export function ClassMonthlyReportView({
           />
         </section>
       </div>
+
+      <section className={sectionCardClass}>{awardList}</section>
 
       <section className={sectionCardClass}>
         <RewardSection

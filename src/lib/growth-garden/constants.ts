@@ -282,3 +282,29 @@ export const STUDENT_REWARD_PRESETS = [
 
 /** 보상 이름 목록 마지막에 붙는 직접 입력 옵션 */
 export const CUSTOM_REWARD_LABEL = '직접 입력'
+
+/* ─── 월간 성장상 ──────────────────────────────────────────────────── */
+
+/** 기본 수상명 — 교사가 모달에서 바꿀 수 있다. */
+export function defaultAwardTitle(month: number): string {
+  return `${month}월 성장의 꽃`
+}
+
+/** 수상명 프리셋(기본값 뒤에 붙는다) */
+export const AWARD_TITLE_PRESETS = ['이번 달 성장상', '멋진 성장상', '우리 반 성장 스타']
+
+/** 수상과 함께 주는 보상 프리셋 */
+export const AWARD_REWARD_PRESETS = [
+  '자유시간 10분',
+  '원하는 자리 선택권',
+  '학급 게임 선택권',
+  '선생님 도우미 선택권',
+  '특별 스티커',
+]
+
+/** 축하 화면에 보여줄 대표 긍정 행동 개수 */
+export const CELEBRATION_REASON_COUNT = 3
+
+/** 축하 화면에 띄우는 나비/꽃잎 수 — 정원 단계와 무관하게 이 범위로 맞춘다. */
+export const CELEBRATION_BUTTERFLIES = 3
+export const CELEBRATION_PETALS = 2

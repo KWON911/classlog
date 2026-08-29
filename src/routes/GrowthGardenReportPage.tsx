@@ -6,11 +6,16 @@ import { ClassMonthlyReportView } from '../components/growth-garden/report/Class
 import { StudentMonthlyReportView } from '../components/growth-garden/report/StudentMonthlyReportView'
 import { SegmentedButton, SegmentedGroup } from '../components/growth-garden/Segmented'
 import { GrowthFeedbackToast, type GrowthFeedback } from '../components/growth-garden/GrowthFeedbackToast'
+import { MonthlyAwardList } from '../components/growth-garden/awards/MonthlyAwardList'
+import { MonthlyAwardModal, type AwardFormValues } from '../components/growth-garden/awards/MonthlyAwardModal'
+import { MonthlyAwardCelebration } from '../components/growth-garden/awards/MonthlyAwardCelebration'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useMonthlyReport } from '../lib/hooks/useMonthlyReport'
 import { useRewards } from '../lib/hooks/useRewards'
+import { useMonthlyAwards } from '../lib/hooks/useMonthlyAwards'
 import { currentYearMonth, formatMonthLabel, type YearMonth } from '../lib/growth-garden/monthlyReport'
 import type { NewReward } from '../lib/growth-garden/services/types'
+import type { MonthlyAward, Student } from '../lib/types'
 
 type ReportTab = 'class' | 'student'
 
@@ -28,8 +33,16 @@ export function GrowthGardenReportPage() {
   const [feedback, setFeedback] = useState<GrowthFeedback | null>(null)
 
   const studentIds = useMemo(() => students.map((student) => student.id), [students])
-  const { loading: reportLoading, error, classReport, studentReportFor } = useMonthlyReport(yearMonth, studentIds)
+  const { loading: reportLoading, error, classReport, growthRanking, studentReportFor } = useMonthlyReport(
+    yearMonth,
+    studentIds,
+  )
   const rewards = useRewards(yearMonth)
+  const awards = useMonthlyAwards(yearMonth)
+
+  // 수상 모달/축하 화면 상태 — 어느 것도 학생 점수나 상벌점 기록을 건드리지 않는다.
+  const [awardTarget, setAwardTarget] = useState<{ student: Student; monthlyGrowth: number } | null>(null)
+  const [celebrating, setCelebrating] = useState<MonthlyAward | null>(null)
 
   // 명단이 로드되면 첫 학생을 기본 선택해 개인 탭이 빈 화면으로 시작하지 않게 한다.
   useEffect(() => {
@@ -50,6 +63,37 @@ export function GrowthGardenReportPage() {
   function handleDeleteReward(id: string) {
     void rewards.deleteReward(id)
   }
+
+  const awardOfSelected = awards.awards.find((award) => award.student_id === selectedStudentId)
+
+  /** 수상은 자동 확정하지 않는다 — 이 폼을 저장해야 기록이 생긴다. */
+  async function handleAwardSubmit(values: AwardFormValues) {
+    if (!awardTarget) return
+    const existing = awards.awards.find((award) => award.student_id === awardTarget.student.id)
+    const result = existing
+      ? await awards.updateAward(existing.id, values)
+      : await awards.createAward({
+          student_id: awardTarget.student.id,
+          year: yearMonth.year,
+          month: yearMonth.month,
+          monthly_growth: awardTarget.monthlyGrowth,
+          ...values,
+        })
+
+    if (!('error' in result)) {
+      setAwardTarget(null)
+      setFeedback({
+        id: Date.now(),
+        tone: 'grow',
+        message: existing ? '수상 정보를 수정했어요.' : awardTarget.student.name + ' 학생을 선정했어요!',
+      })
+    }
+  }
+
+  const celebratingStudent = celebrating
+    ? students.find((student) => student.id === celebrating.student_id)
+    : undefined
+  const celebratingReport = celebrating ? studentReportFor(celebrating.student_id) : null
 
   return (
     <PageContainer size="wide">
@@ -103,6 +147,20 @@ export function GrowthGardenReportPage() {
       {!loading && students.length > 0 && tab === 'class' && (
         <ClassMonthlyReportView
           report={classReport}
+          awardList={
+            <MonthlyAwardList
+              yearMonth={yearMonth}
+              awards={awards.awards}
+              students={students}
+              loading={awards.loading}
+              onCelebrate={setCelebrating}
+              onEdit={(award) => {
+                const student = students.find((candidate) => candidate.id === award.student_id)
+                if (student) setAwardTarget({ student, monthlyGrowth: award.monthly_growth })
+              }}
+              onDelete={(id) => void awards.deleteAward(id)}
+            />
+          }
           rewards={rewards.classRewards}
           rewardsLoading={rewards.loading}
           rewardSaving={rewards.saving}
@@ -117,12 +175,44 @@ export function GrowthGardenReportPage() {
           selectedId={selectedStudentId}
           onSelect={setSelectedStudentId}
           report={studentReport}
+          growthRows={growthRanking}
+          awardOfSelected={awardOfSelected}
+          onAward={(student, monthlyGrowth) => setAwardTarget({ student, monthlyGrowth })}
           rewards={selectedStudentId ? rewards.rewardsForStudent(selectedStudentId) : []}
           rewardsLoading={rewards.loading}
           rewardSaving={rewards.saving}
           onCreateReward={handleCreateReward}
           onDeleteReward={handleDeleteReward}
         />
+      )}
+
+      {awardTarget && (
+        <MonthlyAwardModal
+          student={awardTarget.student}
+          yearMonth={yearMonth}
+          monthlyGrowth={awardTarget.monthlyGrowth}
+          award={awards.awards.find((award) => award.student_id === awardTarget.student.id)}
+          saving={awards.saving}
+          onClose={() => setAwardTarget(null)}
+          onSubmit={handleAwardSubmit}
+        />
+      )}
+
+      {celebrating && celebratingStudent && celebratingReport && (
+        <MonthlyAwardCelebration
+          award={celebrating}
+          student={celebratingStudent}
+          stage={celebratingReport.stageEnd}
+          topReasons={celebratingReport.meritReasons}
+          environment={classReport.garden.end}
+          onClose={() => setCelebrating(null)}
+        />
+      )}
+
+      {awards.error && (
+        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {awards.error}
+        </p>
       )}
 
       <GrowthFeedbackToast feedback={feedback} onDismiss={() => setFeedback(null)} />

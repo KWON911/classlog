@@ -242,3 +242,88 @@ export function buildStudentMonthlyReport(
     summaryEnd,
   }
 }
+
+/* ─── 월간 성장순 ────────────────────────────────────────────────────
+   학생 개인의 "이번 달 성장"은 누적 성장 포인트(식물 단계)와 다른 지표다.
+   여기서는 선택한 달의 기록만으로 계산하며, 0 하한도 두지 않는다(그 달의 변화량). */
+
+export type MonthlyGrowthRow = {
+  studentId: string
+  /** 이번 달 상점 합 - 벌점 합 */
+  monthlyGrowth: number
+  meritScore: number
+  demeritScore: number
+  meritCount: number
+  demeritCount: number
+  /** 서로 다른 긍정 사유의 종류 수 — 동점 처리의 마지막 기준 */
+  reasonKinds: number
+  /** 이번 달 자주 보인 긍정 행동(많은 순) */
+  topMeritReasons: ReasonTally[]
+  /** 성장순 정렬에서의 순위(1부터). 비교값이 모두 같으면 순위를 공유한다. */
+  rank: number
+  /** 같은 순위를 가진 학생이 또 있으면 true(공동 성장자) */
+  tied: boolean
+}
+
+/**
+ * 동점 비교 순서: 월간 성장 → 상점 총점 → 상점 횟수 → 긍정 사유 종류 수.
+ * 넷이 모두 같으면 억지로 순위를 나누지 않고 같은 순위(공동)로 둔다.
+ */
+function compareGrowth(a: MonthlyGrowthRow, b: MonthlyGrowthRow): number {
+  return (
+    b.monthlyGrowth - a.monthlyGrowth ||
+    b.meritScore - a.meritScore ||
+    b.meritCount - a.meritCount ||
+    b.reasonKinds - a.reasonKinds
+  )
+}
+
+export function buildMonthlyGrowthRanking(
+  entriesUpToMonthEnd: GrowthPointEntry[],
+  ym: YearMonth,
+  studentIds: string[],
+): MonthlyGrowthRow[] {
+  const { inMonth } = splitByMonth(entriesUpToMonthEnd, ym)
+  const byStudent = new Map<string, GrowthPointEntry[]>()
+  for (const entry of inMonth) {
+    const bucket = byStudent.get(entry.student_id)
+    if (bucket) bucket.push(entry)
+    else byStudent.set(entry.student_id, [entry])
+  }
+
+  const rows: MonthlyGrowthRow[] = studentIds.map((studentId) => {
+    const mine = byStudent.get(studentId) ?? []
+    const totals = totalsOf(mine)
+    const meritReasons = tallyReasons(mine.filter((entry) => entry.type === 'merit'))
+    return {
+      studentId,
+      monthlyGrowth: totals.netScore,
+      meritScore: totals.meritScore,
+      demeritScore: totals.demeritScore,
+      meritCount: totals.meritCount,
+      demeritCount: totals.demeritCount,
+      reasonKinds: meritReasons.length,
+      topMeritReasons: meritReasons,
+      rank: 0,
+      tied: false,
+    }
+  })
+
+  const sorted = [...rows].sort(compareGrowth)
+
+  // 앞 학생과 비교값이 완전히 같으면 같은 순위를 물려주고 양쪽을 공동으로 표시한다.
+  let currentRank = 0
+  sorted.forEach((row, index) => {
+    const previous = sorted[index - 1]
+    if (previous && compareGrowth(previous, row) === 0) {
+      row.rank = previous.rank
+      row.tied = true
+      previous.tied = true
+    } else {
+      currentRank = index + 1
+      row.rank = currentRank
+    }
+  })
+
+  return sorted
+}

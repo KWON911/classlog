@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { ArrowRight, Minus, Plus, Search } from 'lucide-react'
+import { ArrowRight, Minus, Plus, Search, Sparkles } from 'lucide-react'
 import { sectionCardClass } from '../../../lib/ui/classNames'
 import { PlantIllustration } from '../PlantIllustration'
 import { stageConfig } from '../../../lib/growth-garden/growth'
-import type { StudentMonthlyReport } from '../../../lib/growth-garden/monthlyReport'
-import type { Student, Reward } from '../../../lib/types'
+import type { MonthlyGrowthRow, StudentMonthlyReport } from '../../../lib/growth-garden/monthlyReport'
+import type { MonthlyAward, Student, Reward } from '../../../lib/types'
 import type { NewReward } from '../../../lib/growth-garden/services/types'
 import { ReasonSummary } from './ReasonSummary'
 import { RewardSection } from './RewardSection'
@@ -14,6 +14,11 @@ type StudentMonthlyReportViewProps = {
   selectedId: string
   onSelect: (studentId: string) => void
   report: StudentMonthlyReport | null
+  /** 이번 달 성장순 계산 결과 — 목록 정렬과 성장값 표시에 쓴다(교사용). */
+  growthRows: MonthlyGrowthRow[]
+  /** 선택한 학생이 이미 수상했다면 그 기록 */
+  awardOfSelected?: MonthlyAward
+  onAward: (student: Student, monthlyGrowth: number) => void
   rewards: Reward[]
   rewardsLoading: boolean
   rewardSaving: boolean
@@ -22,6 +27,7 @@ type StudentMonthlyReportViewProps = {
 }
 
 type EntryFilter = 'all' | 'merit' | 'demerit'
+type SortMode = 'number' | 'name' | 'growth'
 
 /** 개인 월간 리포트 — 성장 변화가 가장 먼저 보이도록 식물 비교를 맨 위에 둔다. */
 export function StudentMonthlyReportView({
@@ -29,6 +35,9 @@ export function StudentMonthlyReportView({
   selectedId,
   onSelect,
   report,
+  growthRows,
+  awardOfSelected,
+  onAward,
   rewards,
   rewardsLoading,
   rewardSaving,
@@ -37,13 +46,26 @@ export function StudentMonthlyReportView({
 }: StudentMonthlyReportViewProps) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<EntryFilter>('all')
+  const [sortMode, setSortMode] = useState<SortMode>('number')
+
+  const growthById = new Map(growthRows.map((row) => [row.studentId, row]))
 
   const trimmed = query.trim().toLowerCase()
-  const visibleStudents = trimmed
+  const matched = trimmed
     ? students.filter(
         (student) => student.name.toLowerCase().includes(trimmed) || String(student.number).includes(trimmed),
       )
     : students
+
+  // 성장순은 순수 모듈이 계산한 순서(동점 규칙 포함)를 그대로 따른다.
+  const visibleStudents =
+    sortMode === 'growth'
+      ? growthRows
+          .map((row) => matched.find((student) => student.id === row.studentId))
+          .filter((student): student is Student => Boolean(student))
+      : [...matched].sort((a, b) =>
+          sortMode === 'name' ? a.name.localeCompare(b.name) : a.number - b.number,
+        )
 
   const student = students.find((candidate) => candidate.id === selectedId)
   const entries = report
@@ -55,6 +77,21 @@ export function StudentMonthlyReportView({
       {/* 학생 선택 — 검색 + 목록. 교실에서 번호로도 이름으로도 찾을 수 있게 한다. */}
       <section className={`${sectionCardClass} lg:sticky lg:top-4 lg:self-start`}>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-600">학생 선택</h2>
+        <div className="mb-2 flex h-8 overflow-hidden rounded-lg border border-gray-300 bg-white text-xs">
+          {(['number', 'name', 'growth'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setSortMode(option)}
+              aria-pressed={sortMode === option}
+              className={`flex-1 font-medium transition-colors ${
+                sortMode === option ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {option === 'number' ? '번호순' : option === 'name' ? '이름순' : '성장순'}
+            </button>
+          ))}
+        </div>
         <div className="mb-2 flex h-9 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3">
           <Search size={16} className="shrink-0 text-gray-400" aria-hidden="true" />
           <input
@@ -80,7 +117,16 @@ export function StudentMonthlyReportView({
                 }`}
               >
                 <span className="w-6 shrink-0 text-xs tabular-nums text-gray-400">{candidate.number}</span>
-                <span className="min-w-0 truncate">{candidate.name}</span>
+                <span className="min-w-0 flex-1 truncate">{candidate.name}</span>
+                {/* 성장순으로 볼 때만 값을 함께 보여준다 — 평소엔 명단이 점수표처럼 보이지 않게. */}
+                {sortMode === 'growth' && (
+                  <span className="shrink-0 text-xs font-semibold tabular-nums text-brand-700">
+                    {formatSigned(growthById.get(candidate.id)?.monthlyGrowth ?? 0)}
+                    {growthById.get(candidate.id)?.tied && (
+                      <span className="ml-1 font-normal text-gray-400">공동</span>
+                    )}
+                  </span>
+                )}
               </button>
             </li>
           ))}
@@ -98,13 +144,27 @@ export function StudentMonthlyReportView({
         ) : (
           <>
             <section className={sectionCardClass}>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {student.number}번 {student.name}
-                </h2>
-                <p className="text-sm text-gray-500">
-                  {report.yearMonth.year}년 {report.yearMonth.month}월 성장 리포트
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    {student.number}번 {student.name}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {report.yearMonth.year}년 {report.yearMonth.month}월 성장 리포트
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onAward(student, report.totals.netScore)}
+                  className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-[transform,background-color] duration-150 active:scale-[0.96] ${
+                    awardOfSelected
+                      ? 'border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                      : 'bg-brand-600 text-white hover:bg-brand-700'
+                  }`}
+                >
+                  <Sparkles size={16} aria-hidden="true" />
+                  {awardOfSelected ? '수상 정보 수정' : '수상자로 선정'}
+                </button>
               </div>
 
               {/* 월초 → 월말 식물 비교 */}
