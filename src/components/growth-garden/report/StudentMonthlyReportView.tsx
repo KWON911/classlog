@@ -3,6 +3,7 @@ import { ArrowRight, Minus, Plus, Search, Sparkles } from 'lucide-react'
 import { sectionCardClass } from '../../../lib/ui/classNames'
 import { PlantIllustration } from '../PlantIllustration'
 import { stageConfig } from '../../../lib/growth-garden/growth'
+import { useGrowthSettings } from '../../../lib/growth-garden/growthSettingsContext'
 import type { MonthlyGrowthRow, StudentMonthlyReport } from '../../../lib/growth-garden/monthlyReport'
 import type { MonthlyAward, Student, Reward } from '../../../lib/types'
 import type { NewReward } from '../../../lib/growth-garden/services/types'
@@ -288,7 +289,8 @@ function PlantStep({
   score: number
   highlight?: boolean
 }) {
-  const config = stageConfig(stage)
+  const { personalStages } = useGrowthSettings()
+  const config = stageConfig(stage, personalStages)
   return (
     <div className="w-[120px] text-center">
       <p className="text-xs text-gray-500">{label}</p>

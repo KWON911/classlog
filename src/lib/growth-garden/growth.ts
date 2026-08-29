@@ -8,6 +8,12 @@
 import type { GrowthPointEntry } from '../types'
 import { GROWTH_STAGES, MAX_STAGE, MIN_SCORE, type GrowthStage, type GrowthStageConfig } from './constants'
 
+/**
+ * 단계 표는 인자로 받는다 — 교사가 설정에서 기준 점수를 바꿀 수 있기 때문(growthSettings.ts).
+ * 넘기지 않으면 기본 표를 쓰므로 기존 호출부는 그대로 동작한다.
+ */
+export type StageTable = GrowthStageConfig[]
+
 export type GardenSummary = {
   studentId: string
   /** 상점 합계 - 벌점 합계 (MIN_SCORE 이하로는 내려가지 않음) */
@@ -39,16 +45,16 @@ export function scoreFromEntries(entries: GrowthPointEntry[]): number {
   return Math.max(MIN_SCORE, raw)
 }
 
-/** 점수 → 단계. GROWTH_STAGES가 minScore 오름차순이라는 전제 위에서 뒤에서부터 찾는다. */
-export function stageForScore(score: number): GrowthStage {
-  for (let i = GROWTH_STAGES.length - 1; i >= 0; i -= 1) {
-    if (score >= GROWTH_STAGES[i].minScore) return GROWTH_STAGES[i].stage
+/** 점수 → 단계. 단계 표가 minScore 오름차순이라는 전제 위에서 뒤에서부터 찾는다. */
+export function stageForScore(score: number, stages: StageTable = GROWTH_STAGES): GrowthStage {
+  for (let i = stages.length - 1; i >= 0; i -= 1) {
+    if (score >= stages[i].minScore) return stages[i].stage
   }
   return 0
 }
 
-export function stageConfig(stage: GrowthStage): GrowthStageConfig {
-  return GROWTH_STAGES.find((config) => config.stage === stage) ?? GROWTH_STAGES[0]
+export function stageConfig(stage: GrowthStage, stages: StageTable = GROWTH_STAGES): GrowthStageConfig {
+  return stages.find((config) => config.stage === stage) ?? stages[0]
 }
 
 export type StageProgress = {
@@ -62,10 +68,10 @@ export type StageProgress = {
   remaining: number
 }
 
-export function stageProgress(score: number): StageProgress {
-  const stage = stageForScore(score)
-  const current = stageConfig(stage)
-  const next = stage === MAX_STAGE ? null : stageConfig((stage + 1) as GrowthStage)
+export function stageProgress(score: number, stages: StageTable = GROWTH_STAGES): StageProgress {
+  const stage = stageForScore(score, stages)
+  const current = stageConfig(stage, stages)
+  const next = stage === MAX_STAGE ? null : stageConfig((stage + 1) as GrowthStage, stages)
 
   if (!next) return { stage, current, next: null, ratio: 1, remaining: 0 }
 
@@ -88,13 +94,20 @@ export function entriesForStudent(entries: GrowthPointEntry[], studentId: string
   return sortEntriesByNewest(entries.filter((entry) => entry.student_id === studentId))
 }
 
-export function summarizeStudent(entries: GrowthPointEntry[], studentId: string): GardenSummary {
+export function summarizeStudent(
+  entries: GrowthPointEntry[],
+  studentId: string,
+  stages: StageTable = GROWTH_STAGES,
+): GardenSummary {
   const mine = entries.filter((entry) => entry.student_id === studentId)
-  return buildSummary(studentId, mine)
+  return buildSummary(studentId, mine, stages)
 }
 
 /** 학생 id → 요약. 기록이 하나도 없는 학생은 키 자체가 없으니 호출부는 EMPTY_SUMMARY로 폴백한다. */
-export function summarizeByStudent(entries: GrowthPointEntry[]): Map<string, GardenSummary> {
+export function summarizeByStudent(
+  entries: GrowthPointEntry[],
+  stages: StageTable = GROWTH_STAGES,
+): Map<string, GardenSummary> {
   const grouped = new Map<string, GrowthPointEntry[]>()
   for (const entry of entries) {
     const bucket = grouped.get(entry.student_id)
@@ -104,12 +117,16 @@ export function summarizeByStudent(entries: GrowthPointEntry[]): Map<string, Gar
 
   const summaries = new Map<string, GardenSummary>()
   for (const [studentId, studentEntries] of grouped) {
-    summaries.set(studentId, buildSummary(studentId, studentEntries))
+    summaries.set(studentId, buildSummary(studentId, studentEntries, stages))
   }
   return summaries
 }
 
-function buildSummary(studentId: string, studentEntries: GrowthPointEntry[]): GardenSummary {
+function buildSummary(
+  studentId: string,
+  studentEntries: GrowthPointEntry[],
+  stages: StageTable = GROWTH_STAGES,
+): GardenSummary {
   let meritTotal = 0
   let demeritTotal = 0
   let lastEntryAt: string | null = null
@@ -124,7 +141,7 @@ function buildSummary(studentId: string, studentEntries: GrowthPointEntry[]): Ga
   return {
     studentId,
     score,
-    stage: stageForScore(score),
+    stage: stageForScore(score, stages),
     meritTotal,
     demeritTotal,
     entryCount: studentEntries.length,

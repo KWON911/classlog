@@ -14,7 +14,8 @@ import { useGrowthGarden } from '../lib/hooks/useGrowthGarden'
 import { usePlantPulse } from '../lib/hooks/usePlantPulse'
 import { useGrowthRecorder } from '../lib/hooks/useGrowthRecorder'
 import { stageProgress } from '../lib/growth-garden/growth'
-import { GROWTH_STAGES, HISTORY_PREVIEW_COUNT } from '../lib/growth-garden/constants'
+import { HISTORY_PREVIEW_COUNT } from '../lib/growth-garden/constants'
+import { useGrowthSettings } from '../lib/growth-garden/growthSettingsContext'
 import { sectionCardClass } from '../lib/ui/classNames'
 
 /** /growth-garden/:studentId — 한 학생의 화분과 기록 내역. */
@@ -31,6 +32,7 @@ export function GrowthGardenStudentPage() {
     deleteEntry,
     clearStudent,
   } = useGrowthGarden()
+  const { personalStages } = useGrowthSettings()
   const { pulseFor, trigger } = usePlantPulse()
   const recorder = useGrowthRecorder({ addPoint, trigger })
   const [confirmingReset, setConfirmingReset] = useState(false)
@@ -38,7 +40,7 @@ export function GrowthGardenStudentPage() {
 
   const student = students.find((candidate) => candidate.id === studentId)
   const summary = summaryFor(studentId)
-  const progress = stageProgress(summary.score)
+  const progress = stageProgress(summary.score, personalStages)
   const history = historyFor(studentId)
   const loading = studentsLoading || gardenLoading
 
@@ -138,7 +140,7 @@ export function GrowthGardenStudentPage() {
         <section className={sectionCardClass}>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand-600">성장 단계</h2>
           <ol className="flex flex-col gap-1.5">
-            {GROWTH_STAGES.map((config) => {
+            {personalStages.map((config) => {
               const reached = summary.score >= config.minScore
               return (
                 <li

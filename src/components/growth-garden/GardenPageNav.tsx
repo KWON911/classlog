@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
-import { CalendarRange, Sprout } from 'lucide-react'
+import { CalendarRange, Settings, Sprout } from 'lucide-react'
 
 const ITEMS = [
   { to: '/growth-garden', label: '정원', icon: Sprout },
   { to: '/growth-garden/report', label: '월별 리포트', icon: CalendarRange },
+  { to: '/growth-garden/settings', label: '설정', icon: Settings },
 ]
 
 /**

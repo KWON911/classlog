@@ -11,6 +11,7 @@ import {
   type YearMonth,
 } from '../growth-garden/monthlyReport'
 import type { GrowthPointEntry } from '../types'
+import { useGrowthSettings } from '../growth-garden/growthSettingsContext'
 
 /**
  * 월별 리포트 데이터.
@@ -21,6 +22,7 @@ import type { GrowthPointEntry } from '../types'
  * 집계는 전부 순수 모듈(monthlyReport.ts)이 하고, 여기서는 조회와 상태만 맡는다.
  */
 export function useMonthlyReport(yearMonth: YearMonth, studentIds: string[]) {
+  const { personalStages, environmentStages, loading: settingsLoading } = useGrowthSettings()
   const [entries, setEntries] = useState<GrowthPointEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,8 +46,12 @@ export function useMonthlyReport(yearMonth: YearMonth, studentIds: string[]) {
   const studentKey = studentIds.join(',')
 
   const classReport: ClassMonthlyReport = useMemo(
-    () => buildClassMonthlyReport(entries, yearMonth, studentKey ? studentKey.split(',') : []),
-    [entries, yearMonth.year, yearMonth.month, studentKey], // eslint-disable-line react-hooks/exhaustive-deps
+    () =>
+      buildClassMonthlyReport(entries, yearMonth, studentKey ? studentKey.split(',') : [], {
+        personal: personalStages,
+        garden: environmentStages,
+      }),
+    [entries, yearMonth.year, yearMonth.month, studentKey, personalStages, environmentStages], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   const growthRanking: MonthlyGrowthRow[] = useMemo(
@@ -54,9 +60,13 @@ export function useMonthlyReport(yearMonth: YearMonth, studentIds: string[]) {
   )
 
   const studentReportFor = useCallback(
-    (studentId: string): StudentMonthlyReport => buildStudentMonthlyReport(entries, yearMonth, studentId),
-    [entries, yearMonth],
+    (studentId: string): StudentMonthlyReport =>
+      buildStudentMonthlyReport(entries, yearMonth, studentId, {
+        personal: personalStages,
+        garden: environmentStages,
+      }),
+    [entries, yearMonth, personalStages, environmentStages],
   )
 
-  return { loading, error, classReport, growthRanking, studentReportFor, refetch: fetchEntries }
+  return { loading: loading || settingsLoading, error, classReport, growthRanking, studentReportFor, refetch: fetchEntries }
 }

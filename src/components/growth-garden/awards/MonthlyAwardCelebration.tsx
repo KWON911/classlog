@@ -6,6 +6,7 @@ import { GardenBackground } from '../GardenBackground'
 import { GardenAmbientLayer } from '../GardenAmbientLayer'
 import { useFullscreen } from '../../../lib/hooks/useFullscreen'
 import { stageConfig } from '../../../lib/growth-garden/growth'
+import { useGrowthSettings } from '../../../lib/growth-garden/growthSettingsContext'
 import {
   CELEBRATION_BUTTERFLIES,
   CELEBRATION_PETALS,
@@ -43,6 +44,7 @@ export function MonthlyAwardCelebration({
   environment,
   onClose,
 }: MonthlyAwardCelebrationProps) {
+  const { personalStages } = useGrowthSettings()
   const containerRef = useRef<HTMLDivElement>(null)
   const { isFullscreen, supported, toggle } = useFullscreen(containerRef)
   const prefersReducedMotion = useReducedMotion()
@@ -139,7 +141,7 @@ export function MonthlyAwardCelebration({
             이번 달 성장 {formatSigned(award.monthly_growth)}
           </span>
           <span className="rounded-full bg-white/85 px-3 py-1.5 text-sm font-medium text-gray-700">
-            {stageConfig(stage).label}
+            {stageConfig(stage, personalStages).label}
           </span>
         </motion.div>
 

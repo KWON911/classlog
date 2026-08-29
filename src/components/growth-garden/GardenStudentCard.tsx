@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import type { Student, GrowthPointType } from '../../lib/types'
 import type { GardenSummary } from '../../lib/growth-garden/growth'
 import { stageProgress } from '../../lib/growth-garden/growth'
+import { useGrowthSettings } from '../../lib/growth-garden/growthSettingsContext'
 import { PlantIllustration, type PlantPulse } from './PlantIllustration'
 import { StageProgressBar } from './StageProgressBar'
 import { PointActionButtons } from './PointActionButtons'
@@ -19,7 +20,9 @@ type GardenStudentCardProps = {
  * 위쪽은 하늘색 그라데이션, 아래쪽은 흰 정보 영역으로 나눈다.
  */
 export function GardenStudentCard({ student, summary, pulse, saving = false, onRequestPoint }: GardenStudentCardProps) {
-  const progress = stageProgress(summary.score)
+  // 단계 기준은 교사 설정을 따른다(모든 화면이 같은 기준을 쓰도록 한 곳에서 가져온다).
+  const { personalStages } = useGrowthSettings()
+  const progress = stageProgress(summary.score, personalStages)
 
   return (
     <div className="flex flex-col overflow-hidden rounded-[14px] border border-gray-200 bg-white shadow-[0_0_0.5px_rgba(0,0,0,0.14),0_1px_2px_rgba(0,0,0,0.12)] transition-shadow hover:shadow-[0_2px_10px_rgba(0,0,0,0.10)]">

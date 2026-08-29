@@ -6,9 +6,12 @@
  * 범위로 계산한다 — created_at이 timestamptz라 substring 비교는 시차에서 틀어진다.
  */
 import type { GrowthPointEntry } from '../types'
-import { summarizeByStudent, stageForScore, type GardenSummary } from './growth'
-import { calculateGardenEnvironment, type GardenEnvironment } from './environment'
+import { summarizeByStudent, stageForScore, type GardenSummary, type StageTable } from './growth'
+import { calculateGardenEnvironment, type EnvironmentTable, type GardenEnvironment } from './environment'
 import type { GrowthStage } from './constants'
+
+/** 교사가 설정한 단계 기준. 넘기지 않으면 기본 기준을 쓴다. */
+export type StageTables = { personal?: StageTable; garden?: EnvironmentTable }
 
 export type YearMonth = { year: number; month: number }
 
@@ -133,8 +136,8 @@ function dailySeries(entries: GrowthPointEntry[], ym: YearMonth): DailyPoint[] {
 }
 
 /** 학생별 누적 점수 배열 — 정원 환경 계산에 그대로 넘긴다(기록 없는 학생은 0점). */
-function scoresFor(entries: GrowthPointEntry[], studentIds: string[]): number[] {
-  const summaries = summarizeByStudent(entries)
+function scoresFor(entries: GrowthPointEntry[], studentIds: string[], stages?: StageTable): number[] {
+  const summaries = summarizeByStudent(entries, stages)
   return studentIds.map((id) => summaries.get(id)?.score ?? 0)
 }
 
@@ -165,6 +168,7 @@ export function buildClassMonthlyReport(
   entriesUpToMonthEnd: GrowthPointEntry[],
   ym: YearMonth,
   studentIds: string[],
+  tables: StageTables = {},
 ): ClassMonthlyReport {
   const { before, inMonth } = splitByMonth(entriesUpToMonthEnd, ym)
   const activeStudents = new Set(inMonth.map((entry) => entry.student_id))
@@ -177,7 +181,7 @@ export function buildClassMonthlyReport(
     demeritReasons: tallyReasons(inMonth.filter((entry) => entry.type === 'demerit')),
     activeStudentCount: activeStudents.size,
     totalStudentCount: studentIds.length,
-    garden: buildGardenProgress(before, [...before, ...inMonth], studentIds),
+    garden: buildGardenProgress(before, [...before, ...inMonth], studentIds, tables),
     entryCount: inMonth.length,
   }
 }
@@ -186,9 +190,10 @@ function buildGardenProgress(
   beforeEntries: GrowthPointEntry[],
   throughEntries: GrowthPointEntry[],
   studentIds: string[],
+  tables: StageTables = {},
 ): GardenProgress {
-  const start = calculateGardenEnvironment(scoresFor(beforeEntries, studentIds))
-  const end = calculateGardenEnvironment(scoresFor(throughEntries, studentIds))
+  const start = calculateGardenEnvironment(scoresFor(beforeEntries, studentIds, tables.personal), tables.garden)
+  const end = calculateGardenEnvironment(scoresFor(throughEntries, studentIds, tables.personal), tables.garden)
   return { start, end, stageDelta: end.stage - start.stage }
 }
 
@@ -212,12 +217,13 @@ export function buildStudentMonthlyReport(
   entriesUpToMonthEnd: GrowthPointEntry[],
   ym: YearMonth,
   studentId: string,
+  tables: StageTables = {},
 ): StudentMonthlyReport {
   const mine = entriesUpToMonthEnd.filter((entry) => entry.student_id === studentId)
   const { before, inMonth } = splitByMonth(mine, ym)
 
-  const scoreStart = summarizeByStudent(before).get(studentId)?.score ?? 0
-  const endSummaries = summarizeByStudent([...before, ...inMonth])
+  const scoreStart = summarizeByStudent(before, tables.personal).get(studentId)?.score ?? 0
+  const endSummaries = summarizeByStudent([...before, ...inMonth], tables.personal)
   const summaryEnd = endSummaries.get(studentId) ?? {
     studentId,
     score: 0,
@@ -237,7 +243,7 @@ export function buildStudentMonthlyReport(
     entries: [...inMonth].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)),
     scoreStart,
     scoreEnd: summaryEnd.score,
-    stageStart: stageForScore(scoreStart),
+    stageStart: stageForScore(scoreStart, tables.personal),
     stageEnd: summaryEnd.stage,
     summaryEnd,
   }

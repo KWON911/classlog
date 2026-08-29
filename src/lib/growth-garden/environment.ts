@@ -11,6 +11,9 @@ import {
   type GardenEnvironmentStage,
 } from './constants'
 
+/** 정원 단계 표도 설정에서 기준 평균을 바꿀 수 있으므로 인자로 받는다. */
+export type EnvironmentTable = GardenEnvironmentConfig[]
+
 export type GardenEnvironment = {
   stage: GardenEnvironmentStage
   current: GardenEnvironmentConfig
@@ -26,15 +29,21 @@ export type GardenEnvironment = {
   ratio: number
 }
 
-export function environmentStageForAverage(average: number): GardenEnvironmentStage {
-  for (let i = GARDEN_ENVIRONMENT_STAGES.length - 1; i >= 0; i -= 1) {
-    if (average >= GARDEN_ENVIRONMENT_STAGES[i].minAverage) return GARDEN_ENVIRONMENT_STAGES[i].stage
+export function environmentStageForAverage(
+  average: number,
+  stages: EnvironmentTable = GARDEN_ENVIRONMENT_STAGES,
+): GardenEnvironmentStage {
+  for (let i = stages.length - 1; i >= 0; i -= 1) {
+    if (average >= stages[i].minAverage) return stages[i].stage
   }
   return 0
 }
 
-export function environmentConfig(stage: GardenEnvironmentStage): GardenEnvironmentConfig {
-  return GARDEN_ENVIRONMENT_STAGES.find((config) => config.stage === stage) ?? GARDEN_ENVIRONMENT_STAGES[0]
+export function environmentConfig(
+  stage: GardenEnvironmentStage,
+  stages: EnvironmentTable = GARDEN_ENVIRONMENT_STAGES,
+): GardenEnvironmentConfig {
+  return stages.find((config) => config.stage === stage) ?? stages[0]
 }
 
 /**
@@ -44,14 +53,18 @@ export function environmentConfig(stage: GardenEnvironmentStage): GardenEnvironm
  * 소규모 학급은 최종 단계에 도달할 수 없다. 반면 교사에게 보여줄 "남은 점수"는
  * 실제로 학급이 더 모아야 할 총점이어야 직관적이므로 평균차 × 인원으로 환산한다.
  */
-export function calculateGardenEnvironment(scores: number[]): GardenEnvironment {
+export function calculateGardenEnvironment(
+  scores: number[],
+  stages: EnvironmentTable = GARDEN_ENVIRONMENT_STAGES,
+): GardenEnvironment {
   const studentCount = scores.length
   const totalScore = scores.reduce((sum, score) => sum + score, 0)
   const averageScore = studentCount > 0 ? totalScore / studentCount : 0
 
-  const stage = environmentStageForAverage(averageScore)
-  const current = environmentConfig(stage)
-  const next = stage === MAX_ENVIRONMENT_STAGE ? null : environmentConfig((stage + 1) as GardenEnvironmentStage)
+  const stage = environmentStageForAverage(averageScore, stages)
+  const current = environmentConfig(stage, stages)
+  const next =
+    stage === MAX_ENVIRONMENT_STAGE ? null : environmentConfig((stage + 1) as GardenEnvironmentStage, stages)
 
   if (!next) {
     return { stage, current, next: null, totalScore, averageScore, remainingPoints: 0, ratio: 1 }

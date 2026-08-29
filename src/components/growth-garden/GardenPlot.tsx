@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import type { Student } from '../../lib/types'
 import type { GardenSummary } from '../../lib/growth-garden/growth'
 import { stageProgress } from '../../lib/growth-garden/growth'
+import { useGrowthSettings } from '../../lib/growth-garden/growthSettingsContext'
 import { PlantIllustration, type PlantPulse } from './PlantIllustration'
 import { SWAY_DURATION_RANGE } from '../../lib/growth-garden/constants'
 
@@ -36,7 +37,8 @@ type GardenPlotProps = {
  * 시에는 단계와 남은 점수를 말풍선으로만 보여준다.
  */
 export function GardenPlot({ student, summary, pulse, saving = false, onSelect }: GardenPlotProps) {
-  const progress = stageProgress(summary.score)
+  const { personalStages } = useGrowthSettings()
+  const progress = stageProgress(summary.score, personalStages)
 
   return (
     <div className="group relative flex flex-col items-center">

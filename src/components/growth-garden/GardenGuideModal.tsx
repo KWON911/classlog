@@ -1,12 +1,8 @@
 import { LayoutGrid, Maximize2, Minus, Plus, Sprout } from 'lucide-react'
 import { Modal } from '../Modal'
 import { PlantIllustration } from './PlantIllustration'
-import {
-  GARDEN_ENVIRONMENT_STAGES,
-  GROWTH_STAGES,
-  MIN_SCORE,
-  POINT_AMOUNT_OPTIONS,
-} from '../../lib/growth-garden/constants'
+import { MIN_SCORE, POINT_AMOUNT_OPTIONS } from '../../lib/growth-garden/constants'
+import { useGrowthSettings } from '../../lib/growth-garden/growthSettingsContext'
 
 type GardenGuideModalProps = {
   onClose: () => void
@@ -19,6 +15,9 @@ type GardenGuideModalProps = {
  * 설명서만 옛날 숫자를 말하는 일이 없도록 하기 위함(문서가 코드를 따라간다).
  */
 export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
+  // 설명서도 교사가 설정한 기준을 보여줘야 한다 — 화면과 다른 숫자를 안내하면 안 된다.
+  const { personalStages, environmentStages } = useGrowthSettings()
+
   return (
     <Modal
       title="학급 성장정원 사용법"
@@ -52,7 +51,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </p>
           <div className="-mx-1 overflow-x-auto pb-1">
             <div className="flex min-w-max gap-1.5 px-1">
-              {GROWTH_STAGES.map((stage) => (
+              {personalStages.map((stage) => (
                 <div key={stage.stage} className="w-[80px] shrink-0 rounded-xl bg-brand-50/50 px-1 pb-2 pt-1 text-center">
                   <PlantIllustration stage={stage.stage} variant="ground" className="h-16 w-full" />
                   <p className="mt-0.5 text-xs font-semibold text-gray-800">{stage.label}</p>
@@ -87,11 +86,11 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
 
         <GuideSection title="4. 우리 반 정원">
           <p>
-            정원 보기의 배경은 학급 전체의 성장 상태(학생 1인당 평균 점수)에 따라 {GARDEN_ENVIRONMENT_STAGES.length}
+            정원 보기의 배경은 학급 전체의 성장 상태(학생 1인당 평균 점수)에 따라 {environmentStages.length}
             단계로 변합니다. 흙만 있던 자리에 잔디가 돋고, 풀과 꽃이 늘어납니다.
           </p>
           <ol className="flex flex-wrap gap-1.5">
-            {GARDEN_ENVIRONMENT_STAGES.map((stage) => (
+            {environmentStages.map((stage) => (
               <li
                 key={stage.stage}
                 className="rounded-full border border-brand-100 bg-brand-50/60 px-2.5 py-1 text-xs text-brand-800"

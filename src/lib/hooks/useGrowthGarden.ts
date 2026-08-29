@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { growthGardenService } from '../growth-garden/services'
 import { DEFAULT_DEMERIT_REASON, DEFAULT_MERIT_REASON } from '../growth-garden/constants'
 import { EMPTY_SUMMARY, entriesForStudent, summarizeByStudent, type GardenSummary } from '../growth-garden/growth'
+import { useGrowthSettings } from '../growth-garden/growthSettingsContext'
 import type { GrowthPointEntry, GrowthPointType } from '../types'
 
 /**
@@ -13,6 +14,8 @@ import type { GrowthPointEntry, GrowthPointType } from '../types'
  * 카드의 성장/후퇴 애니메이션이 "저장된 사실"과 어긋나지 않는다.
  */
 export function useGrowthGarden() {
+  // 단계 계산은 교사가 설정한 기준을 따른다(화면마다 기준이 갈리지 않도록 한 곳에서).
+  const { personalStages, loading: settingsLoading } = useGrowthSettings()
   const [entries, setEntries] = useState<GrowthPointEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -100,7 +103,7 @@ export function useGrowthGarden() {
     return {}
   }, [])
 
-  const summaries = useMemo(() => summarizeByStudent(entries), [entries])
+  const summaries = useMemo(() => summarizeByStudent(entries, personalStages), [entries, personalStages])
 
   const summaryFor = useCallback(
     (studentId: string): GardenSummary => summaries.get(studentId) ?? { studentId, ...EMPTY_SUMMARY },
@@ -113,7 +116,8 @@ export function useGrowthGarden() {
 
   return {
     entries,
-    loading,
+    // 기준을 불러오는 동안에도 로딩으로 둔다 — 기본값으로 그렸다가 다시 그리면 식물이 깜빡인다.
+    loading: loading || settingsLoading,
     error,
     summaries,
     summaryFor,
