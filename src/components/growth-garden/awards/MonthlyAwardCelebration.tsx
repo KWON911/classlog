@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Gift, Maximize2, Minimize2, X } from 'lucide-react'
+import { Maximize2, Minimize2, X } from 'lucide-react'
 import { PlantIllustration } from '../PlantIllustration'
 import { GardenBackground } from '../GardenBackground'
 import { GardenAmbientLayer } from '../GardenAmbientLayer'
@@ -32,7 +32,8 @@ type MonthlyAwardCelebrationProps = {
  *
  * 정원 배경·나비·꽃잎·식물 SVG를 그대로 재사용하되, 주인공 식물만 화면 가운데에서
  * 크게 보이도록 한다. 순위(1등/1위) 표현은 쓰지 않는다 — 성장 자체를 축하하는 화면이다.
- * 등장 순서는 정원 → 어두워짐 → 식물 → 이름/수상명 → 축하 문구 → 성장 → 보상.
+ * 등장 순서는 정원 → 화면이 밝게 눌림 → 식물 → 수상명/이름 → 축하 문구 → 성장 → 빛난 모습.
+ * 보상 내용은 교사용 수상자 목록에만 두고 이 화면에는 띄우지 않는다.
  */
 export function MonthlyAwardCelebration({
   award,
@@ -102,14 +103,15 @@ export function MonthlyAwardCelebration({
         transition={{ duration: prefersReducedMotion ? 0.2 : 0.9 }}
       />
 
-      <div className="relative z-30 flex h-full flex-col items-center justify-center gap-3 px-6 py-8 text-center">
-        {/* 주인공 식물 — 화면 높이에 따라 커진다(교실 프로젝터에서도 충분히 크게). */}
+      <div className="relative z-30 flex h-full flex-col items-center justify-center gap-4 px-6 py-6 text-center sm:py-8">
+        {/* 주인공 식물 — 남는 세로 공간을 전부 차지하되 화면 높이의 44%를 넘지 않는다.
+            고정 높이로 두면 노트북처럼 세로가 짧은 화면에서 아래 문구가 잘렸다. */}
         <motion.div
           initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.7 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: prefersReducedMotion ? 0.3 : 1, ease: [0.22, 1, 0.36, 1] }}
-          style={{ height: 'clamp(180px, 34vh, 420px)' }}
-          className="w-full"
+          style={{ maxHeight: 'min(44vh, 520px)' }}
+          className="w-full min-h-[110px] flex-1"
         >
           <PlantIllustration stage={stage} variant="ground" className="mx-auto h-full w-auto" />
         </motion.div>
@@ -157,17 +159,6 @@ export function MonthlyAwardCelebration({
             </ul>
           </motion.div>
         )}
-
-        <motion.div
-          {...step(5)}
-          className="mt-2 inline-flex flex-col items-center gap-1 rounded-2xl bg-white/90 px-5 py-3"
-        >
-          <p className="flex items-center gap-1.5 text-sm text-gray-500">
-            <Gift size={16} aria-hidden="true" />이번 달 특별 보상
-          </p>
-          <p className="text-[clamp(1.1rem,2.6vw,1.8rem)] font-bold text-brand-700">{award.reward_title}</p>
-          {award.reward_description && <p className="text-sm text-gray-600">{award.reward_description}</p>}
-        </motion.div>
       </div>
 
       {/* 조작 버튼은 구석에 작게 — 축하 화면의 주인공을 가리지 않게 한다. */}
