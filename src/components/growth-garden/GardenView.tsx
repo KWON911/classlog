@@ -10,6 +10,7 @@ import type { PlantPulse } from './PlantIllustration'
 import { GardenPlot } from './GardenPlot'
 import { GardenBackground } from './GardenBackground'
 import { ClassGardenSummary } from './ClassGardenSummary'
+import { GardenAmbientLayer } from './GardenAmbientLayer'
 
 type GardenViewProps = {
   /** 카드 보기와 같은 순서(번호순/점수순, 검색 결과)를 그대로 받는다. */
@@ -76,6 +77,8 @@ export function GardenView({
       }`}
     >
       <GardenBackground environment={environment} />
+      {/* 나비·꽃잎 등 자연 애니메이션 — pointer-events: none이라 식물 클릭을 막지 않는다. */}
+      <GardenAmbientLayer environment={environment} />
 
       <ClassGardenSummary
         environment={environment}

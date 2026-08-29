@@ -60,6 +60,58 @@ body {
   }
 }
 
+/* 정원 자연 애니메이션.
+   나비 날갯짓과 식물 흔들림은 프레이머가 아니라 CSS로 돌린다 — 개체 수만큼
+   자바스크립트 애니메이션을 돌리지 않아 가볍고, SVG <g>에 프레이머 transform을
+   걸었을 때 크롬에서 그룹이 안 그려지던 문제도 피할 수 있다.
+   transform/opacity만 건드리므로 레이아웃을 다시 계산하지 않는다. */
+.gg-flyer--animated .gg-wing {
+  animation: gg-wing-flap 0.42s ease-in-out infinite alternate;
+}
+
+/* 원점을 viewBox 좌표(몸통 위치)로 잡아 날개가 몸통에 붙은 채 접힌다. */
+.gg-wing--l,
+.gg-wing--r {
+  transform-origin: 12px 10px;
+}
+
+@keyframes gg-wing-flap {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.55);
+  }
+}
+
+/* 식물 흔들림 — 뿌리(아래 중앙)를 축으로 1도 미만으로만 기운다.
+   주기와 시작 지점은 학생마다 달라(GardenPlot이 인라인으로 지정) 한 덩어리로
+   움직이지 않는다. */
+.gg-sway {
+  transform-origin: 50% 92%;
+  animation-name: gg-sway;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform;
+}
+
+@keyframes gg-sway {
+  from {
+    transform: rotate(-0.7deg);
+  }
+  to {
+    transform: rotate(0.7deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gg-flyer--animated .gg-wing,
+  .gg-sway {
+    animation: none;
+  }
+}
+
 @media (max-width: 767px) {
   .page-container {
     padding-inline: 16px;

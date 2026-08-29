@@ -101,6 +101,12 @@ export type GardenEnvironmentConfig = {
   tuftCount: number
   flowerCount: number
   pebbleCount: number
+  /** 정원이 살아 있어 보이게 하는 움직이는 요소들 — 단계가 오를수록 하나씩 늘어난다. */
+  butterflyCount: number
+  beeCount: number
+  petalCount: number
+  /** 마지막 단계에서만 켜지는 아주 은은한 햇빛 반짝임 */
+  sparkle: boolean
 }
 
 /**
@@ -118,6 +124,10 @@ export const GARDEN_ENVIRONMENT_STAGES: GardenEnvironmentConfig[] = [
     tuftCount: 3,
     flowerCount: 0,
     pebbleCount: 0,
+    butterflyCount: 0,
+    beeCount: 0,
+    petalCount: 0,
+    sparkle: false,
   },
   {
     stage: 1,
@@ -129,6 +139,10 @@ export const GARDEN_ENVIRONMENT_STAGES: GardenEnvironmentConfig[] = [
     tuftCount: 7,
     flowerCount: 0,
     pebbleCount: 2,
+    butterflyCount: 0,
+    beeCount: 0,
+    petalCount: 0,
+    sparkle: false,
   },
   {
     stage: 2,
@@ -140,6 +154,10 @@ export const GARDEN_ENVIRONMENT_STAGES: GardenEnvironmentConfig[] = [
     tuftCount: 12,
     flowerCount: 2,
     pebbleCount: 3,
+    butterflyCount: 1,
+    beeCount: 0,
+    petalCount: 0,
+    sparkle: false,
   },
   {
     stage: 3,
@@ -151,6 +169,10 @@ export const GARDEN_ENVIRONMENT_STAGES: GardenEnvironmentConfig[] = [
     tuftCount: 16,
     flowerCount: 5,
     pebbleCount: 5,
+    butterflyCount: 2,
+    beeCount: 0,
+    petalCount: 1,
+    sparkle: false,
   },
   {
     stage: 4,
@@ -162,6 +184,10 @@ export const GARDEN_ENVIRONMENT_STAGES: GardenEnvironmentConfig[] = [
     tuftCount: 20,
     flowerCount: 9,
     pebbleCount: 6,
+    butterflyCount: 3,
+    beeCount: 1,
+    petalCount: 2,
+    sparkle: false,
   },
   {
     stage: 5,
@@ -173,6 +199,10 @@ export const GARDEN_ENVIRONMENT_STAGES: GardenEnvironmentConfig[] = [
     tuftCount: 24,
     flowerCount: 14,
     pebbleCount: 7,
+    butterflyCount: 4,
+    beeCount: 1,
+    petalCount: 3,
+    sparkle: true,
   },
 ]
 
@@ -180,3 +210,50 @@ export const MAX_ENVIRONMENT_STAGE = GARDEN_ENVIRONMENT_STAGES[GARDEN_ENVIRONMEN
 
 /** 배경 전환 시간(ms) — 요구 사양: 0.6~1.2초의 은은한 전환. */
 export const ENVIRONMENT_TRANSITION_MS = 900
+
+/* ─── 정원 자연 애니메이션 ─────────────────────────────────────────────
+   나비·벌·꽃잎은 개체 수만 위 단계 표에서 정하고, 움직임의 성격은 여기서 정한다.
+   경로는 컨테이너 크기에 대한 0~1 비율 좌표라 화면 크기·전체화면과 무관하게 쓰인다. */
+
+/** 나비 비행 경로 프리셋 — 개체마다 하나씩 골라 쓴다(직선 이동을 피하려 waypoint를 둔다). */
+export const FLIGHT_PATHS: ReadonlyArray<ReadonlyArray<readonly [number, number]>> = [
+  [
+    [-0.06, 0.34],
+    [0.22, 0.16],
+    [0.44, 0.42],
+    [0.7, 0.2],
+    [1.06, 0.36],
+  ],
+  [
+    [1.05, 0.62],
+    [0.72, 0.44],
+    [0.48, 0.68],
+    [0.24, 0.4],
+    [-0.05, 0.58],
+  ],
+  [
+    [-0.05, 0.8],
+    [0.3, 0.62],
+    [0.52, 0.84],
+    [0.78, 0.56],
+    [1.05, 0.74],
+  ],
+  [
+    [0.5, -0.08],
+    [0.66, 0.3],
+    [0.38, 0.52],
+    [0.62, 0.78],
+    [0.44, 1.08],
+  ],
+]
+
+/** 한 마리가 경로를 한 바퀴 도는 데 걸리는 시간(초) 범위 — 느리게 지나가야 산만하지 않다. */
+export const FLIGHT_DURATION_RANGE = { min: 14, max: 26 } as const
+/** 벌은 나비보다 조금 빠르고 작다. */
+export const BEE_DURATION_RANGE = { min: 10, max: 16 } as const
+/** 개체 크기(px) 범위 — 식물보다 작아야 시선을 뺏지 않는다. */
+export const FLYER_SIZE_RANGE = { min: 16, max: 26 } as const
+/** 꽃잎 하나가 떨어지는 시간(초) 범위 */
+export const PETAL_DURATION_RANGE = { min: 9, max: 16 } as const
+/** 식물이 바람에 흔들리는 주기(초) 범위 — 개체마다 달라야 한 덩어리로 움직이지 않는다. */
+export const SWAY_DURATION_RANGE = { min: 3.6, max: 6.4 } as const
