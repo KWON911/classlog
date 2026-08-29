@@ -27,7 +27,7 @@ type StudentMonthlyReportViewProps = {
 }
 
 type EntryFilter = 'all' | 'merit' | 'demerit'
-type SortMode = 'number' | 'name' | 'growth'
+type SortMode = 'number' | 'growth'
 
 /** 개인 월간 리포트 — 성장 변화가 가장 먼저 보이도록 식물 비교를 맨 위에 둔다. */
 export function StudentMonthlyReportView({
@@ -63,9 +63,7 @@ export function StudentMonthlyReportView({
       ? growthRows
           .map((row) => matched.find((student) => student.id === row.studentId))
           .filter((student): student is Student => Boolean(student))
-      : [...matched].sort((a, b) =>
-          sortMode === 'name' ? a.name.localeCompare(b.name) : a.number - b.number,
-        )
+      : [...matched].sort((a, b) => a.number - b.number)
 
   const student = students.find((candidate) => candidate.id === selectedId)
   const entries = report
@@ -78,7 +76,7 @@ export function StudentMonthlyReportView({
       <section className={`${sectionCardClass} lg:sticky lg:top-4 lg:self-start`}>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-600">학생 선택</h2>
         <div className="mb-2 flex h-8 overflow-hidden rounded-lg border border-gray-300 bg-white text-xs">
-          {(['number', 'name', 'growth'] as const).map((option) => (
+          {(['number', 'growth'] as const).map((option) => (
             <button
               key={option}
               type="button"
@@ -88,7 +86,7 @@ export function StudentMonthlyReportView({
                 sortMode === option ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
-              {option === 'number' ? '번호순' : option === 'name' ? '이름순' : '성장순'}
+              {option === 'number' ? '번호순' : '성장순'}
             </button>
           ))}
         </div>
