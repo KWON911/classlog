@@ -1,4 +1,4 @@
-import { LayoutGrid, Maximize2, Minus, Plus, Sprout } from 'lucide-react'
+import { CalendarRange, Gift, LayoutGrid, Maximize2, Minus, Plus, Settings, Sprout, Tv } from 'lucide-react'
 import { Modal } from '../Modal'
 import { PlantIllustration } from './PlantIllustration'
 import { MIN_SCORE, POINT_AMOUNT_OPTIONS } from '../../lib/growth-garden/constants'
@@ -21,7 +21,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
   return (
     <Modal
       title="학급 성장정원 사용법"
-      description="상점을 모으면 학생의 식물이 자라고, 우리 반 정원 전체도 함께 변합니다."
+      description="상점을 모으면 학생의 식물이 자라고, 우리 반 정원 전체도 함께 변합니다. 달마다 리포트와 성장상으로 돌아볼 수 있습니다."
       onClose={onClose}
       maxWidthClassName="max-w-2xl"
     >
@@ -30,13 +30,14 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           <p>
             <strong className="font-semibold text-gray-900">카드 보기</strong>에서는 학생 카드의{' '}
             <InlineChip tone="brand">
-              <Plus size={12} aria-hidden="true" /> 상점
-            </InlineChip>{' '}
+              <Plus size={12} aria-hidden="true" />
+            </InlineChip>
+            (상점) ·{' '}
             <InlineChip tone="rose">
-              <Minus size={12} aria-hidden="true" /> 벌점
-            </InlineChip>{' '}
-            버튼을, <strong className="font-semibold text-gray-900">정원 보기</strong>에서는 학생의 식물을 누르면
-            기록 창이 열립니다.
+              <Minus size={12} aria-hidden="true" />
+            </InlineChip>
+            (벌점) 버튼을, <strong className="font-semibold text-gray-900">정원 보기</strong>에서는 학생의 식물을
+            누르면 기록 창이 열립니다. 정원 보기에서는 창 안에서 상점·벌점을 고릅니다.
           </p>
           <p>
             점수는 {POINT_AMOUNT_OPTIONS.join(' · ')}점 중에서 고르고, 사유는 자주 쓰는 문구를 눌러 고르거나 직접
@@ -72,7 +73,8 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
               <Sprout size={12} aria-hidden="true" /> 정원 보기
             </InlineChip>
             는 학급 전체가 하나의 화단에 심긴 모습으로, 식물에 마우스를 올리거나 키보드로 이동하면 단계와 남은
-            점수가 나타납니다.
+            점수가 나타납니다. 두 보기 모두 <strong className="font-semibold text-gray-900">번호순 · 점수순</strong>으로
+            정렬할 수 있습니다.
           </p>
           <p>
             정원 보기의{' '}
@@ -102,7 +104,59 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </ol>
         </GuideSection>
 
-        <GuideSection title="5. 기록 관리">
+        <GuideSection title="5. 월별 리포트와 보상">
+          <p>
+            위쪽{' '}
+            <InlineChip>
+              <CalendarRange size={12} aria-hidden="true" /> 월별 리포트
+            </InlineChip>
+            에서는 달을 골라 <strong className="font-semibold text-gray-900">학급</strong> 전체 요약(상·벌점 합계,
+            정원 단계 변화, 일별 추이, 사유별 집계)과 <strong className="font-semibold text-gray-900">개인</strong>{' '}
+            리포트(월초·월말 식물 단계, 그달의 순 성장, 기록 목록)를 볼 수 있습니다.
+          </p>
+          <p>
+            같은 화면에서{' '}
+            <InlineChip>
+              <Gift size={12} aria-hidden="true" /> 보상
+            </InlineChip>
+            을 학급 단위나 학생 개인 단위로 남길 수 있습니다. 보상은 기록일 뿐이라 지급하거나 지워도 학생의 성장
+            포인트는 변하지 않습니다.
+          </p>
+        </GuideSection>
+
+        <GuideSection title="6. 이달의 성장상과 축하 화면">
+          <p>
+            개인 리포트의 목록을 <strong className="font-semibold text-gray-900">성장순</strong>으로 두면 그달에 가장
+            많이 자란 학생부터 보입니다. 자동으로 정해지지 않고 교사가{' '}
+            <strong className="font-semibold text-gray-900">수상자로 선정</strong>을 눌러야 기록되며, 한 달에 여러
+            명도 괜찮습니다.
+          </p>
+          <p>
+            선정한 학생 옆의{' '}
+            <InlineChip>
+              <Tv size={12} aria-hidden="true" /> 축하 화면
+            </InlineChip>
+            을 누르면 교실에 띄울 학생용 화면이 나옵니다. 이 화면에는 등수나 벌점이 나오지 않습니다. 수상 역시
+            성장 포인트와 별개라 취소해도 점수는 그대로입니다.
+          </p>
+        </GuideSection>
+
+        <GuideSection title="7. 성장 기준 바꾸기">
+          <p>
+            <InlineChip>
+              <Settings size={12} aria-hidden="true" /> 설정
+            </InlineChip>
+            에서 식물이 다음 단계로 자라는 점수와 우리 반 정원이 변하는 평균 점수를 학급에 맞게 조절할 수 있습니다.
+            단계 이름은 그대로이고, 바꿔도 학생의 점수·상벌점 기록·보상과 수상 기록은 전혀 변하지 않습니다 —
+            <strong className="font-semibold text-gray-900"> 지금 점수가 어떤 단계로 보이는지</strong>만 달라집니다.
+          </p>
+          <p>
+            언제든 <strong className="font-semibold text-gray-900">기본값으로 되돌리기</strong>로 처음 기준으로 돌아갈
+            수 있고, 이 설정은 선생님 계정에만 적용됩니다.
+          </p>
+        </GuideSection>
+
+        <GuideSection title="8. 기록 관리">
           <p>
             학생 카드나 식물을 눌러 열리는 창에서 <strong className="font-semibold text-gray-900">자세히 보기</strong>
             로 들어가면 그 학생의 누적 상점·벌점과 최근 기록을 볼 수 있고, 잘못 넣은 기록은 하나씩 지울 수 있습니다.
