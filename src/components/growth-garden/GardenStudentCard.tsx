@@ -51,10 +51,11 @@ export function GardenStudentCard({ student, summary, pulse, saving = false, onR
 
       <div className="px-3 pb-3 pt-2">
         <StageProgressBar progress={progress} />
-        <p className="mt-1.5 text-[11px] text-gray-500">
-          {progress.next ? `다음 성장까지 ${progress.remaining}점` : '마지막 단계까지 자랐어요'}
-        </p>
-        <div className="mt-2.5">
+        {/* 진행 문구와 기록 버튼을 한 줄에 — 카드 높이를 줄이고 남는 가로를 쓴다. */}
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-[11px] text-gray-500">
+            {progress.next ? `다음 성장까지 ${progress.remaining}점` : '마지막 단계까지 자랐어요'}
+          </p>
           <PointActionButtons
             studentName={student.name}
             saving={saving}
