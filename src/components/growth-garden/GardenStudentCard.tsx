@@ -44,11 +44,17 @@ export function GardenStudentCard({ student, summary, pulse, saving = false, onR
           <PlantIllustration stage={summary.stage} pulse={pulse} className="mx-auto h-28 w-full sm:h-32" />
         </div>
 
+        {/* 점수가 카드에서 가장 큰 글자다. leading-none이 없으면 24px 글자의 줄높이(32px)가
+            이름이 만든 줄(24px)을 밀어내 카드가 8px 높아진다 — 그리드 열 수는 그대로 두고
+            크기 대비만 준다. */}
         <div className="flex items-center justify-between gap-2 px-3 pt-2.5">
-          <span className="min-w-0 truncate text-base font-semibold text-gray-900 group-hover:text-brand-700">
+          <span className="min-w-0 truncate text-sm font-semibold text-gray-900 group-hover:text-brand-700">
             {student.name}
           </span>
-          <span className="shrink-0 text-sm font-bold tabular-nums text-brand-700">{summary.score}점</span>
+          <span className="shrink-0 text-2xl font-extrabold leading-none tabular-nums text-brand-700">
+            {summary.score}
+            <span className="ml-0.5 text-xs font-semibold text-gray-400">점</span>
+          </span>
         </div>
       </Link>
 
