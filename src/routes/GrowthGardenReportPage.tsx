@@ -68,10 +68,10 @@ export function GrowthGardenReportPage() {
         <GardenPageNav />
         <SegmentedGroup label="리포트 종류">
           <SegmentedButton active={tab === 'class'} onClick={() => setTab('class')}>
-            학급 리포트
+            학급
           </SegmentedButton>
           <SegmentedButton active={tab === 'student'} onClick={() => setTab('student')}>
-            개인 리포트
+            개인
           </SegmentedButton>
         </SegmentedGroup>
         <MonthSelector value={yearMonth} onChange={setYearMonth} />
