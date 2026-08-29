@@ -227,3 +227,26 @@ export type GrowthPointEntry = {
   reason: string
   created_at: string
 }
+
+/**
+ * 성장정원의 보상 기록 — 상벌점(GrowthPointEntry)과 완전히 분리된 데이터다.
+ * 보상을 줘도 학생의 성장 포인트는 차감되지 않는다(교사가 결과를 보고 따로 주는 기록).
+ * 나중에 포인트 차감형으로 바꾸고 싶으면 여기에 cost 같은 컬럼을 더하면 된다.
+ */
+export type RewardScope = 'class' | 'student'
+
+export type Reward = {
+  id: string
+  teacher_id: string
+  scope: RewardScope
+  /** scope가 'student'일 때만 채워진다. 학생 이름은 저장하지 않고 id만 참조한다. */
+  student_id: string | null
+  /** 조회를 단순하게 하려고 지급 월을 숫자로 함께 둔다(year 2026, month 8). */
+  year: number
+  month: number
+  title: string
+  description: string | null
+  /** 지급일 'YYYY-MM-DD' */
+  awarded_on: string
+  created_at: string
+}

@@ -8,17 +8,18 @@
  */
 import { supabase } from '../../supabaseClient'
 import type { GrowthPointEntry } from '../../types'
-import type { GrowthGardenService, NewGrowthPointEntry } from './types'
+import type { EntryRange, GrowthGardenService, NewGrowthPointEntry } from './types'
 
 const TABLE = 'growth_points'
 
 export const supabaseGrowthGardenService: GrowthGardenService = {
-  async listEntries() {
-    const { data, error } = await supabase
-      .from(TABLE)
-      .select('*')
-      .order('created_at', { ascending: false })
+  async listEntries(range?: EntryRange) {
+    // 범위를 주면 그 기간만 가져온다 — 월별 리포트가 전체 기록을 매번 끌어오지 않도록.
+    let query = supabase.from(TABLE).select('*').order('created_at', { ascending: false })
+    if (range?.from) query = query.gte('created_at', range.from)
+    if (range?.to) query = query.lt('created_at', range.to)
 
+    const { data, error } = await query
     if (error) return { error: error.message }
     return { data: (data ?? []) as GrowthPointEntry[] }
   },

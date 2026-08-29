@@ -1,9 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { LayoutGrid, Search, Sprout } from 'lucide-react'
+import { LayoutGrid, Sprout } from 'lucide-react'
 import { GardenStudentCard } from './GardenStudentCard'
 import { GardenView } from './GardenView'
 import { SegmentedButton, SegmentedGroup } from './Segmented'
+import { GardenPageNav } from './GardenPageNav'
 import { BehaviorPointModal } from './BehaviorPointModal'
 import { GrowthFeedbackToast } from './GrowthFeedbackToast'
 import { ConfirmDialog } from '../ConfirmDialog'
@@ -39,7 +40,6 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
   const { entries, summaryFor, loading: gardenLoading, error, addPoint, isSaving, clearClass } = useGrowthGarden()
   const { pulseFor, trigger } = usePlantPulse()
   const recorder = useGrowthRecorder({ addPoint, trigger })
-  const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('number')
   const [viewMode, setViewMode] = useState<ViewMode>('card')
   const [confirmingReset, setConfirmingReset] = useState(false)
@@ -48,19 +48,13 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
   // 기본은 번호순(교실에서 학생을 찾는 순서). 점수순은 교사가 명시적으로 고를 때만
   // 적용되며, 등수를 매기지 않도록 순위 숫자나 상/하위 강조는 붙이지 않는다.
   const visibleStudents = useMemo(() => {
-    const trimmed = query.trim().toLowerCase()
-    const filtered = trimmed
-      ? students.filter(
-          (student) => student.name.toLowerCase().includes(trimmed) || String(student.number).includes(trimmed),
-        )
-      : students
-    if (sortMode === 'number') return [...filtered].sort((a, b) => a.number - b.number)
+    if (sortMode === 'number') return [...students].sort((a, b) => a.number - b.number)
     // 동점일 때는 번호순으로 안정화해서 목록이 매 렌더 흔들리지 않게 한다.
-    return [...filtered].sort((a, b) => {
+    return [...students].sort((a, b) => {
       const diff = summaryFor(b.id).score - summaryFor(a.id).score
       return diff !== 0 ? diff : a.number - b.number
     })
-  }, [students, query, sortMode, summaryFor])
+  }, [students, sortMode, summaryFor])
 
   const classTotals = useMemo(() => {
     let merit = 0
@@ -101,39 +95,29 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
         </p>
       )}
 
-      {/* 툴바 — 좁은 화면에서는 검색창이 한 줄을 다 쓰고 토글이 아래로 내려간다
-          (셋을 한 줄에 넣으면 모바일에서 검색창이 아이콘만 남을 만큼 찌그러진다). */}
+      {/* 툴바 — 왼쪽은 화면 이동(정원/월별 리포트), 오른쪽은 이 화면의 표시 옵션.
+          같은 높이의 컨트롤을 한 줄에 모아 두되 성격이 다른 둘을 양끝으로 갈라 둔다. */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 sm:w-auto sm:max-w-xs sm:flex-none">
-          <Search size={16} className="shrink-0 text-gray-400" aria-hidden="true" />
-          <input
-            type="text"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="학생 이름 · 번호 검색..."
-            aria-label="학생 검색"
-            className="w-full min-w-0 text-sm text-gray-900 outline-none placeholder:text-gray-400"
-          />
-        </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
-          <SegmentedGroup label="정렬 기준">
-            <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
-              번호순
-            </SegmentedButton>
-            <SegmentedButton active={sortMode === 'score'} onClick={() => setSortMode('score')}>
-              점수순
-            </SegmentedButton>
-          </SegmentedGroup>
-          <SegmentedGroup label="보기 모드">
-            <SegmentedButton active={viewMode === 'card'} onClick={() => setViewMode('card')}>
-              <LayoutGrid size={14} aria-hidden="true" />
-              카드 보기
-            </SegmentedButton>
-            <SegmentedButton active={viewMode === 'garden'} onClick={() => setViewMode('garden')}>
-              <Sprout size={14} aria-hidden="true" />
-              정원 보기
-            </SegmentedButton>
-          </SegmentedGroup>
+        <GardenPageNav />
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <SegmentedGroup label="정렬 기준">
+          <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
+            번호순
+          </SegmentedButton>
+          <SegmentedButton active={sortMode === 'score'} onClick={() => setSortMode('score')}>
+            점수순
+          </SegmentedButton>
+        </SegmentedGroup>
+        <SegmentedGroup label="보기 모드">
+          <SegmentedButton active={viewMode === 'card'} onClick={() => setViewMode('card')}>
+            <LayoutGrid size={14} aria-hidden="true" />
+            카드 보기
+          </SegmentedButton>
+          <SegmentedButton active={viewMode === 'garden'} onClick={() => setViewMode('garden')}>
+            <Sprout size={14} aria-hidden="true" />
+            정원 보기
+          </SegmentedButton>
+        </SegmentedGroup>
         </div>
       </div>
 
@@ -150,10 +134,6 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
             정보관리에서 학급 명단 등록하기
           </Link>
         </div>
-      )}
-
-      {!loading && students.length > 0 && visibleStudents.length === 0 && (
-        <p className="py-16 text-center text-sm text-gray-500">'{query.trim()}'와(과) 일치하는 학생이 없습니다.</p>
       )}
 
       {/* 카드 보기 — 화단 위에 화분이 놓인 것처럼 보이게 감싼다. */}

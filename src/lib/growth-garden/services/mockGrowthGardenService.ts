@@ -5,7 +5,7 @@
  * 훅/화면/순수 로직은 한 줄도 건드릴 필요가 없다.
  */
 import type { GrowthPointEntry } from '../../types'
-import type { GrowthGardenService, NewGrowthPointEntry } from './types'
+import type { EntryRange, GrowthGardenService, NewGrowthPointEntry } from './types'
 
 const STORAGE_KEY = 'classlog:growth-garden:entries'
 /** 실제 네트워크처럼 살짝 비동기 — 로딩 상태 처리가 mock에서도 검증되도록. */
@@ -54,8 +54,13 @@ function createId(): string {
 }
 
 export const mockGrowthGardenService: GrowthGardenService = {
-  async listEntries() {
-    return delay({ data: readAll() })
+  async listEntries(range?: EntryRange) {
+    const all = readAll()
+    const filtered = all.filter(
+      (entry) =>
+        (!range?.from || entry.created_at >= range.from) && (!range?.to || entry.created_at < range.to),
+    )
+    return delay({ data: filtered })
   },
 
   async addEntry(input: NewGrowthPointEntry) {

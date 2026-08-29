@@ -257,3 +257,28 @@ export const FLYER_SIZE_RANGE = { min: 16, max: 26 } as const
 export const PETAL_DURATION_RANGE = { min: 9, max: 16 } as const
 /** 식물이 바람에 흔들리는 주기(초) 범위 — 개체마다 달라야 한 덩어리로 움직이지 않는다. */
 export const SWAY_DURATION_RANGE = { min: 3.6, max: 6.4 } as const
+
+/* ─── 보상 ─────────────────────────────────────────────────────────────
+   보상은 성장 포인트와 완전히 분리된 기록이다(지급해도 점수가 깎이지 않는다).
+   문구를 바꾸려면 여기만 고치면 된다. */
+
+/** 학급 전체 보상으로 자주 쓰는 것들 */
+export const CLASS_REWARD_PRESETS = [
+  '자유시간 10분',
+  '영화 감상',
+  '체육시간 추가 활동',
+  '간식 파티',
+  '보드게임 시간',
+]
+
+/** 개인 보상으로 자주 쓰는 것들 */
+export const STUDENT_REWARD_PRESETS = [
+  '성장 꽃 스티커',
+  '칭찬 쿠폰',
+  '자리 선택권',
+  '1일 도우미 면제',
+  '학급문고 우선 대출',
+]
+
+/** 보상 이름 목록 마지막에 붙는 직접 입력 옵션 */
+export const CUSTOM_REWARD_LABEL = '직접 입력'

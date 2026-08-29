@@ -6,6 +6,7 @@ import { StudentDetailPage } from './routes/StudentDetailPage'
 import { StudentManagePage } from './routes/StudentManagePage'
 import { GrowthGardenPage } from './routes/GrowthGardenPage'
 import { GrowthGardenStudentPage } from './routes/GrowthGardenStudentPage'
+import { GrowthGardenReportPage } from './routes/GrowthGardenReportPage'
 import { AttendancePage } from './routes/AttendancePage'
 import { SeatingPage } from './routes/SeatingPage'
 import { AppsPage } from './routes/AppsPage'
@@ -25,6 +26,7 @@ function App() {
             <Route path="/students/:id" element={<StudentDetailPage />} />
             <Route path="/students/manage" element={<StudentManagePage />} />
             <Route path="/growth-garden" element={<GrowthGardenPage />} />
+            <Route path="/growth-garden/report" element={<GrowthGardenReportPage />} />
             <Route path="/growth-garden/:studentId" element={<GrowthGardenStudentPage />} />
             <Route path="/attendance" element={<AttendancePage />} />
             <Route path="/seating" element={<SeatingPage />} />
