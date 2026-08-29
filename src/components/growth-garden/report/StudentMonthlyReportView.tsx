@@ -72,8 +72,11 @@ export function StudentMonthlyReportView({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-      {/* 학생 선택 — 검색 + 목록. 교실에서 번호로도 이름으로도 찾을 수 있게 한다. */}
-      <section className={`${sectionCardClass} lg:sticky lg:top-4 lg:self-start`}>
+      {/* 학생 선택 — 검색 + 목록. 교실에서 번호로도 이름으로도 찾을 수 있게 한다.
+          PC에서는 오른쪽 리포트 열과 높이를 맞춘다(self-start면 내용만큼만 차지해
+          오른쪽보다 짧아 보였다). 다만 화면 높이를 넘지 않게 잘라 sticky가 살아 있게 하고,
+          목록이 남는 공간을 채우며 안에서 스크롤되게 한다. */}
+      <section className={`${sectionCardClass} flex flex-col lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]`}>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-600">학생 선택</h2>
         <div className="mb-2 flex h-8 overflow-hidden rounded-lg border border-gray-300 bg-white text-xs">
           {(['number', 'growth'] as const).map((option) => (
@@ -101,7 +104,7 @@ export function StudentMonthlyReportView({
             className="w-full min-w-0 text-sm text-gray-900 outline-none placeholder:text-gray-400"
           />
         </div>
-        <ul className="flex max-h-[420px] flex-col gap-1 overflow-y-auto">
+        <ul className="flex max-h-[360px] flex-col gap-1 overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
           {visibleStudents.map((candidate) => (
             <li key={candidate.id}>
               <button
