@@ -81,4 +81,9 @@ export const mockGrowthGardenService: GrowthGardenService = {
     writeAll(readAll().filter((entry) => entry.student_id !== studentId))
     return delay({})
   },
+
+  async clearClass() {
+    writeAll([])
+    return delay({})
+  },
 }

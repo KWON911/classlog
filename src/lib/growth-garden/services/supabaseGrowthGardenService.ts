@@ -55,4 +55,14 @@ export const supabaseGrowthGardenService: GrowthGardenService = {
     if (error) return { error: error.message }
     return {}
   },
+
+  /**
+   * 조건 없는 delete는 PostgREST가 막으므로 항상 참인 필터를 하나 건다.
+   * 실제 삭제 범위는 RLS가 담당 교사 것으로 한정한다(useStudents.deleteAllStudents와 같은 관례).
+   */
+  async clearClass() {
+    const { error } = await supabase.from(TABLE).delete().not('id', 'is', null)
+    if (error) return { error: error.message }
+    return {}
+  },
 }

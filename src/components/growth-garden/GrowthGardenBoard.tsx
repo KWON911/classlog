@@ -6,6 +6,7 @@ import { GardenView } from './GardenView'
 import { SegmentedButton, SegmentedGroup } from './Segmented'
 import { BehaviorPointModal } from './BehaviorPointModal'
 import { GrowthFeedbackToast } from './GrowthFeedbackToast'
+import { ConfirmDialog } from '../ConfirmDialog'
 import { useGrowthGarden } from '../../lib/hooks/useGrowthGarden'
 import { usePlantPulse } from '../../lib/hooks/usePlantPulse'
 import { useGrowthRecorder } from '../../lib/hooks/useGrowthRecorder'
@@ -35,12 +36,14 @@ type GrowthGardenBoardProps = {
  * 점수/기록만 성장정원 서비스(useGrowthGarden)에서 가져온다.
  */
 export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthGardenBoardProps) {
-  const { summaryFor, loading: gardenLoading, error, addPoint, isSaving } = useGrowthGarden()
+  const { entries, summaryFor, loading: gardenLoading, error, addPoint, isSaving, clearClass } = useGrowthGarden()
   const { pulseFor, trigger } = usePlantPulse()
   const recorder = useGrowthRecorder({ addPoint, trigger })
   const [query, setQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('number')
   const [viewMode, setViewMode] = useState<ViewMode>('card')
+  const [confirmingReset, setConfirmingReset] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   // 기본은 번호순(교실에서 학생을 찾는 순서). 점수순은 교사가 명시적으로 고를 때만
   // 적용되며, 등수를 매기지 않도록 순위 숫자나 상/하위 강조는 붙이지 않는다.
@@ -182,6 +185,47 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
           environment={environment}
         />
       )}
+      {/* 학급 전체 초기화 — 학기 초에나 쓰는 되돌릴 수 없는 동작이라, 수업 중 계속
+          누르는 컨트롤들과 멀리 떨어진 목록 맨 아래에 둔다(정보관리의 '명단 전체
+          삭제'와 같은 자리·같은 모양). 전체화면은 정원 컨테이너만 차지하므로
+          발표 화면에는 이 버튼이 나타나지 않는다. */}
+      {!loading && students.length > 0 && (
+        <div className="mt-4 flex justify-end border-t border-gray-100 pt-4">
+          <button
+            type="button"
+            onClick={() => setConfirmingReset(true)}
+            disabled={entries.length === 0}
+            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            학급 전체 기록 초기화
+          </button>
+        </div>
+      )}
+
+      {confirmingReset && (
+        <ConfirmDialog
+          title="학급 전체 기록 초기화"
+          message={
+            <>
+              학생 <span className="font-medium text-gray-900">{students.length}명</span>의 상점·벌점 기록{' '}
+              <span className="font-medium text-gray-900">{entries.length}건</span>이 모두 삭제되고
+              <br />
+              모든 식물이 씨앗 단계로 돌아갑니다. 이 작업은 되돌릴 수 없습니다.
+            </>
+          }
+          confirmLabel="전체 초기화"
+          pendingLabel="초기화 중..."
+          pending={resetting}
+          onCancel={() => setConfirmingReset(false)}
+          onConfirm={async () => {
+            setResetting(true)
+            await clearClass()
+            setResetting(false)
+            setConfirmingReset(false)
+          }}
+        />
+      )}
+
       {recorder.target && (
         <BehaviorPointModal
           target={recorder.target}

@@ -22,4 +22,6 @@ export type GrowthGardenService = {
   deleteEntry(id: string): Promise<{ error?: string }>
   /** 한 학생의 기록 전체 삭제(정원 되돌리기) */
   clearStudent(studentId: string): Promise<{ error?: string }>
+  /** 담당 학급 전체의 기록 삭제 — 학기 초 초기화용. 되돌릴 수 없다. */
+  clearClass(): Promise<{ error?: string }>
 }

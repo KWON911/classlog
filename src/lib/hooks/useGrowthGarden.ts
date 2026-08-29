@@ -89,6 +89,17 @@ export function useGrowthGarden() {
     return {}
   }, [])
 
+  /** 학급 전체 기록 삭제 — 학기 초 초기화. 되돌릴 수 없다. */
+  const clearClass = useCallback(async () => {
+    const { error } = await growthGardenService.clearClass()
+    if (error) {
+      setError(error)
+      return { error }
+    }
+    setEntries([])
+    return {}
+  }, [])
+
   const summaries = useMemo(() => summarizeByStudent(entries), [entries])
 
   const summaryFor = useCallback(
@@ -111,6 +122,7 @@ export function useGrowthGarden() {
     addPoint,
     deleteEntry,
     clearStudent,
+    clearClass,
     refetch: fetchEntries,
   }
 }
