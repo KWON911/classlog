@@ -54,6 +54,13 @@ export const DEMERIT_REASONS = ['준비물 미준비', '약속 미준수', '수�
 /** 사유 칩 마지막에 붙는 직접 입력 옵션의 라벨 */
 export const CUSTOM_REASON_LABEL = '직접 입력'
 
+/**
+ * 일괄 기록에서 식물 애니메이션을 개별로 재생할 최대 인원.
+ * 학급 전체(25~30명)가 한꺼번에 튀어오르면 읽기도 어렵고 프레임도 떨어져서,
+ * 이 수를 넘으면 애니메이션 없이 점수/단계 변화만 조용히 반영한다.
+ */
+export const BULK_PULSE_LIMIT = 10
+
 /** 모달을 열었을 때 미리 선택돼 있는 사유 */
 export const DEFAULT_MERIT_REASON = MERIT_REASONS[0]
 export const DEFAULT_DEMERIT_REASON = DEMERIT_REASONS[0]

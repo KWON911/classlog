@@ -13,6 +13,10 @@ export type NewGrowthPointEntry = {
   /** 양수 크기 */
   amount: number
   reason: string
+  /** 여러 학생에게 한 번에 남긴 기록이면 'bulk'. 생략하면 개별 기록. */
+  source?: 'individual' | 'bulk'
+  /** 같은 일괄 작업으로 만들어진 기록끼리 공유하는 id. 개별 기록은 없음. */
+  batch_id?: string
 }
 
 /** created_at 기준 [from, to) 범위. 월별 리포트가 필요한 만큼만 가져오려고 쓴다. */
@@ -58,7 +62,15 @@ export type GrowthGardenService = {
   /** 담당 학급 전체의 기록(범위를 주면 그만큼만). 정렬은 호출부(순수 로직)가 담당한다. */
   listEntries(range?: EntryRange): Promise<{ data?: GrowthPointEntry[]; error?: string }>
   addEntry(input: NewGrowthPointEntry): Promise<{ data?: GrowthPointEntry; error?: string }>
+  /**
+   * 여러 건을 한 번에 저장한다(선택 학생 일괄 상벌점).
+   * 요청 한 번 = 문장 한 번이라 일부만 저장되는 상태가 생기지 않는다 — 한 행이라도
+   * RLS나 제약에 걸리면 전체가 실패한다.
+   */
+  addEntries(inputs: NewGrowthPointEntry[]): Promise<{ data?: GrowthPointEntry[]; error?: string }>
   deleteEntry(id: string): Promise<{ error?: string }>
+  /** 한 일괄 작업으로 만들어진 기록만 지운다(일괄 지급 취소). */
+  deleteBatch(batchId: string): Promise<{ error?: string }>
   /** 한 학생의 기록 전체 삭제(정원 되돌리기) */
   clearStudent(studentId: string): Promise<{ error?: string }>
   /** 담당 학급 전체의 기록 삭제 — 학기 초 초기화용. 되돌릴 수 없다. */

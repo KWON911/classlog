@@ -53,6 +53,20 @@ function createId(): string {
   return `gp_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 }
 
+function toEntry(input: NewGrowthPointEntry): GrowthPointEntry {
+  return {
+    id: createId(),
+    student_id: input.student_id,
+    teacher_id: MOCK_TEACHER_ID,
+    type: input.type,
+    amount: Math.abs(input.amount),
+    reason: input.reason,
+    source: input.source ?? 'individual',
+    batch_id: input.batch_id ?? null,
+    created_at: new Date().toISOString(),
+  }
+}
+
 export const mockGrowthGardenService: GrowthGardenService = {
   async listEntries(range?: EntryRange) {
     const all = readAll()
@@ -64,21 +78,26 @@ export const mockGrowthGardenService: GrowthGardenService = {
   },
 
   async addEntry(input: NewGrowthPointEntry) {
-    const entry: GrowthPointEntry = {
-      id: createId(),
-      student_id: input.student_id,
-      teacher_id: MOCK_TEACHER_ID,
-      type: input.type,
-      amount: Math.abs(input.amount),
-      reason: input.reason,
-      created_at: new Date().toISOString(),
-    }
+    const entry = toEntry(input)
     writeAll([...readAll(), entry])
     return delay({ data: entry })
   },
 
+  /** 일괄 저장 — Supabase 구현과 마찬가지로 전부 저장되거나 전부 저장되지 않는다. */
+  async addEntries(inputs: NewGrowthPointEntry[]) {
+    if (inputs.length === 0) return delay({ data: [] })
+    const created = inputs.map(toEntry)
+    writeAll([...readAll(), ...created])
+    return delay({ data: created })
+  },
+
   async deleteEntry(id: string) {
     writeAll(readAll().filter((entry) => entry.id !== id))
+    return delay({})
+  },
+
+  async deleteBatch(batchId: string) {
+    writeAll(readAll().filter((entry) => entry.batch_id !== batchId))
     return delay({})
   },
 

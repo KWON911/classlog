@@ -225,6 +225,13 @@ export type GrowthPointEntry = {
   /** 항상 양수 크기 — 부호는 `type`이 결정한다(합산 로직 한 곳에만 부호가 존재). */
   amount: number
   reason: string
+  /**
+   * 기록이 만들어진 경로. 여러 학생을 골라 한 번에 남긴 기록이 'bulk'다.
+   * 이 컬럼이 생기기 전 기록은 null이므로 앱에서는 'individual'로 해석한다.
+   */
+  source?: 'individual' | 'bulk' | null
+  /** 같은 일괄 작업으로 만들어진 기록끼리 공유하는 id. 개별 기록은 null. */
+  batch_id?: string | null
   created_at: string
 }
 

@@ -12,9 +12,14 @@ import {
   MERIT_REASONS,
   POINT_AMOUNT_OPTIONS,
 } from '../../lib/growth-garden/constants'
+import { summarizeTargetNames } from '../../lib/growth-garden/bulkGrowth'
 
 export type BehaviorModalTarget = {
-  student: Student
+  /**
+   * 기록 대상. 한 명이면 개별 기록, 여러 명이면 선택 학생 일괄 기록이다.
+   * 개별/일괄이 같은 입력 화면(점수·사유)을 쓰도록 한 배열로 받는다.
+   */
+  students: Student[]
   /** 모달을 열 때의 초기 종류 */
   type: GrowthPointType
   /**
@@ -39,7 +44,9 @@ type BehaviorPointModalProps = {
  * constants에서 오므로 이 파일에는 목록이 하드코딩돼 있지 않다.
  */
 export function BehaviorPointModal({ target, saving, onClose, onSubmit }: BehaviorPointModalProps) {
-  const { student, allowTypeChange = false } = target
+  const { students, allowTypeChange = false } = target
+  const student = students[0]
+  const isBulk = students.length > 1
   const [type, setType] = useState<GrowthPointType>(target.type)
   const isMerit = type === 'merit'
   const reasons = isMerit ? MERIT_REASONS : DEMERIT_REASONS
@@ -60,11 +67,17 @@ export function BehaviorPointModal({ target, saving, onClose, onSubmit }: Behavi
 
   return (
     <Modal
-      title={`${student.name} ${isMerit ? '상점' : '벌점'} 기록`}
+      title={
+        isBulk
+          ? `선택한 ${students.length}명 ${isMerit ? '상점' : '벌점'} 기록`
+          : `${student.name} ${isMerit ? '상점' : '벌점'} 기록`
+      }
       description={
-        allowTypeChange
-          ? `${student.number}번 · 종류와 점수, 사유를 고르고 기록하세요.`
-          : `${student.number}번 · 점수와 사유를 고르고 기록하세요.`
+        isBulk
+          ? `${summarizeTargetNames(students.map((item) => item.name))} · 모두에게 같은 점수와 사유가 기록됩니다.`
+          : allowTypeChange
+            ? `${student.number}번 · 종류와 점수, 사유를 고르고 기록하세요.`
+            : `${student.number}번 · 점수와 사유를 고르고 기록하세요.`
       }
       onClose={onClose}
       maxWidthClassName="max-w-md"
@@ -165,12 +178,17 @@ export function BehaviorPointModal({ target, saving, onClose, onSubmit }: Behavi
             }`}
           >
             {isMerit ? <Plus size={18} aria-hidden="true" /> : <Minus size={18} aria-hidden="true" />}
-            {saving ? '기록하는 중...' : `${isMerit ? '상점' : '벌점'} ${amount}점 기록하기`}
+            {saving
+              ? '기록하는 중...'
+              : isBulk
+                ? `${students.length}명에게 ${isMerit ? '상점' : '벌점'} ${amount}점`
+                : `${isMerit ? '상점' : '벌점'} ${amount}점 기록하기`}
           </button>
         </div>
 
-        {/* 정원 보기는 식물을 눌러도 상세로 가지 않으므로 여기서 상세로 갈 길을 남긴다. */}
-        {allowTypeChange && (
+        {/* 정원 보기는 식물을 눌러도 상세로 가지 않으므로 여기서 상세로 갈 길을 남긴다.
+            일괄 기록에는 '그 학생'이 없으므로 링크를 두지 않는다. */}
+        {allowTypeChange && !isBulk && (
           <Link
             to={`/growth-garden/${student.id}`}
             className="-mt-1 text-center text-sm font-medium text-brand-600 hover:underline"

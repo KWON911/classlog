@@ -1,4 +1,4 @@
-import { CalendarRange, Gift, LayoutGrid, Maximize2, Minus, Plus, Settings, Sprout, Tv } from 'lucide-react'
+import { CalendarRange, Gift, LayoutGrid, Maximize2, Minus, Plus, Settings, Sprout, Tv, Users } from 'lucide-react'
 import { Modal } from '../Modal'
 import { PlantIllustration } from './PlantIllustration'
 import { MIN_SCORE, POINT_AMOUNT_OPTIONS } from '../../lib/growth-garden/constants'
@@ -45,7 +45,28 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </p>
         </GuideSection>
 
-        <GuideSection title="2. 식물이 자라는 단계">
+        <GuideSection title="2. 여러 학생에게 한 번에 기록하기">
+          <p>
+            카드 보기 위쪽의{' '}
+            <InlineChip>
+              <Users size={12} aria-hidden="true" /> 학생 선택
+            </InlineChip>
+            을 누르면 선택 모드가 됩니다. 카드를 눌러 학생을 고르고(체크 표시가 붙습니다),{' '}
+            <strong className="font-semibold text-gray-900">전체 선택</strong>으로 학급 전체를 한 번에 고를 수도
+            있습니다. 선택 모드에서는 카드를 눌러도 상세 화면으로 넘어가지 않습니다.
+          </p>
+          <p>
+            한 명이라도 고르면 아래에 막대가 나타나고, 거기서 상점·벌점을 누르면 개별 기록과 같은 창이 열립니다.
+            점수와 사유를 고른 뒤 확인 창에서 대상을 다시 확인하고 지급합니다. 기록은 학생마다 따로 남으므로
+            개인 기록·성장 단계·월별 리포트·성장순에 모두 그대로 반영됩니다.
+          </p>
+          <p>
+            잘못 지급했다면 목록 아래{' '}
+            <strong className="font-semibold text-gray-900">최근 일괄 기록</strong>에서 그 묶음만 취소할 수 있습니다.
+          </p>
+        </GuideSection>
+
+        <GuideSection title="3. 식물이 자라는 단계">
           <p>
             상점을 받아 성장 포인트가 쌓이면 식물이 다음 단계로 자랍니다. 벌점을 받으면 점수가 줄어 이전 모습으로
             부드럽게 돌아가며, {MIN_SCORE}점 아래로는 내려가지 않습니다.
@@ -63,7 +84,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </div>
         </GuideSection>
 
-        <GuideSection title="3. 두 가지 보기">
+        <GuideSection title="4. 두 가지 보기">
           <p>
             <InlineChip>
               <LayoutGrid size={12} aria-hidden="true" /> 카드 보기
@@ -86,7 +107,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </p>
         </GuideSection>
 
-        <GuideSection title="4. 우리 반 정원">
+        <GuideSection title="5. 우리 반 정원">
           <p>
             정원 보기의 배경은 학급 전체의 성장 상태(학생 1인당 평균 점수)에 따라 {environmentStages.length}
             단계로 변합니다. 흙만 있던 자리에 잔디가 돋고, 풀과 꽃이 늘어납니다.
@@ -104,7 +125,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </ol>
         </GuideSection>
 
-        <GuideSection title="5. 월별 리포트와 보상">
+        <GuideSection title="6. 월별 리포트와 보상">
           <p>
             위쪽{' '}
             <InlineChip>
@@ -124,7 +145,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </p>
         </GuideSection>
 
-        <GuideSection title="6. 이달의 성장상과 축하 화면">
+        <GuideSection title="7. 이달의 성장상과 축하 화면">
           <p>
             개인 리포트의 목록을 <strong className="font-semibold text-gray-900">성장순</strong>으로 두면 그달에 가장
             많이 자란 학생부터 보입니다. 자동으로 정해지지 않고 교사가{' '}
@@ -141,7 +162,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </p>
         </GuideSection>
 
-        <GuideSection title="7. 성장 기준 바꾸기">
+        <GuideSection title="8. 성장 기준 바꾸기">
           <p>
             <InlineChip>
               <Settings size={12} aria-hidden="true" /> 설정
@@ -156,7 +177,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           </p>
         </GuideSection>
 
-        <GuideSection title="8. 기록 관리">
+        <GuideSection title="9. 기록 관리">
           <p>
             학생 카드나 식물을 눌러 열리는 창에서 <strong className="font-semibold text-gray-900">자세히 보기</strong>
             로 들어가면 그 학생의 누적 상점·벌점과 최근 기록을 볼 수 있고, 잘못 넣은 기록은 하나씩 지울 수 있습니다.

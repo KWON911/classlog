@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import type { GrowthPointEntry } from '../../lib/types'
 import { SHRINK_ANIMATION_MS } from '../../lib/growth-garden/constants'
+import { isBulkEntry } from '../../lib/growth-garden/bulkGrowth'
 
 type GrowthLogTimelineProps = {
   entries: GrowthPointEntry[]
@@ -37,7 +38,16 @@ export function GrowthLogTimeline({ entries, onDelete }: GrowthLogTimelineProps)
                 {isMerit ? <Plus size={16} aria-hidden="true" /> : <Minus size={16} aria-hidden="true" />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">{entry.reason}</p>
+                <p className="truncate text-sm font-medium text-gray-900">
+                  {entry.reason}
+                  {/* 여러 학생에게 한 번에 남긴 기록임을 표시한다 — 점수 계산에서는
+                      개별 기록과 똑같이 다뤄지고, 배지는 출처만 알려 준다. */}
+                  {isBulkEntry(entry) && (
+                    <span className="ml-1.5 rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-medium text-gray-500">
+                      일괄
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-gray-400">{formatTimestamp(entry.created_at)}</p>
               </div>
               <span

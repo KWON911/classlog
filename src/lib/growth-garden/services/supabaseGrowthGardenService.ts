@@ -45,8 +45,44 @@ export const supabaseGrowthGardenService: GrowthGardenService = {
     return { data: data as GrowthPointEntry }
   },
 
+  /**
+   * 일괄 저장 — 학생 수만큼 요청을 보내지 않고 배열 하나를 insert한다.
+   * 원자성은 이 한 문장이 보장한다: RLS의 with check가 행마다 평가되므로 남의 학생
+   * id가 섞여 있으면 그 행에서 문장 전체가 실패하고 아무것도 저장되지 않는다.
+   * 점수(성장 포인트)는 따로 저장하는 값이 아니라 이 기록들에서 파생되므로
+   * "기록은 저장됐는데 점수 갱신만 실패" 같은 어긋남 자체가 존재하지 않는다.
+   */
+  async addEntries(inputs: NewGrowthPointEntry[]) {
+    if (inputs.length === 0) return { data: [] }
+
+    const { data: userData } = await supabase.auth.getUser()
+    const teacherId = userData.user?.id
+    if (!teacherId) return { error: '로그인이 필요합니다.' }
+
+    const rows = inputs.map((input) => ({
+      student_id: input.student_id,
+      teacher_id: teacherId,
+      type: input.type,
+      amount: Math.abs(input.amount),
+      reason: input.reason,
+      source: input.source ?? 'individual',
+      batch_id: input.batch_id ?? null,
+    }))
+
+    const { data, error } = await supabase.from(TABLE).insert(rows).select()
+    if (error) return { error: error.message }
+    return { data: (data ?? []) as GrowthPointEntry[] }
+  },
+
   async deleteEntry(id: string) {
     const { error } = await supabase.from(TABLE).delete().eq('id', id)
+    if (error) return { error: error.message }
+    return {}
+  },
+
+  /** batch_id가 일치하는 행만 지운다 — 다른 기록은 조건에 걸리지 않는다. */
+  async deleteBatch(batchId: string) {
+    const { error } = await supabase.from(TABLE).delete().eq('batch_id', batchId)
     if (error) return { error: error.message }
     return {}
   },

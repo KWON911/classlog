@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { growthGardenService } from '../growth-garden/services'
 import { DEFAULT_DEMERIT_REASON, DEFAULT_MERIT_REASON } from '../growth-garden/constants'
 import { EMPTY_SUMMARY, entriesForStudent, summarizeByStudent, type GardenSummary } from '../growth-garden/growth'
+import { buildBulkEntries, createBatchId, type BulkPointInput } from '../growth-garden/bulkGrowth'
 import { useGrowthSettings } from '../growth-garden/growthSettingsContext'
 import type { GrowthPointEntry, GrowthPointType } from '../types'
 
@@ -24,6 +25,10 @@ export function useGrowthGarden() {
   // state는 버튼 disabled를 다시 그리기 위해 필요하다.
   const pendingRef = useRef<Set<string>>(new Set())
   const [pendingIds, setPendingIds] = useState<string[]>([])
+
+  // 일괄 저장도 같은 이유로 ref(즉시 차단) + state(버튼 disabled)를 함께 쓴다.
+  const bulkPendingRef = useRef(false)
+  const [bulkSaving, setBulkSaving] = useState(false)
 
   const syncPending = useCallback(() => {
     setPendingIds([...pendingRef.current])
@@ -71,6 +76,62 @@ export function useGrowthGarden() {
     },
     [syncPending],
   )
+
+  /**
+   * 선택 학생 일괄 기록.
+   *
+   * 개별 기록과 같은 규칙을 쓴다 — 사유 기본값 처리도 addPoint와 동일하고, 점수는
+   * 저장된 값이 아니라 이 기록들에서 다시 계산되므로 일괄 전용 점수 로직이 없다.
+   * 요청은 학생 수만큼이 아니라 한 번만 나간다.
+   */
+  const addBulkPoints = useCallback(
+    async ({ studentIds, type, amount, reason }: BulkPointInput) => {
+      // 빈 배열로 요청이 나가면 안 된다(학생이 없는 학급, 선택 0명).
+      const targets = [...new Set(studentIds)]
+      if (targets.length === 0) return { error: '선택된 학생이 없습니다.' }
+      // 진행 중인 일괄 작업이 있으면 같은 묶음이 두 번 만들어지지 않게 막는다.
+      if (bulkPendingRef.current) return { error: '이전 일괄 기록을 저장하는 중입니다.' }
+
+      bulkPendingRef.current = true
+      setBulkSaving(true)
+      try {
+        const batchId = createBatchId()
+        const rows = buildBulkEntries(
+          {
+            studentIds: targets,
+            type,
+            amount,
+            reason: reason.trim() || (type === 'merit' ? DEFAULT_MERIT_REASON : DEFAULT_DEMERIT_REASON),
+          },
+          batchId,
+        )
+
+        const { data, error } = await growthGardenService.addEntries(rows)
+        if (error || !data) {
+          const message = error ?? '일괄 기록에 실패했습니다.'
+          setError(message)
+          return { error: message }
+        }
+        setEntries((previous) => [...previous, ...data])
+        return { data, batchId, count: data.length }
+      } finally {
+        bulkPendingRef.current = false
+        setBulkSaving(false)
+      }
+    },
+    [],
+  )
+
+  /** 일괄 지급 취소 — 그 묶음의 기록만 지운다. 점수는 남은 기록으로 다시 계산된다. */
+  const deleteBatch = useCallback(async (batchId: string) => {
+    const { error } = await growthGardenService.deleteBatch(batchId)
+    if (error) {
+      setError(error)
+      return { error }
+    }
+    setEntries((previous) => previous.filter((entry) => entry.batch_id !== batchId))
+    return {}
+  }, [])
 
   const deleteEntry = useCallback(async (id: string) => {
     const { error } = await growthGardenService.deleteEntry(id)
@@ -123,7 +184,10 @@ export function useGrowthGarden() {
     summaryFor,
     historyFor,
     isSaving,
+    bulkSaving,
     addPoint,
+    addBulkPoints,
+    deleteBatch,
     deleteEntry,
     clearStudent,
     clearClass,

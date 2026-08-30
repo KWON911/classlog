@@ -7,6 +7,8 @@ type ConfirmDialogProps = {
   pendingLabel?: string
   cancelLabel?: string
   pending?: boolean
+  /** 되돌릴 수 없는 삭제는 danger(기본), 상점 지급처럼 파괴적이지 않은 확인은 brand. */
+  tone?: 'danger' | 'brand'
   onCancel: () => void
   onConfirm: () => void
 }
@@ -18,6 +20,7 @@ export function ConfirmDialog({
   pendingLabel = '삭제 중...',
   cancelLabel = '취소',
   pending = false,
+  tone = 'danger',
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
@@ -72,7 +75,7 @@ export function ConfirmDialog({
         <h2 id="confirm-dialog-title" className="text-base font-bold text-gray-900">
           {title}
         </h2>
-        <p className="mt-2 text-sm text-gray-600">{message}</p>
+        <div className="mt-2 text-sm text-gray-600">{message}</div>
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
@@ -86,7 +89,9 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="h-9 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`h-9 rounded-lg px-4 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              tone === 'brand' ? 'bg-brand-600 hover:bg-brand-700' : 'bg-red-600 hover:bg-red-700'
+            }`}
           >
             {pending ? pendingLabel : confirmLabel}
           </button>

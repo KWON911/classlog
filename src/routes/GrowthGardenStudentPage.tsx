@@ -194,7 +194,7 @@ export function GrowthGardenStudentPage() {
       {recorder.target && (
         <BehaviorPointModal
           target={recorder.target}
-          saving={isSaving(recorder.target.student.id)}
+          saving={isSaving(recorder.target.students[0].id)}
           onClose={recorder.close}
           onSubmit={recorder.submit}
         />

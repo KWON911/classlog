@@ -8,6 +8,12 @@ import { GardenPageNav } from './GardenPageNav'
 import { BehaviorPointModal } from './BehaviorPointModal'
 import { GrowthFeedbackToast } from './GrowthFeedbackToast'
 import { ConfirmDialog } from '../ConfirmDialog'
+import { SelectionToolbar } from './bulk/SelectionToolbar'
+import { BulkActionBar } from './bulk/BulkActionBar'
+import { BulkConfirmMessage } from './bulk/BulkConfirmMessage'
+import { BulkBatchList } from './bulk/BulkBatchList'
+import { useStudentSelection } from '../../lib/hooks/useStudentSelection'
+import { useGrowthSettings } from '../../lib/growth-garden/growthSettingsContext'
 import { useGrowthGarden } from '../../lib/hooks/useGrowthGarden'
 import { usePlantPulse } from '../../lib/hooks/usePlantPulse'
 import { useGrowthRecorder } from '../../lib/hooks/useGrowthRecorder'
@@ -37,9 +43,28 @@ type GrowthGardenBoardProps = {
  * 점수/기록만 성장정원 서비스(useGrowthGarden)에서 가져온다.
  */
 export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthGardenBoardProps) {
-  const { entries, summaryFor, loading: gardenLoading, error, addPoint, isSaving, clearClass } = useGrowthGarden()
+  const {
+    entries,
+    summaryFor,
+    loading: gardenLoading,
+    error,
+    addPoint,
+    addBulkPoints,
+    deleteBatch,
+    isSaving,
+    bulkSaving,
+    clearClass,
+  } = useGrowthGarden()
+  const { environmentStages } = useGrowthSettings()
   const { pulseFor, trigger } = usePlantPulse()
-  const recorder = useGrowthRecorder({ addPoint, trigger })
+  const selection = useStudentSelection(students)
+  const recorder = useGrowthRecorder({
+    addPoint,
+    addBulkPoints,
+    trigger,
+    // 저장 후 선택은 비우되 선택 모드는 유지한다 — 다음 그룹에 이어서 기록할 수 있게.
+    onBulkSaved: selection.clear,
+  })
   const [sortMode, setSortMode] = useState<SortMode>('number')
   const [viewMode, setViewMode] = useState<ViewMode>('card')
   const [confirmingReset, setConfirmingReset] = useState(false)
@@ -72,8 +97,8 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
   // 배경 환경은 검색 결과가 아니라 학급 전체 기준 — 검색어를 입력했다고
   // 우리 반 정원 단계가 달라져 보이면 안 된다.
   const environment = useMemo(
-    () => calculateGardenEnvironment(students.map((student) => summaryFor(student.id).score)),
-    [students, summaryFor],
+    () => calculateGardenEnvironment(students.map((student) => summaryFor(student.id).score), environmentStages),
+    [students, summaryFor, environmentStages],
   )
 
   const loading = studentsLoading || gardenLoading
@@ -100,6 +125,22 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <GardenPageNav />
         <div className="ml-auto flex flex-wrap items-center gap-2">
+        {/* 선택 모드는 카드 보기에서만 쓴다 — 정원 보기는 식물을 누르면 기록 모달이
+            열리는 화면이라, 같은 누름이 선택도 되면 동작이 겹친다. */}
+        {viewMode === 'card' && (
+          <SelectionToolbar
+            active={selection.active}
+            classSize={students.length}
+            selectedCount={selection.selectedCount}
+            state={selection.state}
+            onEnter={selection.enter}
+            onSelectAll={selection.selectAll}
+            onClear={selection.clear}
+            onExit={selection.exit}
+          />
+        )}
+        {!selection.active && (
+          <>
         <SegmentedGroup label="정렬 기준">
           <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
             번호순
@@ -118,6 +159,8 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
             정원 보기
           </SegmentedButton>
         </SegmentedGroup>
+          </>
+        )}
         </div>
       </div>
 
@@ -148,9 +191,22 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
                 pulse={pulseFor(student.id)}
                 saving={isSaving(student.id)}
                 onRequestPoint={recorder.open}
+                selectable={selection.active}
+                selected={selection.isSelected(student.id)}
+                onToggleSelect={selection.toggle}
               />
             ))}
           </div>
+
+          {selection.active && selection.selectedCount > 0 && (
+            <BulkActionBar
+              students={selection.selectedStudents}
+              classSize={students.length}
+              saving={bulkSaving}
+              onRequest={(type) => recorder.openBulk(selection.selectedStudents, type)}
+              onClear={selection.clear}
+            />
+          )}
         </div>
       )}
 
@@ -165,6 +221,10 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
           environment={environment}
         />
       )}
+      {!loading && students.length > 0 && (
+        <BulkBatchList entries={entries} students={students} onCancelBatch={deleteBatch} />
+      )}
+
       {/* 학급 전체 초기화 — 학기 초에나 쓰는 되돌릴 수 없는 동작이라, 수업 중 계속
           누르는 컨트롤들과 멀리 떨어진 목록 맨 아래에 둔다(정보관리의 '명단 전체
           삭제'와 같은 자리·같은 모양). 전체화면은 정원 컨테이너만 차지하므로
@@ -209,9 +269,35 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
       {recorder.target && (
         <BehaviorPointModal
           target={recorder.target}
-          saving={isSaving(recorder.target.student.id)}
+          saving={
+            recorder.target.students.length > 1 ? bulkSaving : isSaving(recorder.target.students[0].id)
+          }
           onClose={recorder.close}
           onSubmit={recorder.submit}
+        />
+      )}
+
+      {/* 여러 학생의 기록이 한꺼번에 만들어지므로 저장 직전에 한 번 확인한다. */}
+      {recorder.pendingBulk && (
+        <ConfirmDialog
+          title={recorder.pendingBulk.type === 'merit' ? '선택 학생 상점 지급' : '선택 학생 벌점 적용'}
+          message={
+            <BulkConfirmMessage
+              students={recorder.pendingBulk.students}
+              classSize={students.length}
+              type={recorder.pendingBulk.type}
+              amount={recorder.pendingBulk.amount}
+              reason={recorder.pendingBulk.reason}
+            />
+          }
+          confirmLabel={`${recorder.pendingBulk.students.length}명에게 ${
+            recorder.pendingBulk.type === 'merit' ? '지급' : '적용'
+          }`}
+          pendingLabel="지급 중..."
+          pending={bulkSaving}
+          tone={recorder.pendingBulk.type === 'merit' ? 'brand' : 'danger'}
+          onCancel={recorder.cancelBulk}
+          onConfirm={recorder.confirmBulk}
         />
       )}
 
