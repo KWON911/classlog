@@ -30,7 +30,7 @@ export function SegmentedButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`inline-flex items-center gap-1 px-3 font-medium transition-colors ${
+      className={`inline-flex items-center gap-1 px-2 sm:px-3 font-medium transition-colors ${
         active ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
       }`}
     >

@@ -120,39 +120,40 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
         </p>
       )}
 
-      {/* 툴바 — 왼쪽은 화면 이동(정원/월별 리포트), 오른쪽은 이 화면의 표시 옵션.
-          같은 높이의 컨트롤을 한 줄에 모아 두되 성격이 다른 둘을 양끝으로 갈라 둔다. */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      {/* 모바일에서는 [화면 이동] → [학생 선택] → [정렬·보기] 순으로 세 줄을 쓴다.
+          페이지 이동 탭과 학생 선택을 억지로 한 줄에 두면 390px 폭에서 다시 줄바꿈돼,
+          정렬과 보기 토글이 갈라지는 문제가 되풀이된다. sm 이상은 기존 한 줄 배치를 유지한다. */}
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <GardenPageNav />
-        <div className="ml-auto flex flex-wrap items-center gap-2">
         {/* 선택 모드는 카드 보기에서만 쓴다 — 정원 보기는 식물을 누르면 기록 모달이
             열리는 화면이라, 같은 누름이 선택도 되면 동작이 겹친다. */}
         {viewMode === 'card' && !selection.active && (
-          <SelectionToolbar classSize={students.length} onEnter={selection.enter} />
+          <div className="self-start sm:ml-auto">
+            <SelectionToolbar classSize={students.length} onEnter={selection.enter} />
+          </div>
         )}
         {!selection.active && (
-          <>
-        <SegmentedGroup label="정렬 기준">
-          <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
-            번호순
-          </SegmentedButton>
-          <SegmentedButton active={sortMode === 'score'} onClick={() => setSortMode('score')}>
-            점수순
-          </SegmentedButton>
-        </SegmentedGroup>
-        <SegmentedGroup label="보기 모드">
-          <SegmentedButton active={viewMode === 'card'} onClick={() => setViewMode('card')}>
-            <LayoutGrid size={14} aria-hidden="true" />
-            카드 보기
-          </SegmentedButton>
-          <SegmentedButton active={viewMode === 'garden'} onClick={() => setViewMode('garden')}>
-            <Sprout size={14} aria-hidden="true" />
-            정원 보기
-          </SegmentedButton>
-        </SegmentedGroup>
-          </>
+          <div className="flex flex-nowrap items-center gap-2">
+            <SegmentedGroup label="정렬 기준">
+              <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
+                번호순
+              </SegmentedButton>
+              <SegmentedButton active={sortMode === 'score'} onClick={() => setSortMode('score')}>
+                점수순
+              </SegmentedButton>
+            </SegmentedGroup>
+            <SegmentedGroup label="보기 모드">
+              <SegmentedButton active={viewMode === 'card'} onClick={() => setViewMode('card')}>
+                <LayoutGrid size={14} aria-hidden="true" />
+                카드 보기
+              </SegmentedButton>
+              <SegmentedButton active={viewMode === 'garden'} onClick={() => setViewMode('garden')}>
+                <Sprout size={14} aria-hidden="true" />
+                정원 보기
+              </SegmentedButton>
+            </SegmentedGroup>
+          </div>
         )}
-        </div>
       </div>
 
       {error && (
