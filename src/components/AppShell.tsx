@@ -119,7 +119,11 @@ export function AppShell() {
         </div>
       </nav>
 
-      <main className="min-w-0 flex-1 overflow-auto print:overflow-visible">
+      {/* overflow-auto를 두지 않는다: 바깥이 min-h-dvh라 실제 스크롤은 body가 하는데,
+          main에 스크롤 컨테이너가 생겨 있으면 그 안의 position:sticky가 붙을 기준을
+          잃어 아무 데도 고정되지 않는다(성장정원 선택 바에서 실제로 겪었다).
+          가로로 넓은 표·시간표·자리배치는 각자 overflow-x-auto를 갖고 있다. */}
+      <main className="min-w-0 flex-1">
         <Outlet />
       </main>
 

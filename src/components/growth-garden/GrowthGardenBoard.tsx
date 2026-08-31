@@ -9,7 +9,7 @@ import { BehaviorPointModal } from './BehaviorPointModal'
 import { GrowthFeedbackToast } from './GrowthFeedbackToast'
 import { ConfirmDialog } from '../ConfirmDialog'
 import { SelectionToolbar } from './bulk/SelectionToolbar'
-import { BulkActionBar } from './bulk/BulkActionBar'
+import { SelectionActionBar } from './bulk/SelectionActionBar'
 import { BulkConfirmMessage } from './bulk/BulkConfirmMessage'
 import { BulkBatchList } from './bulk/BulkBatchList'
 import { useStudentSelection } from '../../lib/hooks/useStudentSelection'
@@ -127,17 +127,8 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
         <div className="ml-auto flex flex-wrap items-center gap-2">
         {/* 선택 모드는 카드 보기에서만 쓴다 — 정원 보기는 식물을 누르면 기록 모달이
             열리는 화면이라, 같은 누름이 선택도 되면 동작이 겹친다. */}
-        {viewMode === 'card' && (
-          <SelectionToolbar
-            active={selection.active}
-            classSize={students.length}
-            selectedCount={selection.selectedCount}
-            state={selection.state}
-            onEnter={selection.enter}
-            onSelectAll={selection.selectAll}
-            onClear={selection.clear}
-            onExit={selection.exit}
-          />
+        {viewMode === 'card' && !selection.active && (
+          <SelectionToolbar classSize={students.length} onEnter={selection.enter} />
         )}
         {!selection.active && (
           <>
@@ -182,6 +173,19 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
       {/* 카드 보기 — 화단 위에 화분이 놓인 것처럼 보이게 감싼다. */}
       {!loading && visibleStudents.length > 0 && viewMode === 'card' && (
         <div className="rounded-[18px] bg-gradient-to-b from-brand-50/70 to-transparent p-3 sm:p-4">
+          {/* 선택 조작은 카드 바로 위에 붙는다 — 인원 확인과 기록 버튼이 한 줄에 있다. */}
+          {selection.active && (
+            <SelectionActionBar
+              classSize={students.length}
+              selectedStudents={selection.selectedStudents}
+              state={selection.state}
+              saving={bulkSaving}
+              onSelectAll={selection.selectAll}
+              onClear={selection.clear}
+              onExit={selection.exit}
+              onRequest={(type) => recorder.openBulk(selection.selectedStudents, type)}
+            />
+          )}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {visibleStudents.map((student) => (
               <GardenStudentCard
@@ -197,16 +201,6 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
               />
             ))}
           </div>
-
-          {selection.active && selection.selectedCount > 0 && (
-            <BulkActionBar
-              students={selection.selectedStudents}
-              classSize={students.length}
-              saving={bulkSaving}
-              onRequest={(type) => recorder.openBulk(selection.selectedStudents, type)}
-              onClear={selection.clear}
-            />
-          )}
         </div>
       )}
 
