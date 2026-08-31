@@ -73,7 +73,7 @@ export function GardenStudentCard({
           >
             {progress.current.label}
           </span>
-          <PlantIllustration stage={summary.stage} pulse={pulse} className="mx-auto h-28 w-full sm:h-32" />
+          <PlantIllustration stage={summary.stage} studentId={student.id} pulse={pulse} className="mx-auto h-28 w-full sm:h-32" />
         </div>
 
         {/* 점수가 카드에서 가장 큰 글자다. leading-none이 없으면 24px 글자의 줄높이(32px)가

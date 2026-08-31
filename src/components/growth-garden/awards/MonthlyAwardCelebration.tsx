@@ -115,7 +115,7 @@ export function MonthlyAwardCelebration({
           style={{ maxHeight: 'min(44vh, 520px)' }}
           className="w-full min-h-[110px] flex-1"
         >
-          <PlantIllustration stage={stage} variant="ground" className="mx-auto h-full w-auto" />
+          <PlantIllustration stage={stage} studentId={student.id} variant="ground" className="mx-auto h-full w-auto" />
         </motion.div>
 
         <motion.p

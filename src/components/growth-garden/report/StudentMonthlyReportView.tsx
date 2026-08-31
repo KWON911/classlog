@@ -171,9 +171,9 @@ export function StudentMonthlyReportView({
 
               {/* 월초 → 월말 식물 비교 */}
               <div className="mt-3 flex flex-wrap items-center justify-center gap-4 rounded-2xl bg-gradient-to-b from-sky-50 to-brand-50/60 px-4 py-4">
-                <PlantStep label="월초" stage={report.stageStart} score={report.scoreStart} />
+                <PlantStep label="월초" studentId={student.id} stage={report.stageStart} score={report.scoreStart} />
                 <ArrowRight size={22} className="text-brand-400" aria-hidden="true" />
-                <PlantStep label="월말" stage={report.stageEnd} score={report.scoreEnd} highlight />
+                <PlantStep label="월말" studentId={student.id} stage={report.stageEnd} score={report.scoreEnd} highlight />
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -280,11 +280,13 @@ export function StudentMonthlyReportView({
 
 function PlantStep({
   label,
+  studentId,
   stage,
   score,
   highlight = false,
 }: {
   label: string
+  studentId: string
   stage: Parameters<typeof stageConfig>[0]
   score: number
   highlight?: boolean
@@ -294,7 +296,7 @@ function PlantStep({
   return (
     <div className="w-[120px] text-center">
       <p className="text-xs text-gray-500">{label}</p>
-      <PlantIllustration stage={stage} variant="ground" className="mx-auto h-24 w-full" />
+      <PlantIllustration stage={stage} studentId={studentId} variant="ground" className="mx-auto h-24 w-full" />
       <p className={`text-sm font-semibold ${highlight ? 'text-brand-700' : 'text-gray-700'}`}>{config.label}</p>
       <p className="text-xs tabular-nums text-gray-500">{score}점</p>
     </div>

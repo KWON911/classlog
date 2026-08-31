@@ -101,6 +101,7 @@ export function GrowthGardenStudentPage() {
           <div className="my-2 w-full rounded-2xl bg-gradient-to-b from-sky-50 to-brand-50/60 py-4">
             <PlantIllustration
               stage={summary.stage}
+              studentId={studentId}
               pulse={pulseFor(studentId)}
               className="mx-auto h-48 w-full max-w-[280px] sm:h-56"
             />

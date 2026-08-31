@@ -71,6 +71,7 @@ export function GardenPlot({ student, summary, pulse, saving = false, onSelect }
         <span className="gg-sway block w-full" style={swayStyle(student.id)}>
           <PlantIllustration
             stage={summary.stage}
+            studentId={student.id}
             pulse={pulse}
             variant="ground"
             className="h-[var(--garden-plant-height,80px)] w-full"
