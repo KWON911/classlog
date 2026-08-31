@@ -108,17 +108,21 @@ export function GrowthGardenReportPage() {
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <GardenPageNav />
-        <SegmentedGroup label="리포트 종류">
-          <SegmentedButton active={tab === 'class'} onClick={() => setTab('class')}>
-            학급
-          </SegmentedButton>
-          <SegmentedButton active={tab === 'student'} onClick={() => setTab('student')}>
-            개인
-          </SegmentedButton>
-        </SegmentedGroup>
-        <MonthSelector value={yearMonth} onChange={setYearMonth} />
+      <div className="mb-4 space-y-2">
+        <div className="flex items-center">
+          <GardenPageNav />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <MonthSelector value={yearMonth} onChange={setYearMonth} />
+          <SegmentedGroup label="리포트 종류">
+            <SegmentedButton active={tab === 'class'} onClick={() => setTab('class')}>
+              학급
+            </SegmentedButton>
+            <SegmentedButton active={tab === 'student'} onClick={() => setTab('student')}>
+              개인
+            </SegmentedButton>
+          </SegmentedGroup>
+        </div>
       </div>
 
       {error && (
