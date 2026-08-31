@@ -120,20 +120,19 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
         </p>
       )}
 
-      {/* 모바일에서는 [화면 이동] → [학생 선택] → [정렬·보기] 순으로 세 줄을 쓴다.
-          페이지 이동 탭과 학생 선택을 억지로 한 줄에 두면 390px 폭에서 다시 줄바꿈돼,
-          정렬과 보기 토글이 갈라지는 문제가 되풀이된다. sm 이상은 기존 한 줄 배치를 유지한다. */}
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      {/* 모바일에서는 [화면 이동 · 학생 선택]을 한 줄로 두고, [정렬 · 보기]를 다음 줄에 둔다.
+          학생 선택이 정렬 토글과 경쟁하지 않게 해 두 표시 옵션 묶음이 같은 줄을 지킨다. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <GardenPageNav />
         {/* 선택 모드는 카드 보기에서만 쓴다 — 정원 보기는 식물을 누르면 기록 모달이
             열리는 화면이라, 같은 누름이 선택도 되면 동작이 겹친다. */}
         {viewMode === 'card' && !selection.active && (
-          <div className="self-start sm:ml-auto">
+          <div className="ml-auto">
             <SelectionToolbar classSize={students.length} onEnter={selection.enter} />
           </div>
         )}
         {!selection.active && (
-          <div className="flex flex-nowrap items-center gap-2">
+          <div className="flex w-full flex-nowrap items-center gap-2 sm:w-auto">
             <SegmentedGroup label="정렬 기준">
               <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
                 번호순

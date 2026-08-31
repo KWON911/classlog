@@ -26,7 +26,7 @@ export function GardenPageNav() {
             key={item.to}
             to={item.to}
             aria-current={active ? 'page' : undefined}
-            className={`inline-flex items-center gap-1 px-3 font-medium transition-colors ${
+            className={`inline-flex items-center gap-1 px-2 sm:px-3 font-medium transition-colors ${
               active ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
             }`}
           >

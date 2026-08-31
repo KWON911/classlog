@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 모바일 성장정원에서 `학생 선택`은 정렬·보기 토글 바로 윗줄로 올리고, 정렬·보기 토글은 한 줄에 표시한다.
+**Goal:** 모바일 성장정원에서 `학생 선택`은 첫째 줄로 올리고, 정렬·보기 토글은 둘째 줄 한 줄에 표시한다.
 
 **Architecture:** `GrowthGardenBoard`의 제어 영역을 페이지 이동/선택 행과 표시 옵션 행으로 나눈다. Tailwind 반응형 클래스만 조정해 상태 전환 로직과 컴포넌트 인터페이스는 바꾸지 않는다.
 
@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- 모바일에서 `학생 선택`은 `GardenPageNav` 아래, 정렬·보기 토글 바로 위에 둔다.
+- 모바일에서 `학생 선택`은 `GardenPageNav`와 같은 첫째 줄 오른쪽에 둔다.
 - 정렬과 보기 모드는 모바일에서 한 줄로 유지하며 가로 스크롤·줄바꿈을 만들지 않는다.
 - `sm` 이상에서는 기존 여백과 툴바 흐름을 유지한다.
 - 선택 모드 진입/종료, 정렬, 보기 전환, 접근성 라벨은 바꾸지 않는다.
@@ -43,15 +43,15 @@
 `GrowthGardenBoard`의 툴바를 다음 순서로 배치한다.
 
 ```tsx
-<div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+<div className="mb-4 flex flex-wrap items-center gap-2">
   <GardenPageNav />
   {viewMode === 'card' && !selection.active && (
-    <div className="self-start sm:ml-auto">
+    <div className="ml-auto">
       <SelectionToolbar classSize={students.length} onEnter={selection.enter} />
     </div>
   )}
   {!selection.active && (
-    <div className="flex flex-nowrap items-center gap-2">
+    <div className="flex w-full flex-nowrap items-center gap-2 sm:w-auto">
       <SegmentedGroup label="정렬 기준">
         <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
           번호순
@@ -75,7 +75,7 @@
 </div>
 ```
 
-`GardenPageNav`는 모바일 첫째 줄을 단독으로 사용한다. 표시 옵션 행은 `overflow-hidden` 없이 폭 안에 들어오게 한다.
+`GardenPageNav`와 `학생 선택`은 모바일 첫째 줄을 함께 사용한다. `GardenPageNav`의 버튼 좌우 여백을 모바일에서만 줄여 375px 폭에서도 두 컨트롤이 같은 줄에 들어오게 한다. 표시 옵션 행은 `overflow-hidden` 없이 폭 안에 들어오게 한다.
 
 - [ ] **Step 3: 모바일에서 분절 버튼의 가로 여백을 줄인다**
 
@@ -90,11 +90,10 @@ className={`inline-flex items-center gap-1 px-2 sm:px-3 font-medium transition-c
 390px 폭에서 다음을 확인한다.
 
 ```text
-1. 첫째 줄: GardenPageNav가 표시된다.
-2. 둘째 줄: 학생 선택이 표시된다.
-3. 셋째 줄: 번호순·점수순·카드 보기·정원 보기가 한 줄에 표시된다.
-4. 학생 선택을 누르면 SelectionActionBar가 카드 격자 위에 나타난다.
-5. 정원 보기에서는 학생 선택이 사라지고 표시 옵션 행은 유지된다.
+1. 첫째 줄: GardenPageNav와 학생 선택이 함께 표시된다.
+2. 둘째 줄: 번호순·점수순·카드 보기·정원 보기가 한 줄에 표시된다.
+3. 학생 선택을 누르면 SelectionActionBar가 카드 격자 위에 나타난다.
+4. 정원 보기에서는 학생 선택이 사라지고 표시 옵션 행은 유지된다.
 ```
 
 - [ ] **Step 5: 품질 검증을 실행한다**
