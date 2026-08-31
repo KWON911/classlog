@@ -6,6 +6,7 @@ import {
   SPARKLE_COUNT,
   type GrowthStage,
 } from '../../lib/growth-garden/constants'
+import { flowerForStudent, type FlowerType } from '../../lib/growth-garden/flowers'
 
 /**
  * 단계별 식물 일러스트 — 이미지 파일 없이 전부 SVG 패스로 그린다.
@@ -31,6 +32,7 @@ export type PlantGround = 'pot' | 'ground'
 
 type PlantIllustrationProps = {
   stage: GrowthStage
+  studentId?: string
   pulse?: PlantPulse | null
   variant?: PlantGround
   className?: string
@@ -88,7 +90,7 @@ const SPARKLE_POSITIONS = [
   { x: 60, y: 84 },
 ].slice(0, SPARKLE_COUNT)
 
-export function PlantIllustration({ stage, pulse = null, variant = 'pot', className = '' }: PlantIllustrationProps) {
+export function PlantIllustration({ stage, studentId, pulse = null, variant = 'pot', className = '' }: PlantIllustrationProps) {
   const controls = useAnimationControls()
   const prefersReducedMotion = useReducedMotion()
   const stemTop = STEM_TOP_Y[stage]
@@ -118,6 +120,7 @@ export function PlantIllustration({ stage, pulse = null, variant = 'pot', classN
   // 잎 배치는 줄기 높이에 비례해 계산 — 단계별 좌표를 따로 하드코딩하지 않는다.
   const leaves = useMemo(() => buildLeaves(stage, stemTop), [stage, stemTop])
   const showSparkles = pulse?.direction === 'grow' && !prefersReducedMotion
+  const flowerType = studentId ? flowerForStudent(studentId) : 'daisy'
 
   return (
     /* 전체 펄스(확대/축소)는 SVG의 <g>가 아니라 바깥 div에 건다 — <g>에 scale을 주면
@@ -237,18 +240,7 @@ export function PlantIllustration({ stage, pulse = null, variant = 'pot', classN
                 exit={{ opacity: 0, scale: 0.3, rotate: -25 }}
                 transition={{ duration: GROW_ANIMATION_MS / 1000, ease: [0.22, 1, 0.36, 1] }}
               >
-                {[0, 60, 120, 180, 240, 300].map((angle) => (
-                  <ellipse
-                    key={angle}
-                    cx="60"
-                    cy={stemTop - 20}
-                    rx="7"
-                    ry="12"
-                    fill={COLORS.petal}
-                    transform={`rotate(${angle} 60 ${stemTop - 8})`}
-                  />
-                ))}
-                <circle cx="60" cy={stemTop - 8} r="7.5" fill={COLORS.flowerCenter} />
+                <FinalFlower type={flowerType} centerY={stemTop - 8} />
               </motion.g>
             )}
           </AnimatePresence>
@@ -272,6 +264,80 @@ export function PlantIllustration({ stage, pulse = null, variant = 'pot', classN
         </AnimatePresence>
       </svg>
     </motion.div>
+  )
+}
+
+type FinalFlowerProps = {
+  type: FlowerType
+  centerY: number
+}
+
+function FinalFlower({ type, centerY }: FinalFlowerProps) {
+  const petalAngles = [0, 45, 90, 135, 180, 225, 270, 315]
+
+  if (type === 'tulip') {
+    return (
+      <g data-flower-type={type}>
+        <path d={`M47 ${centerY + 8} C45 ${centerY - 4} 49 ${centerY - 15} 54 ${centerY - 9} C55 ${centerY - 18} 65 ${centerY - 18} 66 ${centerY - 9} C72 ${centerY - 15} 75 ${centerY - 4} 73 ${centerY + 8} Z`} fill={COLORS.petal} />
+        <path d={`M51 ${centerY + 8} C54 ${centerY + 3} 66 ${centerY + 3} 69 ${centerY + 8}`} fill="none" stroke="#d95d84" strokeWidth="1.5" strokeLinecap="round" />
+      </g>
+    )
+  }
+
+  if (type === 'sunflower') {
+    return (
+      <g data-flower-type={type}>
+        {Array.from({ length: 14 }, (_, index) => (
+          <ellipse key={index} cx="60" cy={centerY - 8} rx="4.5" ry="12" fill="#f4ba3f" transform={`rotate(${index * (360 / 14)} 60 ${centerY})`} />
+        ))}
+        <circle cx="60" cy={centerY} r="8" fill="#8b6647" />
+        <circle cx="60" cy={centerY} r="4.8" fill="#6f5138" />
+      </g>
+    )
+  }
+
+  if (type === 'cosmos') {
+    return (
+      <g data-flower-type={type}>
+        {petalAngles.map((angle) => (
+          <ellipse key={angle} cx="60" cy={centerY - 9} rx="6.5" ry="13" fill="#ee8fb6" transform={`rotate(${angle} 60 ${centerY})`} />
+        ))}
+        <circle cx="60" cy={centerY} r="6.5" fill={COLORS.flowerCenter} />
+      </g>
+    )
+  }
+
+  if (type === 'rose') {
+    return (
+      <g data-flower-type={type}>
+        <path d={`M45 ${centerY + 5} C43 ${centerY - 7} 54 ${centerY - 15} 60 ${centerY - 8} C66 ${centerY - 15} 77 ${centerY - 7} 75 ${centerY + 5} C74 ${centerY + 13} 65 ${centerY + 15} 60 ${centerY + 11} C55 ${centerY + 15} 46 ${centerY + 13} 45 ${centerY + 5} Z`} fill="#e35c77" />
+        <path d={`M51 ${centerY + 2} C48 ${centerY - 5} 56 ${centerY - 10} 61 ${centerY - 5} C68 ${centerY - 10} 72 ${centerY - 3} 68 ${centerY + 4} C64 ${centerY + 9} 55 ${centerY + 8} 51 ${centerY + 2} Z`} fill="#f2739a" />
+        <path d={`M56 ${centerY + 2} C54 ${centerY - 3} 60 ${centerY - 7} 64 ${centerY - 2} C67 ${centerY + 3} 61 ${centerY + 7} 56 ${centerY + 2} Z`} fill="#d94768" />
+      </g>
+    )
+  }
+
+  if (type === 'lily') {
+    return (
+      <g data-flower-type={type}>
+        {[0, 60, 120, 180, 240, 300].map((angle) => (
+          <path key={angle} d={`M60 ${centerY} C54 ${centerY - 8} 53 ${centerY - 19} 60 ${centerY - 24} C67 ${centerY - 19} 66 ${centerY - 8} 60 ${centerY} Z`} fill="#f4a8c4" transform={`rotate(${angle} 60 ${centerY})`} />
+        ))}
+        {[0, 120, 240].map((angle) => (
+          <path key={angle} d={`M60 ${centerY} L60 ${centerY - 13}`} stroke="#b9628f" strokeWidth="1.5" strokeLinecap="round" transform={`rotate(${angle} 60 ${centerY})`} />
+        ))}
+        <circle cx="60" cy={centerY} r="3.5" fill="#ffc861" />
+      </g>
+    )
+  }
+
+  return (
+    <g data-flower-type="daisy">
+      {petalAngles.map((angle) => (
+        <ellipse key={angle} cx="60" cy={centerY - 9} rx="5.5" ry="12" fill="#fffaf0" transform={`rotate(${angle} 60 ${centerY})`} />
+      ))}
+      <circle cx="60" cy={centerY} r="6.5" fill={COLORS.flowerCenter} />
+    </g>
   )
 }
 
