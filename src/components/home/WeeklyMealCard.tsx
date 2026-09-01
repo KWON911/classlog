@@ -58,7 +58,7 @@ export function WeeklyMealCard({
         <EmptyState message="급식 정보가 없습니다." />
       ) : (
         <div className="min-w-0 overflow-x-auto">
-          <div className="grid min-w-[480px] grid-cols-5 gap-2 lg:min-w-0">
+          <div className="grid min-w-[480px] grid-cols-5 items-start gap-2 lg:min-w-0">
             {days.map((day, i) => {
               const isToday = day.date === todayStr
               const cellContent = (
