@@ -82,9 +82,10 @@ export function GrowthGardenSettingsPage() {
         <p className="mt-1 text-sm text-gray-500">
           단계 이름은 그대로 두고 기준 점수만 학급에 맞게 조정합니다. 학생의 점수와 기록은 바뀌지 않습니다.
         </p>
-        <div className="mt-2">
-          <GardenPageNav />
-        </div>
+      </div>
+
+      <div data-testid="settings-navigation-toolbar" className="mb-4 flex min-h-9 items-center">
+        <GardenPageNav />
       </div>
 
       {settingsError && (

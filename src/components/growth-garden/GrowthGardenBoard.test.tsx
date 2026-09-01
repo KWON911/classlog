@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GrowthGardenBoard } from './GrowthGardenBoard'
 import type { Student } from '../../lib/types'
 
@@ -30,6 +30,8 @@ vi.mock('../../lib/hooks/usePlantPulse', () => ({
 vi.mock('./GardenStudentCard', () => ({ GardenStudentCard: () => <div /> }))
 vi.mock('./GardenView', () => ({ GardenView: () => <div /> }))
 
+afterEach(cleanup)
+
 const student: Student = {
   id: 'student-1',
   teacher_id: 'teacher-1',
@@ -49,6 +51,19 @@ const student: Student = {
 }
 
 describe('GrowthGardenBoard', () => {
+  it('separates primary navigation from display controls', () => {
+    render(
+      <MemoryRouter initialEntries={['/growth-garden']}>
+        <GrowthGardenBoard students={[student]} studentsLoading={false} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByTestId('garden-primary-toolbar')).toContainElement(screen.getByRole('link', { name: '정원' }))
+    expect(screen.getByTestId('garden-primary-toolbar')).toContainElement(screen.getByRole('button', { name: '학생 선택' }))
+    expect(screen.getByTestId('garden-display-toolbar')).toContainElement(screen.getByRole('group', { name: '정렬 기준' }))
+    expect(screen.getByTestId('garden-display-toolbar')).toContainElement(screen.getByRole('group', { name: '보기 모드' }))
+  })
+
   it('keeps sorting and view controls on their own full row after switching to garden view', () => {
     render(
       <MemoryRouter initialEntries={['/growth-garden']}>
