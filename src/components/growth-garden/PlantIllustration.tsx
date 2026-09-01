@@ -47,6 +47,10 @@ const STEM_TOP_Y: Record<GrowthStage, number> = {
   4: 46,
   5: 38,
   6: 32,
+  7: 32,
+  8: 32,
+  9: 30,
+  10: 30,
 }
 
 /** 흙 표면 y좌표 — 줄기·씨앗이 여기서 시작한다(화분 테두리 안쪽). */
@@ -232,7 +236,7 @@ export function PlantIllustration({ stage, studentId, pulse = null, variant = 'p
               </motion.g>
             )}
 
-            {stage === 6 && (
+            {stage >= 6 && (
               <motion.g
                 key="flower"
                 initial={{ opacity: 0, scale: 0.3, rotate: -25 }}

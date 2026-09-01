@@ -23,4 +23,9 @@ describe('PlantIllustration', () => {
       flowerForStudent(secondStudentId),
     )
   })
+
+  it('keeps the flower visible through post-bloom stages', () => {
+    const { container } = render(<PlantIllustration stage={7} studentId="student-17" />)
+    expect(container.querySelector('[data-flower-type]')).toHaveAttribute('data-flower-type', flowerForStudent('student-17'))
+  })
 })
