@@ -120,8 +120,8 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
         </p>
       )}
 
-      {/* 모바일에서는 [화면 이동 · 학생 선택]을 한 줄로 두고, [정렬 · 보기]를 다음 줄에 둔다.
-          학생 선택이 정렬 토글과 경쟁하지 않게 해 두 표시 옵션 묶음이 같은 줄을 지킨다. */}
+      {/* [화면 이동 · 학생 선택] 다음에 [정렬 · 보기]를 둔다. 카드/정원 보기 전환으로
+          학생 선택 버튼 유무가 바뀌어도 표시 옵션의 줄 위치는 항상 같다. */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <GardenPageNav />
         {/* 선택 모드는 카드 보기에서만 쓴다 — 정원 보기는 식물을 누르면 기록 모달이
@@ -132,7 +132,7 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
           </div>
         )}
         {!selection.active && (
-          <div className="flex w-full flex-nowrap items-center gap-2 sm:w-auto">
+          <div className="flex w-full flex-nowrap items-center gap-2">
             <SegmentedGroup label="정렬 기준">
               <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
                 번호순
