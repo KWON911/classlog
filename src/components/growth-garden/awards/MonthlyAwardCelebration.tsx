@@ -167,7 +167,7 @@ export function MonthlyAwardCelebration({
       </div>
 
       {/* 조작 버튼은 구석에 작게 — 축하 화면의 주인공을 가리지 않게 한다. */}
-      <div className="absolute right-4 top-4 z-40 flex gap-2">
+      <div className="absolute right-4 top-4 z-40 flex items-center gap-2" aria-label="축하 화면 제어">
         {supported && (
           <button
             type="button"

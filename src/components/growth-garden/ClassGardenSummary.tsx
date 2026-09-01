@@ -61,7 +61,7 @@ export function ClassGardenSummary({ environment, action, hint }: ClassGardenSum
         <p className="text-[11px] text-gray-500">우리 반 전체 성장 포인트</p>
       </div>
 
-      {action && <div className="ml-auto">{action}</div>}
+      {action && <div data-testid="garden-scene-action" className="ml-auto shrink-0">{action}</div>}
     </div>
   )
 }
