@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useSeatingPlans, type SeatingPlanInput } from '../lib/hooks/useSeatingPlans'
 import { SeatingGrid } from '../components/SeatingGrid'
@@ -28,6 +28,7 @@ import type {
   SeparationType,
   TeacherDirection,
 } from '../lib/types'
+import { loadSeatingDraft, saveSeatingDraft, type SeatingDraft } from '../lib/seatingDraft'
 
 const PREVIOUS_SEAT_SCOPE_LABELS: Record<PreviousSeatHistoryScope, string> = {
   latest1: '최근 1회',
@@ -59,34 +60,41 @@ const toolbarNeutralButtonClass =
 
 export function SeatingPage() {
   const { students } = useStudents()
+  const [initialDraft] = useState<SeatingDraft | null>(() => loadSeatingDraft())
 
-  const [rowsInput, setRowsInput] = useState(5)
-  const [columnsInput, setColumnsInput] = useState(6)
-  const [teacherDirection, setTeacherDirection] = useState<TeacherDirection>('north')
-  const [viewMode, setViewMode] = useState<'teacher' | 'back'>('teacher')
-  const [seats, setSeats] = useState<Seat[]>(() => createSeats(5, 6))
-  const [assignments, setAssignments] = useState<Map<string, string>>(new Map())
+  const [rowsInput, setRowsInput] = useState(initialDraft?.rowsInput ?? 5)
+  const [columnsInput, setColumnsInput] = useState(initialDraft?.columnsInput ?? 6)
+  const [teacherDirection, setTeacherDirection] = useState<TeacherDirection>(initialDraft?.teacherDirection ?? 'north')
+  const [viewMode, setViewMode] = useState<'teacher' | 'back'>(initialDraft?.viewMode ?? 'teacher')
+  const [seats, setSeats] = useState<Seat[]>(() => initialDraft?.seats ?? createSeats(5, 6))
+  const [assignments, setAssignments] = useState<Map<string, string>>(
+    () => new Map(initialDraft?.assignments ?? []),
+  )
   const [seatEditMode, setSeatEditMode] = useState<'empty' | 'disabled' | null>(null)
   const [activeTool, setActiveTool] = useState<ActiveTool | null>(null)
   const [message, setMessage] = useState('학생 명단을 불러온 뒤 자리 배치 시작을 눌러 주세요.')
   const [errorMessage, setErrorMessage] = useState('')
 
-  const [fixed, setFixed] = useState<Map<string, string>>(new Map())
-  const [separations, setSeparations] = useState<SeatSeparation[]>([])
-  const [genderBalance, setGenderBalance] = useState(false)
+  const [fixed, setFixed] = useState<Map<string, string>>(() => new Map(initialDraft?.fixed ?? []))
+  const [separations, setSeparations] = useState<SeatSeparation[]>(() => initialDraft?.separations ?? [])
+  const [genderBalance, setGenderBalance] = useState(initialDraft?.genderBalance ?? false)
   const [selectedFixedStudentId, setSelectedFixedStudentId] = useState('')
   const [separationStudentA, setSeparationStudentA] = useState('')
   const [separationStudentB, setSeparationStudentB] = useState('')
   const [separationType, setSeparationType] = useState<SeparationType>('orthogonal')
   const [conditionMessage, setConditionMessage] = useState('')
 
-  const [manuallyMoved, setManuallyMoved] = useState<Set<string>>(new Set())
-  const [title, setTitle] = useState('')
-  const [planDate, setPlanDate] = useState(todayDate())
-  const [savedPlanId, setSavedPlanId] = useState<string | null>(null)
-  const [avoidPastNeighbors, setAvoidPastNeighbors] = useState(false)
-  const [avoidPreviousSeats, setAvoidPreviousSeats] = useState(false)
-  const [previousSeatHistoryScope, setPreviousSeatHistoryScope] = useState<PreviousSeatHistoryScope>('latest3')
+  const [manuallyMoved, setManuallyMoved] = useState<Set<string>>(
+    () => new Set(initialDraft?.manuallyMoved ?? []),
+  )
+  const [title, setTitle] = useState(initialDraft?.title ?? '')
+  const [planDate, setPlanDate] = useState(initialDraft?.planDate ?? todayDate())
+  const [savedPlanId, setSavedPlanId] = useState<string | null>(initialDraft?.savedPlanId ?? null)
+  const [avoidPastNeighbors, setAvoidPastNeighbors] = useState(initialDraft?.avoidPastNeighbors ?? false)
+  const [avoidPreviousSeats, setAvoidPreviousSeats] = useState(initialDraft?.avoidPreviousSeats ?? false)
+  const [previousSeatHistoryScope, setPreviousSeatHistoryScope] = useState<PreviousSeatHistoryScope>(
+    initialDraft?.previousSeatHistoryScope ?? 'latest3',
+  )
   const [saveMessage, setSaveMessage] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [showSaveChoice, setShowSaveChoice] = useState(false)
@@ -101,6 +109,49 @@ export function SeatingPage() {
     [allPlans],
   )
   const noPreviousSeatHistory = !plansLoading && allPlans.length === 0
+
+  const seatingDraft = useMemo<SeatingDraft>(
+    () => ({
+      rowsInput,
+      columnsInput,
+      teacherDirection,
+      viewMode,
+      seats,
+      assignments: [...assignments.entries()],
+      fixed: [...fixed.entries()],
+      manuallyMoved: [...manuallyMoved],
+      separations,
+      genderBalance,
+      avoidPastNeighbors,
+      avoidPreviousSeats,
+      previousSeatHistoryScope,
+      title,
+      planDate,
+      savedPlanId,
+    }),
+    [
+      rowsInput,
+      columnsInput,
+      teacherDirection,
+      viewMode,
+      seats,
+      assignments,
+      fixed,
+      manuallyMoved,
+      separations,
+      genderBalance,
+      avoidPastNeighbors,
+      avoidPreviousSeats,
+      previousSeatHistoryScope,
+      title,
+      planDate,
+      savedPlanId,
+    ],
+  )
+
+  useEffect(() => {
+    saveSeatingDraft(seatingDraft)
+  }, [seatingDraft])
 
   const columns = useMemo(() => seats.reduce((max, s) => Math.max(max, s.column), 0), [seats])
   const placementButtonLabel = assignments.size ? '재배치하기' : '자리 배치 시작'
