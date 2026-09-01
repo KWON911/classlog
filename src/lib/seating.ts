@@ -196,8 +196,22 @@ export function scorePlacement(
 
   if (options.pastSeatsByStudent) {
     for (const [studentId, seatId] of candidate) {
-      const weight = options.pastSeatsByStudent.get(studentId)?.get(seatId)
+      const pastSeats = options.pastSeatsByStudent.get(studentId)
+      const weight = pastSeats?.get(seatId)
       if (weight) total += weight
+
+      // A student who has recently occupied a rear row should be moved
+      // forward when possible. Keep this as a strong soft penalty so a full
+      // or heavily constrained classroom can still produce a placement.
+      const candidateSeat = seatById.get(seatId)
+      if (candidateSeat && candidateSeat.row >= 4 && pastSeats) {
+        let rearRowHistoryWeight = 0
+        for (const [pastSeatId, pastWeight] of pastSeats) {
+          const pastSeat = seatById.get(pastSeatId)
+          if (pastSeat && pastSeat.row >= 4) rearRowHistoryWeight += pastWeight
+        }
+        total += rearRowHistoryWeight * 4
+      }
     }
   }
 

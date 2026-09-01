@@ -255,6 +255,19 @@ describe('scorePlacement', () => {
     expect(score).toBe(6)
   })
 
+  it('strongly penalizes a student returning to the rear rows after a past rear-row seat', () => {
+    const rearSeats = createSeats(5, 2)
+    const candidate = new Map([['s1', 'r4-c1']])
+    const score = scorePlacement(candidate, [students[0]], rearSeats, {
+      genderBalance: false,
+      previousAssignments: new Map(),
+      avoidPairs: new Set(),
+      pastSeatsByStudent: new Map([['s1', new Map([['r4-c2', 6]])]]),
+    })
+
+    expect(score).toBe(24)
+  })
+
   it('scores normally when pastSeatsByStudent is omitted (backward compatible)', () => {
     const candidate = new Map([['s1', 'r1-c1']])
     const score = scorePlacement(candidate, [students[0]], seats, {
