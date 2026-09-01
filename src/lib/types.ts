@@ -235,6 +235,17 @@ export type GrowthPointEntry = {
   created_at: string
 }
 
+export type PlantCycle = {
+  id: string
+  teacher_id: string
+  student_id: string
+  cycle_number: number
+  flower_type: 'tulip' | 'sunflower' | 'daisy' | 'cosmos' | 'rose' | 'lily'
+  completed_at: string
+  completion_threshold: number
+  created_at: string
+}
+
 /**
  * 성장정원의 보상 기록 — 상벌점(GrowthPointEntry)과 완전히 분리된 데이터다.
  * 보상을 줘도 학생의 성장 포인트는 차감되지 않는다(교사가 결과를 보고 따로 주는 기록).
