@@ -246,6 +246,7 @@ export function PlantIllustration({ stage, studentId, flowerType: explicitFlower
                 transition={{ duration: GROW_ANIMATION_MS / 1000, ease: [0.22, 1, 0.36, 1] }}
               >
                 <FinalFlower type={flowerType} centerY={stemTop - 8} />
+                {stage >= 8 && <FruitCluster type={flowerType} centerY={stemTop - 8} rich={stage >= 9} />}
               </motion.g>
             )}
           </AnimatePresence>
@@ -342,6 +343,18 @@ function FinalFlower({ type, centerY }: FinalFlowerProps) {
         <ellipse key={angle} cx="60" cy={centerY - 9} rx="5.5" ry="12" fill="#fffaf0" transform={`rotate(${angle} 60 ${centerY})`} />
       ))}
       <circle cx="60" cy={centerY} r="6.5" fill={COLORS.flowerCenter} />
+    </g>
+  )
+}
+
+function FruitCluster({ type, centerY, rich }: FinalFlowerProps & { rich: boolean }) {
+  const count = rich ? 3 : 1
+  const color = type === 'rose' ? '#c95c57' : type === 'sunflower' ? '#6f5138' : '#a1785a'
+  return (
+    <g data-fruit-type={type}>
+      {Array.from({ length: count }, (_, index) => (
+        <circle key={index} cx={60 + (index - (count - 1) / 2) * 7} cy={centerY + 14 + (index % 2) * 3} r={type === 'sunflower' ? 3.2 : 3.8} fill={color} />
+      ))}
     </g>
   )
 }

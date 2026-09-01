@@ -28,4 +28,9 @@ describe('PlantIllustration', () => {
     const { container } = render(<PlantIllustration stage={7} studentId="student-17" />)
     expect(container.querySelector('[data-flower-type]')).toHaveAttribute('data-flower-type', flowerForStudent('student-17'))
   })
+
+  it.each(['tulip', 'sunflower', 'daisy', 'cosmos', 'rose', 'lily'] as const)('%s has a distinct fruit at the fruit stage', (flowerType) => {
+    const { container } = render(<PlantIllustration stage={8} flowerType={flowerType} />)
+    expect(container.querySelector(`[data-fruit-type="${flowerType}"]`)).toBeInTheDocument()
+  })
 })
