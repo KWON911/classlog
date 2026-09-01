@@ -7,10 +7,11 @@
  * (NEIS의 services/neis-service.ts와 같은 예외 패턴).
  */
 import { supabase } from '../../supabaseClient'
-import type { GrowthPointEntry } from '../../types'
-import type { EntryRange, GrowthGardenService, NewGrowthPointEntry } from './types'
+import type { GrowthPointEntry, PlantCycle } from '../../types'
+import type { EntryRange, GrowthGardenService, NewGrowthPointEntry, NewPlantCycle } from './types'
 
 const TABLE = 'growth_points'
+const CYCLES_TABLE = 'plant_cycles'
 
 export const supabaseGrowthGardenService: GrowthGardenService = {
   async listEntries(range?: EntryRange) {
@@ -22,6 +23,25 @@ export const supabaseGrowthGardenService: GrowthGardenService = {
     const { data, error } = await query
     if (error) return { error: error.message }
     return { data: (data ?? []) as GrowthPointEntry[] }
+  },
+
+  async listPlantCycles() {
+    const { data, error } = await supabase.from(CYCLES_TABLE).select('*').order('cycle_number')
+    if (error) return { error: error.message }
+    return { data: (data ?? []) as PlantCycle[] }
+  },
+
+  async upsertPlantCycles(inputs: NewPlantCycle[]) {
+    if (inputs.length === 0) return { data: [] }
+    const { data: userData } = await supabase.auth.getUser()
+    const teacherId = userData.user?.id
+    if (!teacherId) return { error: '로그인이 필요합니다.' }
+    const { data, error } = await supabase
+      .from(CYCLES_TABLE)
+      .upsert(inputs.map((input) => ({ ...input, teacher_id: teacherId })), { onConflict: 'teacher_id,student_id,cycle_number', ignoreDuplicates: true })
+      .select()
+    if (error) return { error: error.message }
+    return { data: (data ?? []) as PlantCycle[] }
   },
 
   async addEntry(input: NewGrowthPointEntry) {

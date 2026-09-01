@@ -4,10 +4,11 @@
  * 같은 모양을 유지하는 게 핵심이다: 나중에 supabase 구현체로 바꿔도
  * 훅/화면/순수 로직은 한 줄도 건드릴 필요가 없다.
  */
-import type { GrowthPointEntry } from '../../types'
-import type { EntryRange, GrowthGardenService, NewGrowthPointEntry } from './types'
+import type { GrowthPointEntry, PlantCycle } from '../../types'
+import type { EntryRange, GrowthGardenService, NewGrowthPointEntry, NewPlantCycle } from './types'
 
 const STORAGE_KEY = 'classlog:growth-garden:entries'
+const CYCLES_STORAGE_KEY = 'classlog:growth-garden:plant-cycles'
 /** 실제 네트워크처럼 살짝 비동기 — 로딩 상태 처리가 mock에서도 검증되도록. */
 const SIMULATED_LATENCY_MS = 80
 const MOCK_TEACHER_ID = 'mock-teacher'
@@ -31,6 +32,15 @@ function writeAll(entries: GrowthPointEntry[]) {
     // 저장 실패(사파리 프라이빗 모드 등)해도 화면 동작은 막지 않는다.
   }
 }
+
+function readCycles(): PlantCycle[] {
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(CYCLES_STORAGE_KEY) ?? '[]')
+    return Array.isArray(parsed) ? parsed as PlantCycle[] : []
+  } catch { return [] }
+}
+
+function writeCycles(cycles: PlantCycle[]) { window.localStorage.setItem(CYCLES_STORAGE_KEY, JSON.stringify(cycles)) }
 
 function isGrowthPointEntry(value: unknown): value is GrowthPointEntry {
   if (typeof value !== 'object' || value === null) return false
@@ -75,6 +85,17 @@ export const mockGrowthGardenService: GrowthGardenService = {
         (!range?.from || entry.created_at >= range.from) && (!range?.to || entry.created_at < range.to),
     )
     return delay({ data: filtered })
+  },
+
+  async listPlantCycles() { return delay({ data: readCycles() }) },
+
+  async upsertPlantCycles(inputs: NewPlantCycle[]) {
+    const current = readCycles()
+    const added = inputs.filter((input) => !current.some((cycle) => cycle.student_id === input.student_id && cycle.cycle_number === input.cycle_number)).map((input) => ({
+      ...input, id: createId(), teacher_id: MOCK_TEACHER_ID, created_at: new Date().toISOString(),
+    }))
+    writeCycles([...current, ...added])
+    return delay({ data: added })
   },
 
   async addEntry(input: NewGrowthPointEntry) {

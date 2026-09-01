@@ -206,7 +206,8 @@ export function GrowthGardenReportPage() {
         <MonthlyAwardCelebration
           award={celebrating}
           student={celebratingStudent}
-          stage={celebratingReport.stageEnd}
+          stage={celebratingReport.cycleEnd.currentStage}
+          flowerType={celebratingReport.cycleEnd.currentFlowerType}
           topReasons={celebratingReport.meritReasons}
           environment={classReport.garden.end}
           onClose={() => setCelebrating(null)}

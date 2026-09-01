@@ -8,7 +8,8 @@
 import type { GrowthPointEntry } from '../types'
 import { summarizeByStudent, stageForScore, type GardenSummary, type StageTable } from './growth'
 import { calculateGardenEnvironment, type EnvironmentTable, type GardenEnvironment } from './environment'
-import type { GrowthStage } from './constants'
+import { GROWTH_STAGES, type GrowthStage } from './constants'
+import { plantCycleForScore, type PlantCycleSummary } from './plantCycle'
 
 /** 교사가 설정한 단계 기준. 넘기지 않으면 기본 기준을 쓴다. */
 export type StageTables = { personal?: StageTable; garden?: EnvironmentTable }
@@ -210,6 +211,9 @@ export type StudentMonthlyReport = {
   scoreEnd: number
   stageStart: GrowthStage
   stageEnd: GrowthStage
+  cycleStart: PlantCycleSummary
+  cycleEnd: PlantCycleSummary
+  cycleTransition: 'none' | 'completed' | 'reverted'
   summaryEnd: GardenSummary
 }
 
@@ -234,6 +238,9 @@ export function buildStudentMonthlyReport(
     lastEntryAt: null,
   }
 
+  const stages = tables.personal ?? GROWTH_STAGES
+  const cycleStart = plantCycleForScore(studentId, scoreStart, stages)
+  const cycleEnd = plantCycleForScore(studentId, summaryEnd.score, stages)
   return {
     yearMonth: ym,
     studentId,
@@ -245,6 +252,9 @@ export function buildStudentMonthlyReport(
     scoreEnd: summaryEnd.score,
     stageStart: stageForScore(scoreStart, tables.personal),
     stageEnd: summaryEnd.stage,
+    cycleStart,
+    cycleEnd,
+    cycleTransition: cycleEnd.currentCycleNumber > cycleStart.currentCycleNumber ? 'completed' : cycleEnd.currentCycleNumber < cycleStart.currentCycleNumber ? 'reverted' : 'none',
     summaryEnd,
   }
 }

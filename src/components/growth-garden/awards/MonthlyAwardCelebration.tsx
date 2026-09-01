@@ -16,12 +16,14 @@ import type { GardenEnvironment } from '../../../lib/growth-garden/environment'
 import type { ReasonTally } from '../../../lib/growth-garden/monthlyReport'
 import type { GrowthStage } from '../../../lib/growth-garden/constants'
 import type { MonthlyAward, Student } from '../../../lib/types'
+import type { FlowerType } from '../../../lib/growth-garden/flowers'
 
 type MonthlyAwardCelebrationProps = {
   award: MonthlyAward
   student: Student
   /** 월말 기준 성장 단계 — 축하 화면의 주인공 식물 */
   stage: GrowthStage
+  flowerType?: FlowerType
   /** 이번 달 자주 보인 긍정 행동 (벌점 사유는 넘기지 않는다) */
   topReasons: ReasonTally[]
   environment: GardenEnvironment
@@ -40,6 +42,7 @@ export function MonthlyAwardCelebration({
   award,
   student,
   stage,
+  flowerType,
   topReasons,
   environment,
   onClose,
@@ -115,7 +118,7 @@ export function MonthlyAwardCelebration({
           style={{ maxHeight: 'min(44vh, 520px)' }}
           className="w-full min-h-[110px] flex-1"
         >
-          <PlantIllustration stage={stage} studentId={student.id} variant="ground" className="mx-auto h-full w-auto" />
+          <PlantIllustration stage={stage} studentId={student.id} flowerType={flowerType} variant="ground" className="mx-auto h-full w-auto" />
         </motion.div>
 
         <motion.p

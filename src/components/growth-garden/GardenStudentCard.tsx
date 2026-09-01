@@ -3,6 +3,7 @@ import { Check } from 'lucide-react'
 import type { Student, GrowthPointType } from '../../lib/types'
 import type { GardenSummary } from '../../lib/growth-garden/growth'
 import { stageProgress } from '../../lib/growth-garden/growth'
+import { plantCycleForScore } from '../../lib/growth-garden/plantCycle'
 import { useGrowthSettings } from '../../lib/growth-garden/growthSettingsContext'
 import { PlantIllustration, type PlantPulse } from './PlantIllustration'
 import { StageProgressBar } from './StageProgressBar'
@@ -36,7 +37,8 @@ export function GardenStudentCard({
 }: GardenStudentCardProps) {
   // 단계 기준은 교사 설정을 따른다(모든 화면이 같은 기준을 쓰도록 한 곳에서 가져온다).
   const { personalStages } = useGrowthSettings()
-  const progress = stageProgress(summary.score, personalStages)
+  const cycle = plantCycleForScore(student.id, summary.score, personalStages)
+  const progress = stageProgress(cycle.currentCyclePoint, personalStages)
 
   return (
     <div
@@ -73,7 +75,7 @@ export function GardenStudentCard({
           >
             {progress.current.label}
           </span>
-          <PlantIllustration stage={summary.stage} studentId={student.id} pulse={pulse} className="mx-auto h-28 w-full sm:h-32" />
+          <PlantIllustration stage={cycle.currentStage} studentId={student.id} pulse={pulse} className="mx-auto h-28 w-full sm:h-32" />
         </div>
 
         {/* 점수가 카드에서 가장 큰 글자다. leading-none이 없으면 24px 글자의 줄높이(32px)가
@@ -95,7 +97,7 @@ export function GardenStudentCard({
         {/* 진행 문구와 기록 버튼을 한 줄에 — 카드 높이를 줄이고 남는 가로를 쓴다. */}
         <div className="mt-2 flex items-center justify-between gap-2">
           <p className="min-w-0 truncate text-[11px] text-gray-500">
-            {progress.next ? `다음 성장까지 ${progress.remaining}점` : '마지막 단계까지 자랐어요'}
+            {progress.next ? `${cycle.currentCycleNumber}번째 식물 · 다음 성장까지 ${progress.remaining}점` : '성장을 완성했어요'}
           </p>
           {/* 선택 모드에서는 개별 버튼 대신 하단 액션바로 기록한다 — 카드마다 버튼이
               남아 있으면 '선택 중'과 '지금 기록' 두 동작이 한 카드에 섞인다. */}

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import type { Student } from '../../lib/types'
 import type { GardenSummary } from '../../lib/growth-garden/growth'
 import { stageProgress } from '../../lib/growth-garden/growth'
+import { plantCycleForScore } from '../../lib/growth-garden/plantCycle'
 import { useGrowthSettings } from '../../lib/growth-garden/growthSettingsContext'
 import { PlantIllustration, type PlantPulse } from './PlantIllustration'
 import { SWAY_DURATION_RANGE } from '../../lib/growth-garden/constants'
@@ -38,7 +39,8 @@ type GardenPlotProps = {
  */
 export function GardenPlot({ student, summary, pulse, saving = false, onSelect }: GardenPlotProps) {
   const { personalStages } = useGrowthSettings()
-  const progress = stageProgress(summary.score, personalStages)
+  const cycle = plantCycleForScore(student.id, summary.score, personalStages)
+  const progress = stageProgress(cycle.currentCyclePoint, personalStages)
 
   return (
     <div className="group relative flex flex-col items-center">
@@ -54,7 +56,7 @@ export function GardenPlot({ student, summary, pulse, saving = false, onSelect }
           </p>
           <p className="text-[11px] text-gray-500">
             {progress.current.label}
-            {progress.next ? ` · 다음까지 ${progress.remaining}점` : ' · 마지막 단계'}
+            {progress.next ? ` · ${cycle.currentCycleNumber}번째 식물, 다음까지 ${progress.remaining}점` : ' · 성장 완료'}
           </p>
         </div>
       </div>
@@ -70,8 +72,9 @@ export function GardenPlot({ student, summary, pulse, saving = false, onSelect }
             흔들림은 식물에만 건다 — 이름표까지 움직이면 읽기 어려워진다. */}
         <span className="gg-sway block w-full" style={swayStyle(student.id)}>
           <PlantIllustration
-            stage={summary.stage}
+            stage={cycle.currentStage}
             studentId={student.id}
+            showVisitor={cycle.currentStage >= 7}
             pulse={pulse}
             variant="ground"
             className="h-[var(--garden-plant-height,80px)] w-full"

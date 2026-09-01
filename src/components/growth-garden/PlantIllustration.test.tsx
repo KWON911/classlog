@@ -23,4 +23,19 @@ describe('PlantIllustration', () => {
       flowerForStudent(secondStudentId),
     )
   })
+
+  it('keeps the flower visible through post-bloom stages', () => {
+    const { container } = render(<PlantIllustration stage={7} studentId="student-17" />)
+    expect(container.querySelector('[data-flower-type]')).toHaveAttribute('data-flower-type', flowerForStudent('student-17'))
+  })
+
+  it.each(['tulip', 'sunflower', 'daisy', 'cosmos', 'rose', 'lily'] as const)('%s has a distinct fruit at the fruit stage', (flowerType) => {
+    const { container } = render(<PlantIllustration stage={8} flowerType={flowerType} />)
+    expect(container.querySelector(`[data-fruit-type="${flowerType}"]`)).toBeInTheDocument()
+  })
+
+  it('shows a visitor only when the post-bloom plant requests it', () => {
+    const { container } = render(<PlantIllustration stage={7} showVisitor />)
+    expect(container.querySelector('[data-plant-visitor]')).toBeInTheDocument()
+  })
 })

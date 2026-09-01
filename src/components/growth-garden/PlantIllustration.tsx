@@ -33,6 +33,8 @@ export type PlantGround = 'pot' | 'ground'
 type PlantIllustrationProps = {
   stage: GrowthStage
   studentId?: string
+  flowerType?: FlowerType
+  showVisitor?: boolean
   pulse?: PlantPulse | null
   variant?: PlantGround
   className?: string
@@ -47,6 +49,10 @@ const STEM_TOP_Y: Record<GrowthStage, number> = {
   4: 46,
   5: 38,
   6: 32,
+  7: 32,
+  8: 32,
+  9: 30,
+  10: 30,
 }
 
 /** 흙 표면 y좌표 — 줄기·씨앗이 여기서 시작한다(화분 테두리 안쪽). */
@@ -90,7 +96,7 @@ const SPARKLE_POSITIONS = [
   { x: 60, y: 84 },
 ].slice(0, SPARKLE_COUNT)
 
-export function PlantIllustration({ stage, studentId, pulse = null, variant = 'pot', className = '' }: PlantIllustrationProps) {
+export function PlantIllustration({ stage, studentId, flowerType: explicitFlowerType, showVisitor = false, pulse = null, variant = 'pot', className = '' }: PlantIllustrationProps) {
   const controls = useAnimationControls()
   const prefersReducedMotion = useReducedMotion()
   const stemTop = STEM_TOP_Y[stage]
@@ -120,7 +126,7 @@ export function PlantIllustration({ stage, studentId, pulse = null, variant = 'p
   // 잎 배치는 줄기 높이에 비례해 계산 — 단계별 좌표를 따로 하드코딩하지 않는다.
   const leaves = useMemo(() => buildLeaves(stage, stemTop), [stage, stemTop])
   const showSparkles = pulse?.direction === 'grow' && !prefersReducedMotion
-  const flowerType = studentId ? flowerForStudent(studentId) : 'daisy'
+  const flowerType = explicitFlowerType ?? (studentId ? flowerForStudent(studentId) : 'daisy')
 
   return (
     /* 전체 펄스(확대/축소)는 SVG의 <g>가 아니라 바깥 div에 건다 — <g>에 scale을 주면
@@ -232,7 +238,7 @@ export function PlantIllustration({ stage, studentId, pulse = null, variant = 'p
               </motion.g>
             )}
 
-            {stage === 6 && (
+            {stage >= 6 && (
               <motion.g
                 key="flower"
                 initial={{ opacity: 0, scale: 0.3, rotate: -25 }}
@@ -241,6 +247,8 @@ export function PlantIllustration({ stage, studentId, pulse = null, variant = 'p
                 transition={{ duration: GROW_ANIMATION_MS / 1000, ease: [0.22, 1, 0.36, 1] }}
               >
                 <FinalFlower type={flowerType} centerY={stemTop - 8} />
+                {stage >= 8 && <FruitCluster type={flowerType} centerY={stemTop - 8} rich={stage >= 9} />}
+                {stage >= 7 && showVisitor && <g data-plant-visitor="true"><ellipse cx="78" cy={stemTop - 22} rx="6" ry="4" fill="#f7b9d2" /><ellipse cx="84" cy={stemTop - 18} rx="5" ry="3" fill="#e79ec0" /><ellipse cx="81" cy={stemTop - 18} rx="1.5" ry="5" fill="#7a6a5f" /></g>}
               </motion.g>
             )}
           </AnimatePresence>
@@ -337,6 +345,18 @@ function FinalFlower({ type, centerY }: FinalFlowerProps) {
         <ellipse key={angle} cx="60" cy={centerY - 9} rx="5.5" ry="12" fill="#fffaf0" transform={`rotate(${angle} 60 ${centerY})`} />
       ))}
       <circle cx="60" cy={centerY} r="6.5" fill={COLORS.flowerCenter} />
+    </g>
+  )
+}
+
+function FruitCluster({ type, centerY, rich }: FinalFlowerProps & { rich: boolean }) {
+  const count = rich ? 3 : 1
+  const color = type === 'rose' ? '#c95c57' : type === 'sunflower' ? '#6f5138' : '#a1785a'
+  return (
+    <g data-fruit-type={type}>
+      {Array.from({ length: count }, (_, index) => (
+        <circle key={index} cx={60 + (index - (count - 1) / 2) * 7} cy={centerY + 14 + (index % 2) * 3} r={type === 'sunflower' ? 3.2 : 3.8} fill={color} />
+      ))}
     </g>
   )
 }
