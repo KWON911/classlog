@@ -15,6 +15,12 @@ const mockStore: { entries: GrowthPointEntry[]; addEntriesCalls: number } = { en
 
 vi.mock('../growth-garden/services', () => ({
   growthGardenService: {
+    async listPlantCycles() {
+      return { data: [] }
+    },
+    async upsertPlantCycles() {
+      return { data: [] }
+    },
     async listEntries() {
       return { data: [...mockStore.entries] }
     },

@@ -33,4 +33,9 @@ describe('PlantIllustration', () => {
     const { container } = render(<PlantIllustration stage={8} flowerType={flowerType} />)
     expect(container.querySelector(`[data-fruit-type="${flowerType}"]`)).toBeInTheDocument()
   })
+
+  it('shows a visitor only when the post-bloom plant requests it', () => {
+    const { container } = render(<PlantIllustration stage={7} showVisitor />)
+    expect(container.querySelector('[data-plant-visitor]')).toBeInTheDocument()
+  })
 })

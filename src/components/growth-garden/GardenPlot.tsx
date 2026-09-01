@@ -74,6 +74,7 @@ export function GardenPlot({ student, summary, pulse, saving = false, onSelect }
           <PlantIllustration
             stage={cycle.currentStage}
             studentId={student.id}
+            showVisitor={cycle.currentStage >= 7}
             pulse={pulse}
             variant="ground"
             className="h-[var(--garden-plant-height,80px)] w-full"

@@ -34,6 +34,7 @@ type PlantIllustrationProps = {
   stage: GrowthStage
   studentId?: string
   flowerType?: FlowerType
+  showVisitor?: boolean
   pulse?: PlantPulse | null
   variant?: PlantGround
   className?: string
@@ -95,7 +96,7 @@ const SPARKLE_POSITIONS = [
   { x: 60, y: 84 },
 ].slice(0, SPARKLE_COUNT)
 
-export function PlantIllustration({ stage, studentId, flowerType: explicitFlowerType, pulse = null, variant = 'pot', className = '' }: PlantIllustrationProps) {
+export function PlantIllustration({ stage, studentId, flowerType: explicitFlowerType, showVisitor = false, pulse = null, variant = 'pot', className = '' }: PlantIllustrationProps) {
   const controls = useAnimationControls()
   const prefersReducedMotion = useReducedMotion()
   const stemTop = STEM_TOP_Y[stage]
@@ -247,6 +248,7 @@ export function PlantIllustration({ stage, studentId, flowerType: explicitFlower
               >
                 <FinalFlower type={flowerType} centerY={stemTop - 8} />
                 {stage >= 8 && <FruitCluster type={flowerType} centerY={stemTop - 8} rich={stage >= 9} />}
+                {stage >= 7 && showVisitor && <g data-plant-visitor="true"><ellipse cx="78" cy={stemTop - 22} rx="6" ry="4" fill="#f7b9d2" /><ellipse cx="84" cy={stemTop - 18} rx="5" ry="3" fill="#e79ec0" /><ellipse cx="81" cy={stemTop - 18} rx="1.5" ry="5" fill="#7a6a5f" /></g>}
               </motion.g>
             )}
           </AnimatePresence>

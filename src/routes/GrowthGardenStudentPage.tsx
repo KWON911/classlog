@@ -107,6 +107,7 @@ export function GrowthGardenStudentPage() {
             <PlantIllustration
               stage={cycle.currentStage}
               studentId={studentId}
+              showVisitor={cycle.currentStage >= 7}
               pulse={pulseFor(studentId)}
               className="mx-auto h-48 w-full max-w-[280px] sm:h-56"
             />
