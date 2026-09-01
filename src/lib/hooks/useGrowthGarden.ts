@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { growthGardenService } from '../growth-garden/services'
 import { DEFAULT_DEMERIT_REASON, DEFAULT_MERIT_REASON } from '../growth-garden/constants'
 import { EMPTY_SUMMARY, entriesForStudent, summarizeByStudent, type GardenSummary } from '../growth-garden/growth'
+import { backfillPlantCycles, plantCycleForScore } from '../growth-garden/plantCycle'
 import { buildBulkEntries, createBatchId, type BulkPointInput } from '../growth-garden/bulkGrowth'
 import { useGrowthSettings } from '../growth-garden/growthSettingsContext'
-import type { GrowthPointEntry, GrowthPointType } from '../types'
+import type { GrowthPointEntry, GrowthPointType, PlantCycle } from '../types'
 
 /**
  * 성장정원 상태 훅.
@@ -18,6 +19,7 @@ export function useGrowthGarden() {
   // 단계 계산은 교사가 설정한 기준을 따른다(화면마다 기준이 갈리지 않도록 한 곳에서).
   const { personalStages, loading: settingsLoading } = useGrowthSettings()
   const [entries, setEntries] = useState<GrowthPointEntry[]>([])
+  const [plantCycles, setPlantCycles] = useState<PlantCycle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   // 저장 중인 학생 id — 같은 학생에게 연타가 들어와도 요청은 한 번만 나간다.
@@ -37,9 +39,9 @@ export function useGrowthGarden() {
   const fetchEntries = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const { data, error } = await growthGardenService.listEntries()
-    if (error) setError(error)
-    else setEntries(data ?? [])
+    const [entriesResult, cyclesResult] = await Promise.all([growthGardenService.listEntries(), growthGardenService.listPlantCycles()])
+    if (entriesResult.error || cyclesResult.error) setError(entriesResult.error ?? cyclesResult.error ?? '정원을 불러오지 못했습니다.')
+    else { setEntries(entriesResult.data ?? []); setPlantCycles(cyclesResult.data ?? []) }
     setLoading(false)
   }, [])
 
@@ -166,12 +168,24 @@ export function useGrowthGarden() {
 
   const summaries = useMemo(() => summarizeByStudent(entries, personalStages), [entries, personalStages])
 
+  useEffect(() => {
+    const ids = [...new Set(entries.map((entry) => entry.student_id))]
+    const missing = ids.flatMap((studentId) => backfillPlantCycles(studentId, entries, plantCycles, personalStages))
+    if (missing.length === 0) return
+    growthGardenService.upsertPlantCycles(missing).then(({ data }) => {
+      if (data?.length) setPlantCycles((previous) => [...previous, ...data])
+    })
+  }, [entries, plantCycles, personalStages])
+
   const summaryFor = useCallback(
     (studentId: string): GardenSummary => summaries.get(studentId) ?? { studentId, ...EMPTY_SUMMARY },
     [summaries],
   )
 
   const historyFor = useCallback((studentId: string) => entriesForStudent(entries, studentId), [entries])
+  const cycleFor = useCallback((studentId: string) => plantCycleForScore(studentId, summaryFor(studentId).score, personalStages), [personalStages, summaryFor])
+  const cyclesFor = useCallback((studentId: string) => plantCycles.filter((cycle) => cycle.student_id === studentId).sort((a, b) => a.cycle_number - b.cycle_number), [plantCycles])
+  const latestCompletedCycleFor = useCallback((studentId: string) => cyclesFor(studentId).at(-1) ?? null, [cyclesFor])
 
   const isSaving = useCallback((studentId: string) => pendingIds.includes(studentId), [pendingIds])
 
@@ -183,6 +197,9 @@ export function useGrowthGarden() {
     summaries,
     summaryFor,
     historyFor,
+    cycleFor,
+    cyclesFor,
+    latestCompletedCycleFor,
     isSaving,
     bulkSaving,
     addPoint,

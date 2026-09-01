@@ -33,6 +33,7 @@ export type PlantGround = 'pot' | 'ground'
 type PlantIllustrationProps = {
   stage: GrowthStage
   studentId?: string
+  flowerType?: FlowerType
   pulse?: PlantPulse | null
   variant?: PlantGround
   className?: string
@@ -94,7 +95,7 @@ const SPARKLE_POSITIONS = [
   { x: 60, y: 84 },
 ].slice(0, SPARKLE_COUNT)
 
-export function PlantIllustration({ stage, studentId, pulse = null, variant = 'pot', className = '' }: PlantIllustrationProps) {
+export function PlantIllustration({ stage, studentId, flowerType: explicitFlowerType, pulse = null, variant = 'pot', className = '' }: PlantIllustrationProps) {
   const controls = useAnimationControls()
   const prefersReducedMotion = useReducedMotion()
   const stemTop = STEM_TOP_Y[stage]
@@ -124,7 +125,7 @@ export function PlantIllustration({ stage, studentId, pulse = null, variant = 'p
   // 잎 배치는 줄기 높이에 비례해 계산 — 단계별 좌표를 따로 하드코딩하지 않는다.
   const leaves = useMemo(() => buildLeaves(stage, stemTop), [stage, stemTop])
   const showSparkles = pulse?.direction === 'grow' && !prefersReducedMotion
-  const flowerType = studentId ? flowerForStudent(studentId) : 'daisy'
+  const flowerType = explicitFlowerType ?? (studentId ? flowerForStudent(studentId) : 'daisy')
 
   return (
     /* 전체 펄스(확대/축소)는 SVG의 <g>가 아니라 바깥 div에 건다 — <g>에 scale을 주면

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { PageContainer } from '../components/PageContainer'
 import { PlantIllustration } from '../components/growth-garden/PlantIllustration'
+import { FlowerCollection } from '../components/growth-garden/FlowerCollection'
 import { StageProgressBar } from '../components/growth-garden/StageProgressBar'
 import { PointActionButtons } from '../components/growth-garden/PointActionButtons'
 import { BehaviorPointModal } from '../components/growth-garden/BehaviorPointModal'
@@ -14,6 +15,7 @@ import { useGrowthGarden } from '../lib/hooks/useGrowthGarden'
 import { usePlantPulse } from '../lib/hooks/usePlantPulse'
 import { useGrowthRecorder } from '../lib/hooks/useGrowthRecorder'
 import { stageProgress } from '../lib/growth-garden/growth'
+import { plantCycleForScore } from '../lib/growth-garden/plantCycle'
 import { HISTORY_PREVIEW_COUNT } from '../lib/growth-garden/constants'
 import { useGrowthSettings } from '../lib/growth-garden/growthSettingsContext'
 import { sectionCardClass } from '../lib/ui/classNames'
@@ -31,6 +33,7 @@ export function GrowthGardenStudentPage() {
     isSaving,
     deleteEntry,
     clearStudent,
+    cyclesFor,
   } = useGrowthGarden()
   const { personalStages } = useGrowthSettings()
   const { pulseFor, trigger } = usePlantPulse()
@@ -40,8 +43,10 @@ export function GrowthGardenStudentPage() {
 
   const student = students.find((candidate) => candidate.id === studentId)
   const summary = summaryFor(studentId)
-  const progress = stageProgress(summary.score, personalStages)
+  const cycle = plantCycleForScore(studentId, summary.score, personalStages)
+  const progress = stageProgress(cycle.currentCyclePoint, personalStages)
   const history = historyFor(studentId)
+  const completedCycles = cyclesFor(studentId)
   const loading = studentsLoading || gardenLoading
 
   // 기본은 최근 10개만 — 30건이 넘어가도 화면이 길어지지 않게 한다.
@@ -100,7 +105,7 @@ export function GrowthGardenStudentPage() {
 
           <div className="my-2 w-full rounded-2xl bg-gradient-to-b from-sky-50 to-brand-50/60 py-4">
             <PlantIllustration
-              stage={summary.stage}
+              stage={cycle.currentStage}
               studentId={studentId}
               pulse={pulseFor(studentId)}
               className="mx-auto h-48 w-full max-w-[280px] sm:h-56"
@@ -118,6 +123,7 @@ export function GrowthGardenStudentPage() {
             </div>
             <p className="mb-2 text-sm text-gray-600">{progress.current.description}</p>
             <StageProgressBar progress={progress} showCaption />
+            <FlowerCollection cycles={completedCycles} current={cycle} />
           </div>
 
           {/* 통계 */}
@@ -142,12 +148,12 @@ export function GrowthGardenStudentPage() {
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-brand-600">성장 단계</h2>
           <ol className="flex flex-col gap-1.5">
             {personalStages.map((config) => {
-              const reached = summary.score >= config.minScore
+              const reached = cycle.currentCyclePoint >= config.minScore
               return (
                 <li
                   key={config.stage}
                   className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm ${
-                    config.stage === summary.stage ? 'bg-brand-50 font-semibold text-brand-700' : 'text-gray-600'
+                    config.stage === cycle.currentStage ? 'bg-brand-50 font-semibold text-brand-700' : 'text-gray-600'
                   }`}
                 >
                   <span
