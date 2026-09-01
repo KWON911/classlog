@@ -109,10 +109,10 @@ export function GrowthGardenReportPage() {
       </div>
 
       <div className="mb-4 space-y-2">
-        <div className="flex items-center">
+        <div data-testid="report-navigation-toolbar" className="flex min-h-9 items-center">
           <GardenPageNav />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div data-testid="report-display-toolbar" className="flex w-full flex-wrap items-center gap-2">
           <MonthSelector value={yearMonth} onChange={setYearMonth} />
           <SegmentedGroup label="리포트 종류">
             <SegmentedButton active={tab === 'class'} onClick={() => setTab('class')}>
