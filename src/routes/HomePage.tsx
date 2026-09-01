@@ -70,6 +70,16 @@ export function HomePage() {
             >
               오늘
             </button>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 lg:flex"
+              aria-label="시간표·급식 새로고침"
+              title="새로고침"
+            >
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : undefined} />
+            </button>
           </div>
         </div>
         <div className="flex w-full items-center gap-2 sm:w-auto">
@@ -78,7 +88,7 @@ export function HomePage() {
             type="button"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
             aria-label="시간표·급식 새로고침"
             title="새로고침"
           >
