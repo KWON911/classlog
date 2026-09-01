@@ -171,10 +171,11 @@ export function StudentMonthlyReportView({
 
               {/* 월초 → 월말 식물 비교 */}
               <div className="mt-3 flex flex-wrap items-center justify-center gap-4 rounded-2xl bg-gradient-to-b from-sky-50 to-brand-50/60 px-4 py-4">
-                <PlantStep label="월초" studentId={student.id} stage={report.stageStart} score={report.scoreStart} />
+                <PlantStep label="월초" studentId={student.id} stage={report.cycleStart.currentStage} score={report.cycleStart.currentCyclePoint} />
                 <ArrowRight size={22} className="text-brand-400" aria-hidden="true" />
-                <PlantStep label="월말" studentId={student.id} stage={report.stageEnd} score={report.scoreEnd} highlight />
+                <PlantStep label="월말" studentId={student.id} stage={report.cycleEnd.currentStage} score={report.cycleEnd.currentCyclePoint} highlight />
               </div>
+              {report.cycleTransition === 'completed' && <p className="mt-2 text-center text-sm font-medium text-brand-700">{report.cycleStart.currentCycleNumber}번째 식물 성장 완료 → {report.cycleEnd.currentCycleNumber}번째 식물 시작</p>}
 
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <MiniTile label="이번 달 순 성장" value={formatSigned(report.totals.netScore)} tone="brand" />
