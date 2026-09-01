@@ -5,7 +5,7 @@
  * 컴포넌트/서비스/훅 어디에도 숫자를 다시 적지 말 것.
  */
 
-export type GrowthStage = 0 | 1 | 2 | 3 | 4 | 5 | 6
+export type GrowthStage = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
 
 export type GrowthStageConfig = {
   stage: GrowthStage
@@ -31,6 +31,10 @@ export const GROWTH_STAGES: GrowthStageConfig[] = [
   { stage: 4, label: '풍성한 잎', minScore: 15, description: '잎이 무성해졌어요.', accent: '#128561' },
   { stage: 5, label: '꽃봉오리', minScore: 20, description: '곧 꽃이 필 것 같아요.', accent: '#c2649a' },
   { stage: 6, label: '꽃 피움', minScore: 25, description: '활짝 꽃을 피웠어요!', accent: '#e0577f' },
+  { stage: 7, label: '생명체 방문', minScore: 30, description: '나비와 벌이 꽃을 찾아왔어요.', accent: '#dd8b4f' },
+  { stage: 8, label: '결실', minScore: 35, description: '꽃이 작은 열매와 씨앗을 맺고 있어요.', accent: '#b46b45' },
+  { stage: 9, label: '풍성한 결실', minScore: 40, description: '열매와 씨앗이 풍성하게 자랐어요.', accent: '#9c7042' },
+  { stage: 10, label: '성장 완료', minScore: 45, description: '한 번의 성장을 완성했어요!', accent: '#8a6d45' },
 ]
 
 export const MAX_STAGE = GROWTH_STAGES[GROWTH_STAGES.length - 1].stage

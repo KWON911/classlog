@@ -38,10 +38,19 @@ export const MAX_THRESHOLD = 999
  * 화면이 깨진 기준으로 식물을 그리는 것보다 기본값으로 그리는 편이 안전하다.
  */
 function safeThresholds(values: unknown, fallback: Thresholds): Thresholds {
-  if (!Array.isArray(values) || values.length !== fallback.length) return fallback
+  if (!Array.isArray(values)) return fallback
   const numbers = values.map((value) => Number(value))
   if (numbers.some((value) => !Number.isFinite(value))) return fallback
   if (validateThresholds(numbers)) return fallback
+
+  // 기존 사용자는 꽃 피움까지 7개 기준만 저장했다. 앞값은 그대로 보존하고,
+  // 마지막 꽃 피움 기준 뒤에 동일한 간격의 후속 단계를 안전하게 덧붙인다.
+  if (fallback.length === 11 && numbers.length === 7) {
+    const bloomThreshold = numbers[6]
+    return [...numbers, bloomThreshold + 5, bloomThreshold + 10, bloomThreshold + 15, bloomThreshold + 20]
+  }
+
+  if (numbers.length !== fallback.length) return fallback
   return numbers
 }
 

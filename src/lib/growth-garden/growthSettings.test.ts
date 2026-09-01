@@ -24,6 +24,15 @@ describe('기본값', () => {
     expect(resolveSettings(undefined).garden).toEqual(DEFAULT_GARDEN_THRESHOLDS)
   })
 
+  it('기존 7개 개인 기준 뒤에 꽃 피움 기준 기반의 네 단계를 보완한다', () => {
+    expect(
+      resolveSettings({
+        personal: [0, 3, 6, 10, 15, 20, 28],
+        garden: DEFAULT_GARDEN_THRESHOLDS,
+      }),
+    ).toMatchObject({ personal: [0, 3, 6, 10, 15, 20, 28, 33, 38, 43, 48] })
+  })
+
   it('저장된 값이 손상됐으면 기본값으로 되돌린다', () => {
     // 길이가 다르거나, 숫자가 아니거나, 순서가 뒤집힌 값은 신뢰하지 않는다.
     expect(resolveSettings({ personal: [0, 3] }).personal).toEqual(DEFAULT_PERSONAL_THRESHOLDS)
@@ -34,7 +43,7 @@ describe('기본값', () => {
   })
 
   it('정상 저장값은 그대로 쓴다', () => {
-    const custom = [0, 5, 10, 15, 20, 25, 30]
+    const custom = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
     expect(resolveSettings({ personal: custom }).personal).toEqual(custom)
   })
 })
@@ -64,7 +73,7 @@ describe('validateThresholds', () => {
 
 describe('resolve*Stages', () => {
   it('기준 점수만 바뀌고 이름·색·설명은 그대로다', () => {
-    const custom = [0, 5, 10, 15, 20, 25, 30]
+    const custom = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
     const stages = resolveGrowthStages(custom)
     expect(stages.map((stage) => stage.minScore)).toEqual(custom)
     expect(stages.map((stage) => stage.label)).toEqual(GROWTH_STAGES.map((stage) => stage.label))
