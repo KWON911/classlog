@@ -21,7 +21,7 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
   return (
     <Modal
       title="학급 성장정원 사용법"
-      description="상점을 모으면 학생의 식물이 자라고, 우리 반 정원 전체도 함께 변합니다. 달마다 리포트와 성장상으로 돌아볼 수 있습니다."
+      description="상점을 모으면 학생의 식물이 한 사이클씩 자라고, 완성한 꽃은 도감에 남습니다. 우리 반 정원과 월별 리포트도 함께 돌아볼 수 있습니다."
       onClose={onClose}
       maxWidthClassName="max-w-2xl"
     >
@@ -70,6 +70,11 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
           <p>
             상점을 받아 성장 포인트가 쌓이면 식물이 다음 단계로 자랍니다. 벌점을 받으면 점수가 줄어 이전 모습으로
             부드럽게 돌아가며, {MIN_SCORE}점 아래로는 내려가지 않습니다.
+          </p>
+          <p>
+            <strong className="font-semibold text-gray-900">꽃 피움은 끝이 아니라 성장 사이클의 중간</strong>입니다. 꽃 뒤에는
+            생명체 방문, 결실, 풍성한 결실을 거쳐 성장 완료에 도달합니다. 완료하면 누적 점수와 기존 기록은 그대로 둔 채
+            다음 식물이 씨앗부터 새로 자랍니다.
           </p>
           <div className="-mx-1 overflow-x-auto pb-1">
             <div className="flex min-w-max gap-1.5 px-1">
@@ -133,7 +138,8 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
             </InlineChip>
             에서는 달을 골라 <strong className="font-semibold text-gray-900">학급</strong> 전체 요약(상·벌점 합계,
             정원 단계 변화, 일별 추이, 사유별 집계)과 <strong className="font-semibold text-gray-900">개인</strong>{' '}
-            리포트(월초·월말 식물 단계, 그달의 순 성장, 기록 목록)를 볼 수 있습니다.
+            리포트(월초·월말 식물 단계, 그달의 순 성장, 기록 목록)를 볼 수 있습니다. 한 달 사이 식물을 완성하고 새 씨앗을
+            시작했다면 단계가 내려간 것이 아니라 <strong className="font-semibold text-gray-900">성장 완료 → 다음 식물 시작</strong>으로 표시됩니다.
           </p>
           <p>
             같은 화면에서{' '}
@@ -183,6 +189,10 @@ export function GardenGuideModal({ onClose }: GardenGuideModalProps) {
             로 들어가면 그 학생의 누적 상점·벌점과 최근 기록을 볼 수 있고, 잘못 넣은 기록은 하나씩 지울 수 있습니다.
             그 학생의 기록만 모두 지우려면 같은 화면의 <strong className="font-semibold text-gray-900">전체 초기화</strong>
             를 쓰세요.
+          </p>
+          <p>
+            학생 상세에는 <strong className="font-semibold text-gray-900">나의 꽃 기록</strong>이 있습니다. 지금까지 완성한
+            꽃과 현재 진행 중인 식물을 볼 수 있으며, 한 번 완성한 꽃은 성장 기준을 바꾸거나 현재 사이클 점수가 줄어도 지워지지 않습니다.
           </p>
           <p>
             새 학기처럼 학급 전체를 처음부터 시작하려면 목록 맨 아래의{' '}
