@@ -120,19 +120,21 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
         </p>
       )}
 
-      {/* [화면 이동 · 학생 선택] 다음에 [정렬 · 보기]를 둔다. 카드/정원 보기 전환으로
-          학생 선택 버튼 유무가 바뀌어도 표시 옵션의 줄 위치는 항상 같다. */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <GardenPageNav />
-        {/* 선택 모드는 카드 보기에서만 쓴다 — 정원 보기는 식물을 누르면 기록 모달이
-            열리는 화면이라, 같은 누름이 선택도 되면 동작이 겹친다. */}
-        {viewMode === 'card' && !selection.active && (
-          <div className="ml-auto">
-            <SelectionToolbar classSize={students.length} onEnter={selection.enter} />
-          </div>
-        )}
+      {/* 이동·주 동작·표시 제어를 분리한다. 카드/정원 전환으로 학생 선택 버튼이
+          사라져도 정렬·보기 행의 시작선과 위치는 흔들리지 않는다. */}
+      <div className="mb-4 space-y-2">
+        <div data-testid="garden-primary-toolbar" className="flex min-h-9 flex-wrap items-center gap-2">
+          <GardenPageNav />
+          {/* 선택 모드는 카드 보기에서만 쓴다 — 정원 보기는 식물을 누르면 기록 모달이
+              열리는 화면이라, 같은 누름이 선택도 되면 동작이 겹친다. */}
+          {viewMode === 'card' && !selection.active && (
+            <div className="flex w-full justify-end sm:ml-auto sm:w-auto">
+              <SelectionToolbar classSize={students.length} onEnter={selection.enter} />
+            </div>
+          )}
+        </div>
         {!selection.active && (
-          <div className="flex w-full flex-nowrap items-center gap-2">
+          <div data-testid="garden-display-toolbar" className="flex w-full flex-nowrap items-center gap-2">
             <SegmentedGroup label="정렬 기준">
               <SegmentedButton active={sortMode === 'number'} onClick={() => setSortMode('number')}>
                 번호순
