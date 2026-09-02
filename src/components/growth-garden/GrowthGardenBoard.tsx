@@ -19,7 +19,8 @@ import { usePlantPulse } from '../../lib/hooks/usePlantPulse'
 import { useGrowthRecorder } from '../../lib/hooks/useGrowthRecorder'
 import { GROWTH_GARDEN_DATA_SOURCE } from '../../lib/growth-garden/constants'
 import { calculateGardenEnvironment } from '../../lib/growth-garden/environment'
-import type { Student } from '../../lib/types'
+import { useClassGardenGoal } from '../../lib/hooks/useClassGardenGoal'
+import type { DecorationType, Student } from '../../lib/types'
 
 type SortMode = 'number' | 'score'
 /** 카드 보기가 기본 — 관리(기록) 작업이 주 용도이고, 정원 보기는 감상/확인용. */
@@ -56,6 +57,8 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
     clearClass,
   } = useGrowthGarden()
   const { environmentStages } = useGrowthSettings()
+  const today = new Date()
+  const { unlocks, goalProgress } = useClassGardenGoal(today.getFullYear(), today.getMonth() + 1)
   const { pulseFor, trigger } = usePlantPulse()
   const selection = useStudentSelection(students)
   const recorder = useGrowthRecorder({
@@ -99,6 +102,10 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
   const environment = useMemo(
     () => calculateGardenEnvironment(students.map((student) => summaryFor(student.id).score), environmentStages),
     [students, summaryFor, environmentStages],
+  )
+  const newlyUnlockedTypes = useMemo(
+    () => new Set<DecorationType>(goalProgress?.newlyReachableMilestones.map((milestone) => milestone.decorationType) ?? []),
+    [goalProgress],
   )
 
   const loading = studentsLoading || gardenLoading
@@ -215,6 +222,8 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
           isSaving={isSaving}
           onSelect={(student) => recorder.open(student, 'merit', { allowTypeChange: true })}
           environment={environment}
+          unlocks={unlocks}
+          newlyUnlockedTypes={newlyUnlockedTypes}
         />
       )}
       {!loading && students.length > 0 && (

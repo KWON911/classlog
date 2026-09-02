@@ -4,6 +4,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GrowthGardenBoard } from './GrowthGardenBoard'
 import type { Student } from '../../lib/types'
 
+const mockGardenView = vi.hoisted(() => vi.fn())
+const mockClassGardenUnlock = vi.hoisted(() => ({
+  id: 'unlock-pond',
+  teacher_id: 'teacher-1',
+  decoration_type: 'pond',
+  year: 2026,
+  month: 9,
+  milestone_point: 100,
+  unlocked_at: '2026-09-02T00:00:00.000Z',
+  created_at: '2026-09-02T00:00:00.000Z',
+}))
+
 vi.mock('../../lib/hooks/useGrowthGarden', () => ({
   useGrowthGarden: () => ({
     entries: [],
@@ -27,8 +39,20 @@ vi.mock('../../lib/hooks/usePlantPulse', () => ({
   usePlantPulse: () => ({ pulseFor: () => null, trigger: vi.fn() }),
 }))
 
+vi.mock('../../lib/hooks/useClassGardenGoal', () => ({
+  useClassGardenGoal: () => ({
+    unlocks: [mockClassGardenUnlock],
+    goalProgress: { newlyReachableMilestones: [{ point: 100, decorationType: 'pond' }] },
+  }),
+}))
+
 vi.mock('./GardenStudentCard', () => ({ GardenStudentCard: () => <div /> }))
-vi.mock('./GardenView', () => ({ GardenView: () => <div /> }))
+vi.mock('./GardenView', () => ({
+  GardenView: (props: unknown) => {
+    mockGardenView(props)
+    return <div />
+  },
+}))
 
 afterEach(cleanup)
 
@@ -51,6 +75,8 @@ const student: Student = {
 }
 
 describe('GrowthGardenBoard', () => {
+  afterEach(() => mockGardenView.mockClear())
+
   it('separates primary navigation from display controls', () => {
     render(
       <MemoryRouter initialEntries={['/growth-garden']}>
@@ -76,5 +102,22 @@ describe('GrowthGardenBoard', () => {
     const controlsRow = screen.getByRole('group', { name: '정렬 기준' }).parentElement
     expect(controlsRow).toHaveClass('w-full')
     expect(controlsRow).not.toHaveClass('sm:w-auto')
+  })
+
+  it('passes permanent unlocks and newly reachable decoration types to the garden view', () => {
+    render(
+      <MemoryRouter initialEntries={['/growth-garden']}>
+        <GrowthGardenBoard students={[student]} studentsLoading={false} />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '정원 보기' }))
+
+    expect(mockGardenView).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        unlocks: [mockClassGardenUnlock],
+        newlyUnlockedTypes: new Set(['pond']),
+      }),
+    )
   })
 })

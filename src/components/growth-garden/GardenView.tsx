@@ -11,6 +11,8 @@ import { GardenPlot } from './GardenPlot'
 import { GardenBackground } from './GardenBackground'
 import { ClassGardenSummary } from './ClassGardenSummary'
 import { GardenAmbientLayer } from './GardenAmbientLayer'
+import { GardenDecorationLayer } from './GardenDecorationLayer'
+import type { ClassGardenUnlock, DecorationType } from '../../lib/types'
 
 type GardenViewProps = {
   /** 카드 보기와 같은 순서(번호순/점수순, 검색 결과)를 그대로 받는다. */
@@ -22,6 +24,10 @@ type GardenViewProps = {
   onSelect: (student: Student) => void
   /** 학급 전체 성장으로 계산된 배경 환경 — 검색으로 걸러진 목록이 아니라 학급 전체 기준. */
   environment: GardenEnvironment
+  /** 월이 바뀌어도 남아 있는 공동 목표 해금 장식. */
+  unlocks: ClassGardenUnlock[]
+  /** 이번 갱신에서 막 도달한 장식만 짧게 등장시킨다. */
+  newlyUnlockedTypes: Set<DecorationType>
 }
 
 /**
@@ -42,6 +48,8 @@ export function GardenView({
   isSaving,
   onSelect,
   environment,
+  unlocks,
+  newlyUnlockedTypes,
 }: GardenViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gridAreaRef = useRef<HTMLDivElement>(null)
@@ -77,6 +85,11 @@ export function GardenView({
       }`}
     >
       <GardenBackground environment={environment} />
+      <GardenDecorationLayer
+        unlocks={unlocks}
+        isFullscreen={isFullscreen}
+        newlyUnlockedTypes={newlyUnlockedTypes}
+      />
       {/* 나비·꽃잎 등 자연 애니메이션 — pointer-events: none이라 식물 클릭을 막지 않는다. */}
       <GardenAmbientLayer environment={environment} />
 
