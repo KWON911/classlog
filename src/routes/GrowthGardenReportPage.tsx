@@ -3,6 +3,7 @@ import { PageContainer } from '../components/PageContainer'
 import { GardenPageNav } from '../components/growth-garden/GardenPageNav'
 import { MonthSelector } from '../components/growth-garden/report/MonthSelector'
 import { ClassMonthlyReportView } from '../components/growth-garden/report/ClassMonthlyReportView'
+import { ClassGoalMonthlyReport } from '../components/growth-garden/report/ClassGoalMonthlyReport'
 import { StudentMonthlyReportView } from '../components/growth-garden/report/StudentMonthlyReportView'
 import { SegmentedButton, SegmentedGroup } from '../components/growth-garden/Segmented'
 import { GrowthFeedbackToast, type GrowthFeedback } from '../components/growth-garden/GrowthFeedbackToast'
@@ -10,6 +11,7 @@ import { MonthlyAwardList } from '../components/growth-garden/awards/MonthlyAwar
 import { MonthlyAwardModal, type AwardFormValues } from '../components/growth-garden/awards/MonthlyAwardModal'
 import { MonthlyAwardCelebration } from '../components/growth-garden/awards/MonthlyAwardCelebration'
 import { useStudents } from '../lib/hooks/useStudents'
+import { useClassGardenGoal } from '../lib/hooks/useClassGardenGoal'
 import { useMonthlyReport } from '../lib/hooks/useMonthlyReport'
 import { useRewards } from '../lib/hooks/useRewards'
 import { useMonthlyAwards } from '../lib/hooks/useMonthlyAwards'
@@ -37,6 +39,13 @@ export function GrowthGardenReportPage() {
     yearMonth,
     studentIds,
   )
+  const {
+    goal: classGoal,
+    progress: classGoalProgress,
+    unlocks: classGoalUnlocks,
+    loading: classGoalLoading,
+    error: classGoalError,
+  } = useClassGardenGoal(yearMonth.year, yearMonth.month)
   const rewards = useRewards(yearMonth)
   const awards = useMonthlyAwards(yearMonth)
 
@@ -50,7 +59,11 @@ export function GrowthGardenReportPage() {
   }, [students, selectedStudentId])
 
   const studentReport = selectedStudentId ? studentReportFor(selectedStudentId) : null
-  const loading = studentsLoading || reportLoading
+  const loading = studentsLoading || reportLoading || classGoalLoading
+  const monthlyClassGoalUnlocks = useMemo(
+    () => classGoalUnlocks.filter((unlock) => unlock.year === yearMonth.year && unlock.month === yearMonth.month),
+    [classGoalUnlocks, yearMonth.month, yearMonth.year],
+  )
 
   async function handleCreateReward(input: NewReward) {
     const result = await rewards.createReward(input)
@@ -128,6 +141,11 @@ export function GrowthGardenReportPage() {
       {error && (
         <p className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       )}
+      {tab === 'class' && classGoalError && (
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          공동 목표를 불러오지 못했습니다: {classGoalError}
+        </p>
+      )}
       {rewards.error && (
         <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {rewards.error}
@@ -149,28 +167,35 @@ export function GrowthGardenReportPage() {
       )}
 
       {!loading && students.length > 0 && tab === 'class' && (
-        <ClassMonthlyReportView
-          report={classReport}
-          awardList={
-            <MonthlyAwardList
-              yearMonth={yearMonth}
-              awards={awards.awards}
-              students={students}
-              loading={awards.loading}
-              onCelebrate={setCelebrating}
-              onEdit={(award) => {
-                const student = students.find((candidate) => candidate.id === award.student_id)
-                if (student) setAwardTarget({ student, monthlyGrowth: award.monthly_growth })
-              }}
-              onDelete={(id) => void awards.deleteAward(id)}
-            />
-          }
-          rewards={rewards.classRewards}
-          rewardsLoading={rewards.loading}
-          rewardSaving={rewards.saving}
-          onCreateReward={handleCreateReward}
-          onDeleteReward={handleDeleteReward}
-        />
+        <div className="flex flex-col gap-4">
+          <ClassGoalMonthlyReport
+            goal={classGoal}
+            progress={classGoalProgress}
+            monthlyUnlocks={monthlyClassGoalUnlocks}
+          />
+          <ClassMonthlyReportView
+            report={classReport}
+            awardList={
+              <MonthlyAwardList
+                yearMonth={yearMonth}
+                awards={awards.awards}
+                students={students}
+                loading={awards.loading}
+                onCelebrate={setCelebrating}
+                onEdit={(award) => {
+                  const student = students.find((candidate) => candidate.id === award.student_id)
+                  if (student) setAwardTarget({ student, monthlyGrowth: award.monthly_growth })
+                }}
+                onDelete={(id) => void awards.deleteAward(id)}
+              />
+            }
+            rewards={rewards.classRewards}
+            rewardsLoading={rewards.loading}
+            rewardSaving={rewards.saving}
+            onCreateReward={handleCreateReward}
+            onDeleteReward={handleDeleteReward}
+          />
+        </div>
       )}
 
       {!loading && students.length > 0 && tab === 'student' && (
