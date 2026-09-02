@@ -38,7 +38,15 @@ export function GrowthGardenSettingsPage() {
   const today = new Date()
   const [goalYear, setGoalYear] = useState(today.getFullYear())
   const [goalMonth, setGoalMonth] = useState(today.getMonth() + 1)
-  const { goal, unlocks, loading: goalLoading, error: goalError, saveGoal } = useClassGardenGoal(goalYear, goalMonth)
+  const {
+    goal,
+    unlocks,
+    loading: goalLoading,
+    dataReady: goalDataReady,
+    error: goalError,
+    refresh: refreshGoal,
+    saveGoal,
+  } = useClassGardenGoal(goalYear, goalMonth)
 
   const [personal, setPersonal] = useState<Thresholds>(settings.personal)
   const [garden, setGarden] = useState<Thresholds>(settings.garden)
@@ -100,7 +108,12 @@ export function GrowthGardenSettingsPage() {
         </p>
       )}
       {goalError && (
-        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{goalError}</p>
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <span>{goalError}</span>
+          <button type="button" onClick={() => void refreshGoal()} className="rounded-lg border border-amber-300 bg-white px-3 py-1 font-semibold hover:bg-amber-100">
+            공동 목표 다시 불러오기
+          </button>
+        </div>
       )}
 
       {loading ? (
@@ -189,18 +202,23 @@ export function GrowthGardenSettingsPage() {
           </section>
 
           <section className={sectionCardClass}>
-            <ClassGoalEditor
-              initialGoal={goal}
-              unlockedTypes={new Set(unlocks.map((unlock) => unlock.decoration_type))}
-              year={goalYear}
-              month={goalMonth}
-              saving={goalLoading}
-              onYearMonthChange={(year, month) => {
-                setGoalYear(year)
-                setGoalMonth(month)
-              }}
-              onSave={saveGoal}
-            />
+            {goalLoading ? (
+              <p className="py-8 text-center text-sm text-gray-500">공동 목표를 불러오는 중...</p>
+            ) : goalDataReady ? (
+              <ClassGoalEditor
+                initialGoal={goal}
+                unlockedTypes={new Set(unlocks.map((unlock) => unlock.decoration_type))}
+                year={goalYear}
+                month={goalMonth}
+                onYearMonthChange={(year, month) => {
+                  setGoalYear(year)
+                  setGoalMonth(month)
+                }}
+                onSave={saveGoal}
+              />
+            ) : (
+              <p className="py-8 text-center text-sm text-gray-500">공동 목표 데이터를 불러온 뒤 편집할 수 있습니다.</p>
+            )}
           </section>
         </div>
       )}

@@ -5,6 +5,7 @@ import type {
   GrowthPointEntry,
 } from '../types'
 import { monthRange, type YearMonth } from './monthlyReport'
+import { CLASS_GOAL_DECORATION_TYPES } from './classGoalDecorations'
 
 export type ClassGoalMilestoneState = ClassGoalMilestone & {
   reached: boolean
@@ -50,6 +51,42 @@ export function validateClassGoalMilestones(
   if (milestones[milestones.length - 1].point > targetPoint) {
     return '마지막 단계 점수는 최종 목표 점수보다 클 수 없습니다.'
   }
+  return null
+}
+
+/** 이미 영구 해금된 장식은 기존 목표의 같은 점수 단계에서만 그대로 유지할 수 있다. */
+export function validateClassGoalUnlockConstraints(
+  input: Pick<ClassGoal, 'year' | 'month' | 'milestones'>,
+  currentGoal: ClassGoal | null,
+  unlocks: ClassGardenUnlock[],
+): string | null {
+  const unlockedTypes = new Set(unlocks.map((unlock) => unlock.decoration_type))
+  const editingCurrentGoal = currentGoal?.year === input.year && currentGoal.month === input.month
+    ? currentGoal
+    : null
+
+  if (!editingCurrentGoal && CLASS_GOAL_DECORATION_TYPES.filter((type) => !unlockedTypes.has(type)).length < 3) {
+    return '새 공동 목표에는 사용하지 않은 장식이 3개 이상 필요합니다.'
+  }
+
+  for (const milestone of input.milestones) {
+    if (!unlockedTypes.has(milestone.decorationType)) continue
+    const original = editingCurrentGoal?.milestones.find(
+      (item) => item.decorationType === milestone.decorationType,
+    )
+    if (!original || original.point !== milestone.point) {
+      return '이미 해금된 단계의 점수와 장식은 변경할 수 없습니다.'
+    }
+  }
+
+  for (const original of editingCurrentGoal?.milestones ?? []) {
+    if (!unlockedTypes.has(original.decorationType)) continue
+    const preserved = input.milestones.some(
+      (milestone) => milestone.decorationType === original.decorationType && milestone.point === original.point,
+    )
+    if (!preserved) return '이미 해금된 단계의 점수와 장식은 변경하거나 삭제할 수 없습니다.'
+  }
+
   return null
 }
 

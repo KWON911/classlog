@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Flag, Settings2, Sparkles } from 'lucide-react'
-import type { ClassGoal } from '../../lib/types'
+import type { ClassGoal, DecorationType } from '../../lib/types'
 import type { ClassGoalProgress } from '../../lib/growth-garden/classGoal'
 import { classGoalDecorationLabel } from '../../lib/growth-garden/classGoalDecorations'
 import { GrowthFeedbackToast, type GrowthFeedback } from './GrowthFeedbackToast'
@@ -8,17 +8,18 @@ import { GrowthFeedbackToast, type GrowthFeedback } from './GrowthFeedbackToast'
 type ClassGoalPanelProps = {
   goal: ClassGoal | null
   progress: ClassGoalProgress | null
+  newlyUnlockedTypes: Set<DecorationType>
   onOpenSettings: () => void
   /** 전체화면에서는 학생 식별을 방해하지 않는 월·점수만 남긴다. */
   compact?: boolean
 }
 
 /** 월간 공동 목표의 안내·진행 상태. 학생별 기여도나 순위는 보여주지 않는다. */
-export function ClassGoalPanel({ goal, progress, onOpenSettings, compact = false }: ClassGoalPanelProps) {
+export function ClassGoalPanel({ goal, progress, newlyUnlockedTypes, onOpenSettings, compact = false }: ClassGoalPanelProps) {
   const [feedback, setFeedback] = useState<GrowthFeedback | null>(null)
   const newlyUnlockedKey = useMemo(
-    () => progress?.newlyReachableMilestones.map((milestone) => milestone.decorationType).join(',') ?? '',
-    [progress],
+    () => [...newlyUnlockedTypes].sort().join(','),
+    [newlyUnlockedTypes],
   )
 
   useEffect(() => {

@@ -20,7 +20,7 @@ import { useGrowthRecorder } from '../../lib/hooks/useGrowthRecorder'
 import { GROWTH_GARDEN_DATA_SOURCE } from '../../lib/growth-garden/constants'
 import { calculateGardenEnvironment } from '../../lib/growth-garden/environment'
 import { useClassGardenGoal } from '../../lib/hooks/useClassGardenGoal'
-import type { DecorationType, Student } from '../../lib/types'
+import type { Student } from '../../lib/types'
 
 type SortMode = 'number' | 'score'
 /** 카드 보기가 기본 — 관리(기록) 작업이 주 용도이고, 정원 보기는 감상/확인용. */
@@ -59,7 +59,14 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
   const { environmentStages } = useGrowthSettings()
   const navigate = useNavigate()
   const today = new Date()
-  const { goal, unlocks, goalProgress } = useClassGardenGoal(today.getFullYear(), today.getMonth() + 1)
+  const {
+    goal,
+    unlocks,
+    goalProgress,
+    newlyUnlockedTypes,
+    error: goalError,
+    refresh: refreshGoal,
+  } = useClassGardenGoal(today.getFullYear(), today.getMonth() + 1)
   const { pulseFor, trigger } = usePlantPulse()
   const selection = useStudentSelection(students)
   const recorder = useGrowthRecorder({
@@ -104,11 +111,6 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
     () => calculateGardenEnvironment(students.map((student) => summaryFor(student.id).score), environmentStages),
     [students, summaryFor, environmentStages],
   )
-  const newlyUnlockedTypes = useMemo(
-    () => new Set<DecorationType>(goalProgress?.newlyReachableMilestones.map((milestone) => milestone.decorationType) ?? []),
-    [goalProgress],
-  )
-
   const loading = studentsLoading || gardenLoading
 
   return (
@@ -167,6 +169,14 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
 
       {error && (
         <p className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+      )}
+      {goalError && (
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <span>{goalError}</span>
+          <button type="button" onClick={() => void refreshGoal()} className="rounded-lg border border-amber-300 bg-white px-3 py-1 font-semibold hover:bg-amber-100">
+            장식 해금 다시 시도
+          </button>
+        </div>
       )}
 
       {loading && <p className="py-16 text-center text-sm text-gray-500">정원을 불러오는 중...</p>}

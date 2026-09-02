@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { buildClassGoalProgress, classGoalScore, validateClassGoalMilestones, type ClassGoalProgress } from '../growth-garden/classGoal'
+import { buildClassGoalProgress, classGoalScore, validateClassGoalMilestones, validateClassGoalUnlockConstraints, type ClassGoalProgress } from '../growth-garden/classGoal'
 import { growthGardenService } from '../growth-garden/services'
 import type { NewClassGardenUnlock, NewClassGoal } from '../growth-garden/services/types'
 import { useStudents } from './useStudents'
@@ -24,18 +24,29 @@ export function useClassGardenGoal(year: number, month: number) {
   const [goal, setGoal] = useState<ClassGoal | null>(null)
   const [unlocks, setUnlocks] = useState<ClassGardenUnlock[]>([])
   const [entries, setEntries] = useState<GrowthPointEntry[]>([])
+  const [newlyUnlockedTypes, setNewlyUnlockedTypes] = useState<Set<ClassGardenUnlock['decoration_type']>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [dataReady, setDataReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const refreshSequence = useRef(0)
+  const loadedPeriod = useRef<string | null>(null)
 
   const studentIds = useMemo(() => new Set(students.map((student) => student.id)), [students])
 
   const refresh = useCallback(async () => {
+    const sequence = ++refreshSequence.current
+    const requestedPeriod = `${year}-${month}`
+    setLoading(true)
+    setDataReady(false)
+    setError(null)
+    setNewlyUnlockedTypes(new Set())
+    if (loadedPeriod.current !== requestedPeriod) {
+      setGoal(null)
+      setUnlocks([])
+      setEntries([])
+    }
     if (studentsLoading) return
 
-    const sequence = ++refreshSequence.current
-    setLoading(true)
-    setError(null)
     const [goalResult, unlockResult, entriesResult] = await Promise.all([
       growthGardenService.getClassGoal(year, month),
       growthGardenService.listClassGardenUnlocks(),
@@ -45,6 +56,10 @@ export function useClassGardenGoal(year: number, month: number) {
     if (sequence !== refreshSequence.current) return
     const loadError = goalResult.error ?? unlockResult.error ?? entriesResult.error
     if (loadError) {
+      loadedPeriod.current = null
+      setGoal(null)
+      setUnlocks([])
+      setEntries([])
       setError(loadError)
       setLoading(false)
       return
@@ -56,6 +71,8 @@ export function useClassGardenGoal(year: number, month: number) {
     setGoal(nextGoal)
     setUnlocks(nextUnlocks)
     setEntries(nextEntries)
+    loadedPeriod.current = requestedPeriod
+    setDataReady(true)
 
     if (!nextGoal) {
       setLoading(false)
@@ -81,6 +98,20 @@ export function useClassGardenGoal(year: number, month: number) {
       setError(saved.error)
     } else if (saved.data?.length) {
       setUnlocks((current) => mergeUnlocks(current, saved.data ?? []))
+      setNewlyUnlockedTypes(new Set(saved.data.map((unlock) => unlock.decoration_type)))
+    } else {
+      const synced = await growthGardenService.listClassGardenUnlocks()
+      if (sequence !== refreshSequence.current) return
+      if (synced.error) {
+        loadedPeriod.current = null
+        setGoal(null)
+        setUnlocks([])
+        setEntries([])
+        setDataReady(false)
+        setError(synced.error)
+      } else {
+        setUnlocks(synced.data ?? [])
+      }
     }
     setLoading(false)
   }, [month, studentIds, studentsLoading, year])
@@ -101,10 +132,20 @@ export function useClassGardenGoal(year: number, month: number) {
   ), [entries, goal, month, studentIds, unlocks, year])
 
   const saveGoal = useCallback(async (input: NewClassGoal) => {
+    if (!dataReady) {
+      const message = '공동 목표 데이터를 다시 불러온 뒤 저장해 주세요.'
+      setError(message)
+      return { error: message }
+    }
     const validationError = validateClassGoalMilestones(input.milestones, input.target_point)
     if (validationError) {
       setError(validationError)
       return { error: validationError }
+    }
+    const unlockConstraintError = validateClassGoalUnlockConstraints(input, goal, unlocks)
+    if (unlockConstraintError) {
+      setError(unlockConstraintError)
+      return { error: unlockConstraintError }
     }
     const result = await growthGardenService.saveClassGoal(input)
     if (result.error || !result.data) {
@@ -114,7 +155,7 @@ export function useClassGardenGoal(year: number, month: number) {
     }
     await refresh()
     return { data: result.data }
-  }, [refresh])
+  }, [dataReady, goal, refresh, unlocks])
 
   return {
     goal,
@@ -122,6 +163,8 @@ export function useClassGardenGoal(year: number, month: number) {
     // 기존 성장정원 소비처가 읽기 쉬운 별칭.
     goalProgress: progress,
     unlocks,
+    newlyUnlockedTypes,
+    dataReady,
     loading: loading || studentsLoading,
     error,
     refresh,

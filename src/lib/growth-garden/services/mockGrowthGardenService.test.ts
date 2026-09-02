@@ -49,6 +49,26 @@ describe('mockGrowthGardenService class goals', () => {
     ])
   })
 
+  it('목표를 읽은 뒤 해금이 생겨도 저장 경계에서 해금 단계를 다시 검증한다', async () => {
+    await mockGrowthGardenService.saveClassGoal(septemberGoal)
+    await mockGrowthGardenService.upsertClassGardenUnlocks([pondUnlock])
+
+    const result = await mockGrowthGardenService.saveClassGoal({
+      ...septemberGoal,
+      milestones: [
+        { point: 100, decorationType: 'stone_path' },
+        { point: 200, decorationType: 'bench' },
+        { point: 300, decorationType: 'big_tree' },
+      ],
+    })
+
+    expect(result).toEqual({ error: expect.stringContaining('해금') })
+    expect((await mockGrowthGardenService.getClassGoal(2026, 9)).data?.milestones[1]).toEqual({
+      point: 200,
+      decorationType: 'pond',
+    })
+  })
+
   it('손상된 목표·해금 저장값은 안전한 빈 결과를 반환한다', async () => {
     window.localStorage.setItem('classlog:growth-garden:class-goals', '{not json')
     window.localStorage.setItem('classlog:growth-garden:class-garden-unlocks', JSON.stringify({ invalid: true }))

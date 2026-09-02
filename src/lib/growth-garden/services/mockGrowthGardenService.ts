@@ -5,7 +5,7 @@
  * 훅/화면/순수 로직은 한 줄도 건드릴 필요가 없다.
  */
 import type { ClassGardenUnlock, ClassGoal, DecorationType, GrowthPointEntry, PlantCycle } from '../../types'
-import { validateClassGoalMilestones } from '../classGoal'
+import { validateClassGoalMilestones, validateClassGoalUnlockConstraints } from '../classGoal'
 import type {
   EntryRange,
   GrowthGardenService,
@@ -184,6 +184,8 @@ export const mockGrowthGardenService: GrowthGardenService = {
   async saveClassGoal(input: NewClassGoal) {
     const current = readClassGoals()
     const existing = current.find((goal) => goal.year === input.year && goal.month === input.month)
+    const unlockError = validateClassGoalUnlockConstraints(input, existing ?? null, readClassGardenUnlocks())
+    if (unlockError) return delay({ error: unlockError })
     const now = new Date().toISOString()
     const saved: ClassGoal = {
       ...input,

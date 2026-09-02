@@ -34,4 +34,36 @@ describe('ClassGoalEditor', () => {
     expect(screen.getAllByRole('option', { name: '작은 연못 (이미 해금됨)' })[0]).toBeDisabled()
     expect(screen.getByRole('button', { name: '단계 추가' })).toBeEnabled()
   })
+
+  it('locks the point, decoration, and deletion controls for an already unlocked milestone', () => {
+    render(
+      <ClassGoalEditor
+        initialGoal={initialGoal}
+        unlockedTypes={new Set(['stone_path'])}
+        onSave={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByLabelText('1단계 점수')).toBeDisabled()
+    expect(screen.getByLabelText('1단계 장식')).toBeDisabled()
+    expect(screen.getByRole('button', { name: '1단계 삭제' })).toBeDisabled()
+    expect(screen.getByText('해금 완료')).toBeInTheDocument()
+  })
+
+  it('does not create or save a new goal draft when fewer than three decorations remain unused', () => {
+    const onSave = vi.fn()
+    render(
+      <ClassGoalEditor
+        initialGoal={null}
+        unlockedTypes={new Set(['stone_path', 'bench', 'pond', 'birdhouse', 'big_tree', 'bridge'])}
+        onSave={onSave}
+      />,
+    )
+
+    expect(screen.queryAllByLabelText(/단계 점수/)).toHaveLength(0)
+    expect(screen.getByRole('alert')).toHaveTextContent('사용하지 않은 장식이 3개 이상')
+    expect(screen.getByRole('button', { name: '저장' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: '저장' }))
+    expect(onSave).not.toHaveBeenCalled()
+  })
 })

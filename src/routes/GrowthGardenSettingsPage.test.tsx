@@ -3,10 +3,21 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GrowthGardenSettingsPage } from './GrowthGardenSettingsPage'
 
+const mockGoalRefresh = vi.hoisted(() => vi.fn())
+const mockGoalHook = vi.hoisted(() => ({
+  goal: null,
+  unlocks: [],
+  loading: false,
+  error: null as string | null,
+  dataReady: true,
+  refresh: mockGoalRefresh,
+  saveGoal: vi.fn(),
+}))
+
 vi.mock('../lib/hooks/useStudents', () => ({ useStudents: () => ({ students: [], loading: false }) }))
 vi.mock('../lib/hooks/useGrowthGarden', () => ({ useGrowthGarden: () => ({ summaryFor: () => ({ score: 0 }), loading: false }) }))
 vi.mock('../lib/hooks/useClassGardenGoal', () => ({
-  useClassGardenGoal: () => ({ goal: null, unlocks: [], loading: false, error: null, saveGoal: vi.fn() }),
+  useClassGardenGoal: () => mockGoalHook,
 }))
 vi.mock('../lib/growth-garden/growthSettingsContext', () => ({
   useGrowthSettings: () => ({
@@ -18,7 +29,12 @@ vi.mock('../components/growth-garden/settings/ThresholdEditor', () => ({ Thresho
 vi.mock('../components/growth-garden/PlantIllustration', () => ({ PlantIllustration: () => <div /> }))
 vi.mock('../components/growth-garden/GrowthFeedbackToast', () => ({ GrowthFeedbackToast: () => null }))
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  mockGoalHook.error = null
+  mockGoalHook.dataReady = true
+  mockGoalRefresh.mockClear()
+})
 
 describe('GrowthGardenSettingsPage', () => {
   it('keeps shared garden navigation separate from threshold editor actions', () => {
@@ -34,5 +50,16 @@ describe('GrowthGardenSettingsPage', () => {
     expect(screen.getByRole('heading', { name: '학급 공동 목표' })).toBeInTheDocument()
     expect(screen.getByLabelText('목표 연도')).toBeInTheDocument()
     expect(screen.getByLabelText('목표 월')).toBeInTheDocument()
+  })
+
+  it('does not render an editable goal draft after goal data fails to load and offers retry', () => {
+    mockGoalHook.error = '목표 조회 실패'
+    mockGoalHook.dataReady = false
+    render(<MemoryRouter initialEntries={['/growth-garden/settings']}><GrowthGardenSettingsPage /></MemoryRouter>)
+
+    expect(screen.queryByRole('heading', { name: '학급 공동 목표' })).not.toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('목표 조회 실패')
+    screen.getByRole('button', { name: '공동 목표 다시 불러오기' }).click()
+    expect(mockGoalRefresh).toHaveBeenCalledOnce()
   })
 })

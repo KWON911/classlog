@@ -7,8 +7,8 @@ import { CLASS_GOAL_DECORATION_TYPES, classGoalDecorationLabel } from '../../../
 
 function defaultMilestones(unlockedTypes: Set<DecorationType>): ClassGoalMilestone[] {
   const available = CLASS_GOAL_DECORATION_TYPES.filter((type) => !unlockedTypes.has(type))
-  const types = [...available, ...CLASS_GOAL_DECORATION_TYPES].slice(0, 3)
-  return types.map((decorationType, index) => ({ point: (index + 1) * 100, decorationType }))
+  if (available.length < 3) return []
+  return available.slice(0, 3).map((decorationType, index) => ({ point: (index + 1) * 100, decorationType }))
 }
 
 type ClassGoalEditorProps = {
@@ -30,6 +30,10 @@ export function ClassGoalEditor({ initialGoal, unlockedTypes, onSave, year, mont
   const [targetPoint, setTargetPoint] = useState(initialGoal?.target_point ?? 300)
   const [milestones, setMilestones] = useState<ClassGoalMilestone[]>(initialGoal?.milestones ?? (() => defaultMilestones(unlockedTypes)))
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const unusedDecorationCount = CLASS_GOAL_DECORATION_TYPES.filter((type) => !unlockedTypes.has(type)).length
+  const creationError = !initialGoal && unusedDecorationCount < 3
+    ? '새 공동 목표에는 사용하지 않은 장식이 3개 이상 필요합니다.'
+    : null
 
   useEffect(() => {
     setTargetPoint(initialGoal?.target_point ?? 300)
@@ -42,7 +46,10 @@ export function ClassGoalEditor({ initialGoal, unlockedTypes, onSave, year, mont
     return validateClassGoalMilestones(milestones, targetPoint)
   }, [milestones, targetPoint])
 
-  const duplicateError = submitError ?? validationError
+  const duplicateError = submitError ?? creationError ?? validationError
+  const nextDecoration = CLASS_GOAL_DECORATION_TYPES.find(
+    (type) => !unlockedTypes.has(type) && !milestones.some((item) => item.decorationType === type),
+  )
 
   function updateMilestone(index: number, patch: Partial<ClassGoalMilestone>) {
     setMilestones((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item))
@@ -80,15 +87,16 @@ export function ClassGoalEditor({ initialGoal, unlockedTypes, onSave, year, mont
         {milestones.map((milestone, index) => (
           <li key={index} className="flex flex-wrap items-center gap-2 rounded-xl bg-brand-50/50 p-2">
             <span className="w-12 text-sm font-semibold text-brand-700">{index + 1}단계</span>
-            <input aria-label={`${index + 1}단계 점수`} type="number" min={1} inputMode="numeric" value={Number.isFinite(milestone.point) ? milestone.point : ''} onChange={(event) => updateMilestone(index, { point: Number(event.target.value) })} className="h-9 w-20 rounded-lg border border-gray-300 bg-white px-2 text-right tabular-nums" />
-            <select aria-label={`${index + 1}단계 장식`} value={milestone.decorationType} onChange={(event) => updateMilestone(index, { decorationType: event.target.value as DecorationType })} className="h-9 min-w-[130px] flex-1 rounded-lg border border-gray-300 bg-white px-2 text-sm">
+            <input aria-label={`${index + 1}단계 점수`} type="number" min={1} inputMode="numeric" disabled={Boolean(initialGoal && unlockedTypes.has(milestone.decorationType))} value={Number.isFinite(milestone.point) ? milestone.point : ''} onChange={(event) => updateMilestone(index, { point: Number(event.target.value) })} className="h-9 w-20 rounded-lg border border-gray-300 bg-white px-2 text-right tabular-nums disabled:cursor-not-allowed disabled:bg-gray-100" />
+            <select aria-label={`${index + 1}단계 장식`} value={milestone.decorationType} disabled={Boolean(initialGoal && unlockedTypes.has(milestone.decorationType))} onChange={(event) => updateMilestone(index, { decorationType: event.target.value as DecorationType })} className="h-9 min-w-[130px] flex-1 rounded-lg border border-gray-300 bg-white px-2 text-sm disabled:cursor-not-allowed disabled:bg-gray-100">
               {CLASS_GOAL_DECORATION_TYPES.map((type) => {
                 const legacySelection = initialGoal?.milestones.some((item) => item.decorationType === type) ?? false
                 const disabled = unlockedTypes.has(type) && !legacySelection
                 return <option key={type} value={type} disabled={disabled}>{classGoalDecorationLabel(type)}{disabled ? ' (이미 해금됨)' : ''}</option>
               })}
             </select>
-            <button type="button" aria-label={`${index + 1}단계 삭제`} disabled={milestones.length <= 3} onClick={() => setMilestones((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"><Minus size={16} aria-hidden="true" /></button>
+            {initialGoal && unlockedTypes.has(milestone.decorationType) && <span className="text-xs font-semibold text-brand-700">해금 완료</span>}
+            <button type="button" aria-label={`${index + 1}단계 삭제`} disabled={milestones.length <= 3 || Boolean(initialGoal && unlockedTypes.has(milestone.decorationType))} onClick={() => setMilestones((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"><Minus size={16} aria-hidden="true" /></button>
           </li>
         ))}
       </ol>
@@ -96,8 +104,8 @@ export function ClassGoalEditor({ initialGoal, unlockedTypes, onSave, year, mont
       {duplicateError && <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{duplicateError}</p>}
 
       <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-4">
-        <button type="button" onClick={() => setMilestones((current) => [...current, { point: (current[current.length - 1]?.point ?? 0) + 100, decorationType: CLASS_GOAL_DECORATION_TYPES.find((type) => !unlockedTypes.has(type) && !current.some((item) => item.decorationType === type)) ?? 'stone_path' }])} disabled={milestones.length >= 5} className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={15} aria-hidden="true" />단계 추가</button>
-        <button type="button" onClick={() => void submit()} disabled={saving} className="ml-auto inline-flex h-10 items-center gap-1.5 rounded-full bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"><Save size={15} aria-hidden="true" />{saving ? '저장하는 중...' : '저장'}</button>
+        <button type="button" onClick={() => nextDecoration && setMilestones((current) => [...current, { point: (current[current.length - 1]?.point ?? 0) + 100, decorationType: nextDecoration }])} disabled={milestones.length >= 5 || !nextDecoration || Boolean(creationError)} className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={15} aria-hidden="true" />단계 추가</button>
+        <button type="button" onClick={() => void submit()} disabled={saving || Boolean(creationError)} className="ml-auto inline-flex h-10 items-center gap-1.5 rounded-full bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"><Save size={15} aria-hidden="true" />{saving ? '저장하는 중...' : '저장'}</button>
       </div>
     </div>
   )

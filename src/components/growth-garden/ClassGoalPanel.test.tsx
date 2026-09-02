@@ -23,7 +23,7 @@ describe('ClassGoalPanel', () => {
       milestone_point: 100, unlocked_at: '2026-09-02T00:00:00.000Z', created_at: '2026-09-02T00:00:00.000Z',
     }])
 
-    render(<ClassGoalPanel goal={goal} progress={progress} onOpenSettings={vi.fn()} />)
+    render(<ClassGoalPanel goal={goal} progress={progress} newlyUnlockedTypes={new Set()} onOpenSettings={vi.fn()} />)
 
     expect(screen.getByText('57점 남았어요')).toBeInTheDocument()
     expect(screen.getByText('✓ 돌길')).toBeInTheDocument()
@@ -33,17 +33,29 @@ describe('ClassGoalPanel', () => {
 
   it('guides teachers to create a goal when the month has no goal', () => {
     const onOpenSettings = vi.fn()
-    render(<ClassGoalPanel goal={null} progress={null} onOpenSettings={onOpenSettings} />)
+    render(<ClassGoalPanel goal={null} progress={null} newlyUnlockedTypes={new Set()} onOpenSettings={onOpenSettings} />)
 
     screen.getByRole('button', { name: '공동 목표 만들기' }).click()
     expect(onOpenSettings).toHaveBeenCalledOnce()
   })
 
   it('keeps only month and score in fullscreen mode after completion', () => {
-    render(<ClassGoalPanel goal={goal} progress={buildClassGoalProgress(goal, 300)} onOpenSettings={vi.fn()} compact />)
+    render(<ClassGoalPanel goal={goal} progress={buildClassGoalProgress(goal, 300)} newlyUnlockedTypes={new Set()} onOpenSettings={vi.fn()} compact />)
 
     expect(screen.getByText('9월 공동 목표')).toBeInTheDocument()
     expect(screen.getByText('300 / 300점')).toBeInTheDocument()
     expect(screen.queryByText('작은 연못')).not.toBeInTheDocument()
+  })
+
+  it('celebrates only decoration types confirmed as newly persisted', () => {
+    const progress = buildClassGoalProgress(goal, 100)
+    const { rerender } = render(
+      <ClassGoalPanel goal={goal} progress={progress} newlyUnlockedTypes={new Set()} onOpenSettings={vi.fn()} />,
+    )
+
+    expect(screen.queryByText(/장식을 해금했어요/)).not.toBeInTheDocument()
+
+    rerender(<ClassGoalPanel goal={goal} progress={progress} newlyUnlockedTypes={new Set(['stone_path'])} onOpenSettings={vi.fn()} />)
+    expect(screen.getByText('돌길 장식을 해금했어요!')).toBeInTheDocument()
   })
 })

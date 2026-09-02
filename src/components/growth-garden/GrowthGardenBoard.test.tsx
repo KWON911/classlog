@@ -15,6 +15,15 @@ const mockClassGardenUnlock = vi.hoisted(() => ({
   unlocked_at: '2026-09-02T00:00:00.000Z',
   created_at: '2026-09-02T00:00:00.000Z',
 }))
+const mockRefreshClassGoal = vi.hoisted(() => vi.fn())
+const mockClassGoalHook = vi.hoisted(() => ({
+  goal: null,
+  unlocks: [mockClassGardenUnlock],
+  goalProgress: { newlyReachableMilestones: [{ point: 100, decorationType: 'pond' }] },
+  newlyUnlockedTypes: new Set(['bench']),
+  error: '장식 해금을 저장하지 못했습니다.',
+  refresh: mockRefreshClassGoal,
+}))
 
 vi.mock('../../lib/hooks/useGrowthGarden', () => ({
   useGrowthGarden: () => ({
@@ -40,10 +49,7 @@ vi.mock('../../lib/hooks/usePlantPulse', () => ({
 }))
 
 vi.mock('../../lib/hooks/useClassGardenGoal', () => ({
-  useClassGardenGoal: () => ({
-    unlocks: [mockClassGardenUnlock],
-    goalProgress: { newlyReachableMilestones: [{ point: 100, decorationType: 'pond' }] },
-  }),
+  useClassGardenGoal: () => mockClassGoalHook,
 }))
 
 vi.mock('./GardenStudentCard', () => ({ GardenStudentCard: () => <div /> }))
@@ -104,7 +110,7 @@ describe('GrowthGardenBoard', () => {
     expect(controlsRow).not.toHaveClass('sm:w-auto')
   })
 
-  it('passes permanent unlocks and newly reachable decoration types to the garden view', () => {
+  it('passes permanent unlocks and only actually persisted new decoration types to the garden view', () => {
     render(
       <MemoryRouter initialEntries={['/growth-garden']}>
         <GrowthGardenBoard students={[student]} studentsLoading={false} />
@@ -116,8 +122,20 @@ describe('GrowthGardenBoard', () => {
     expect(mockGardenView).toHaveBeenLastCalledWith(
       expect.objectContaining({
         unlocks: [mockClassGardenUnlock],
-        newlyUnlockedTypes: new Set(['pond']),
+        newlyUnlockedTypes: new Set(['bench']),
       }),
     )
+  })
+
+  it('shows class-goal persistence errors and retries them on request', () => {
+    render(
+      <MemoryRouter initialEntries={['/growth-garden']}>
+        <GrowthGardenBoard students={[student]} studentsLoading={false} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('alert')).toHaveTextContent('장식 해금을 저장하지 못했습니다.')
+    fireEvent.click(screen.getByRole('button', { name: '장식 해금 다시 시도' }))
+    expect(mockRefreshClassGoal).toHaveBeenCalledOnce()
   })
 })

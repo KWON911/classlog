@@ -121,6 +121,7 @@ export function GardenView({
       <ClassGoalPanel
         goal={goal}
         progress={goalProgress}
+        newlyUnlockedTypes={newlyUnlockedTypes}
         onOpenSettings={onOpenGoalSettings}
         compact={isFullscreen}
       />
