@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react'
 import { PageContainer } from '../components/PageContainer'
 import { GardenPageNav } from '../components/growth-garden/GardenPageNav'
 import { ThresholdEditor } from '../components/growth-garden/settings/ThresholdEditor'
+import { ClassGoalEditor } from '../components/growth-garden/settings/ClassGoalEditor'
 import { PlantIllustration } from '../components/growth-garden/PlantIllustration'
 import { GrowthFeedbackToast, type GrowthFeedback } from '../components/growth-garden/GrowthFeedbackToast'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useGrowthGarden } from '../lib/hooks/useGrowthGarden'
+import { useClassGardenGoal } from '../lib/hooks/useClassGardenGoal'
 import { useGrowthSettings } from '../lib/growth-garden/growthSettingsContext'
 import {
   DEFAULT_GARDEN_THRESHOLDS,
@@ -33,6 +35,10 @@ export function GrowthGardenSettingsPage() {
   const { settings, save, loading: settingsLoading, error: settingsError } = useGrowthSettings()
   const { students, loading: studentsLoading } = useStudents()
   const { summaryFor, loading: gardenLoading } = useGrowthGarden()
+  const today = new Date()
+  const [goalYear, setGoalYear] = useState(today.getFullYear())
+  const [goalMonth, setGoalMonth] = useState(today.getMonth() + 1)
+  const { goal, unlocks, loading: goalLoading, error: goalError, saveGoal } = useClassGardenGoal(goalYear, goalMonth)
 
   const [personal, setPersonal] = useState<Thresholds>(settings.personal)
   const [garden, setGarden] = useState<Thresholds>(settings.garden)
@@ -92,6 +98,9 @@ export function GrowthGardenSettingsPage() {
         <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {settingsError}
         </p>
+      )}
+      {goalError && (
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{goalError}</p>
       )}
 
       {loading ? (
@@ -176,6 +185,21 @@ export function GrowthGardenSettingsPage() {
                   </dl>
                 )
               }
+            />
+          </section>
+
+          <section className={sectionCardClass}>
+            <ClassGoalEditor
+              initialGoal={goal}
+              unlockedTypes={new Set(unlocks.map((unlock) => unlock.decoration_type))}
+              year={goalYear}
+              month={goalMonth}
+              saving={goalLoading}
+              onYearMonthChange={(year, month) => {
+                setGoalYear(year)
+                setGoalMonth(month)
+              }}
+              onSave={saveGoal}
             />
           </section>
         </div>

@@ -5,6 +5,9 @@ import { GrowthGardenSettingsPage } from './GrowthGardenSettingsPage'
 
 vi.mock('../lib/hooks/useStudents', () => ({ useStudents: () => ({ students: [], loading: false }) }))
 vi.mock('../lib/hooks/useGrowthGarden', () => ({ useGrowthGarden: () => ({ summaryFor: () => ({ score: 0 }), loading: false }) }))
+vi.mock('../lib/hooks/useClassGardenGoal', () => ({
+  useClassGardenGoal: () => ({ goal: null, unlocks: [], loading: false, error: null, saveGoal: vi.fn() }),
+}))
 vi.mock('../lib/growth-garden/growthSettingsContext', () => ({
   useGrowthSettings: () => ({
     settings: { personal: [0, 3, 6, 10, 15, 20, 25, 30, 35, 40, 45], garden: [0, 3, 6, 10, 15] },
@@ -23,5 +26,13 @@ describe('GrowthGardenSettingsPage', () => {
 
     expect(screen.getByTestId('settings-navigation-toolbar')).toContainElement(screen.getByRole('link', { name: '설정' }))
     expect(screen.getByTestId('settings-navigation-toolbar').compareDocumentPosition(screen.getAllByRole('button', { name: '저장' })[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('adds the month-aware class goal editor below the growth threshold settings', () => {
+    render(<MemoryRouter initialEntries={['/growth-garden/settings']}><GrowthGardenSettingsPage /></MemoryRouter>)
+
+    expect(screen.getByRole('heading', { name: '학급 공동 목표' })).toBeInTheDocument()
+    expect(screen.getByLabelText('목표 연도')).toBeInTheDocument()
+    expect(screen.getByLabelText('목표 월')).toBeInTheDocument()
   })
 })

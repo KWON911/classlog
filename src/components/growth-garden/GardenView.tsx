@@ -12,7 +12,9 @@ import { GardenBackground } from './GardenBackground'
 import { ClassGardenSummary } from './ClassGardenSummary'
 import { GardenAmbientLayer } from './GardenAmbientLayer'
 import { GardenDecorationLayer } from './GardenDecorationLayer'
-import type { ClassGardenUnlock, DecorationType } from '../../lib/types'
+import type { ClassGardenUnlock, ClassGoal, DecorationType } from '../../lib/types'
+import type { ClassGoalProgress } from '../../lib/growth-garden/classGoal'
+import { ClassGoalPanel } from './ClassGoalPanel'
 
 type GardenViewProps = {
   /** 카드 보기와 같은 순서(번호순/점수순, 검색 결과)를 그대로 받는다. */
@@ -28,6 +30,9 @@ type GardenViewProps = {
   unlocks: ClassGardenUnlock[]
   /** 이번 갱신에서 막 도달한 장식만 짧게 등장시킨다. */
   newlyUnlockedTypes: Set<DecorationType>
+  goal: ClassGoal | null
+  goalProgress: ClassGoalProgress | null
+  onOpenGoalSettings: () => void
 }
 
 /**
@@ -50,6 +55,9 @@ export function GardenView({
   environment,
   unlocks,
   newlyUnlockedTypes,
+  goal,
+  goalProgress,
+  onOpenGoalSettings,
 }: GardenViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gridAreaRef = useRef<HTMLDivElement>(null)
@@ -109,6 +117,12 @@ export function GardenView({
             </button>
           ) : null
         }
+      />
+      <ClassGoalPanel
+        goal={goal}
+        progress={goalProgress}
+        onOpenSettings={onOpenGoalSettings}
+        compact={isFullscreen}
       />
 
       {/* 그리드가 실제로 쓸 수 있는 영역 — 이 박스를 실측해 식물 크기를 정한다.

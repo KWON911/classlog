@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { LayoutGrid, Sprout } from 'lucide-react'
 import { GardenStudentCard } from './GardenStudentCard'
 import { GardenView } from './GardenView'
@@ -57,8 +57,9 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
     clearClass,
   } = useGrowthGarden()
   const { environmentStages } = useGrowthSettings()
+  const navigate = useNavigate()
   const today = new Date()
-  const { unlocks, goalProgress } = useClassGardenGoal(today.getFullYear(), today.getMonth() + 1)
+  const { goal, unlocks, goalProgress } = useClassGardenGoal(today.getFullYear(), today.getMonth() + 1)
   const { pulseFor, trigger } = usePlantPulse()
   const selection = useStudentSelection(students)
   const recorder = useGrowthRecorder({
@@ -224,6 +225,9 @@ export function GrowthGardenBoard({ students, studentsLoading, header }: GrowthG
           environment={environment}
           unlocks={unlocks}
           newlyUnlockedTypes={newlyUnlockedTypes}
+          goal={goal}
+          goalProgress={goalProgress ?? null}
+          onOpenGoalSettings={() => navigate('/growth-garden/settings')}
         />
       )}
       {!loading && students.length > 0 && (
