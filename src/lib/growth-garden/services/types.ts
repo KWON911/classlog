@@ -5,7 +5,16 @@
  * 고른다. 반환 shape `{ data?, error? }`는 프로젝트의 Supabase 훅들과 동일하게
  * 맞춰 두었다 — 나중에 구현체를 갈아끼워도 호출부 수정이 없도록.
  */
-import type { GrowthPointEntry, GrowthPointType, MonthlyAward, PlantCycle, Reward, RewardScope } from '../../types'
+import type {
+  ClassGardenUnlock,
+  ClassGoal,
+  GrowthPointEntry,
+  GrowthPointType,
+  MonthlyAward,
+  PlantCycle,
+  Reward,
+  RewardScope,
+} from '../../types'
 import type { FlowerType } from '../flowers'
 
 export type NewGrowthPointEntry = {
@@ -27,6 +36,15 @@ export type NewPlantCycle = {
   completed_at: string
   completion_threshold: number
 }
+
+/** 교사·식별자·시각은 저장소가 채운다. */
+export type NewClassGoal = Pick<ClassGoal, 'year' | 'month' | 'target_point' | 'milestones'>
+
+/** 해금 시각과 식별자는 저장소가 채운다. */
+export type NewClassGardenUnlock = Pick<
+  ClassGardenUnlock,
+  'decoration_type' | 'year' | 'month' | 'milestone_point'
+>
 
 /** created_at 기준 [from, to) 범위. 월별 리포트가 필요한 만큼만 가져오려고 쓴다. */
 export type EntryRange = { from?: string; to?: string }
@@ -72,6 +90,10 @@ export type GrowthGardenService = {
   listEntries(range?: EntryRange): Promise<{ data?: GrowthPointEntry[]; error?: string }>
   listPlantCycles(): Promise<{ data?: PlantCycle[]; error?: string }>
   upsertPlantCycles(inputs: NewPlantCycle[]): Promise<{ data?: PlantCycle[]; error?: string }>
+  getClassGoal(year: number, month: number): Promise<{ data: ClassGoal | null; error?: string }>
+  saveClassGoal(input: NewClassGoal): Promise<{ data?: ClassGoal; error?: string }>
+  listClassGardenUnlocks(): Promise<{ data?: ClassGardenUnlock[]; error?: string }>
+  upsertClassGardenUnlocks(inputs: NewClassGardenUnlock[]): Promise<{ data?: ClassGardenUnlock[]; error?: string }>
   addEntry(input: NewGrowthPointEntry): Promise<{ data?: GrowthPointEntry; error?: string }>
   /**
    * 여러 건을 한 번에 저장한다(선택 학생 일괄 상벌점).

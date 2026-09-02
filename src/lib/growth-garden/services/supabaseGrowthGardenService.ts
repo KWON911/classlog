@@ -7,11 +7,20 @@
  * (NEIS의 services/neis-service.ts와 같은 예외 패턴).
  */
 import { supabase } from '../../supabaseClient'
-import type { GrowthPointEntry, PlantCycle } from '../../types'
-import type { EntryRange, GrowthGardenService, NewGrowthPointEntry, NewPlantCycle } from './types'
+import type { ClassGardenUnlock, ClassGoal, GrowthPointEntry, PlantCycle } from '../../types'
+import type {
+  EntryRange,
+  GrowthGardenService,
+  NewClassGardenUnlock,
+  NewClassGoal,
+  NewGrowthPointEntry,
+  NewPlantCycle,
+} from './types'
 
 const TABLE = 'growth_points'
 const CYCLES_TABLE = 'plant_cycles'
+const CLASS_GOALS_TABLE = 'class_goals'
+const CLASS_GARDEN_UNLOCKS_TABLE = 'class_garden_unlocks'
 
 export const supabaseGrowthGardenService: GrowthGardenService = {
   async listEntries(range?: EntryRange) {
@@ -42,6 +51,81 @@ export const supabaseGrowthGardenService: GrowthGardenService = {
       .select()
     if (error) return { error: error.message }
     return { data: (data ?? []) as PlantCycle[] }
+  },
+
+  async getClassGoal(year: number, month: number) {
+    const { data, error } = await supabase
+      .from(CLASS_GOALS_TABLE)
+      .select('*')
+      .eq('year', year)
+      .eq('month', month)
+      .maybeSingle()
+    if (error) return { data: null, error: error.message }
+    return { data: data as ClassGoal | null }
+  },
+
+  async saveClassGoal(input: NewClassGoal) {
+    const { data: userData } = await supabase.auth.getUser()
+    const teacherId = userData.user?.id
+    if (!teacherId) return { error: '로그인이 필요합니다.' }
+
+    const { data, error } = await supabase
+      .from(CLASS_GOALS_TABLE)
+      .upsert(
+        { ...input, teacher_id: teacherId, updated_at: new Date().toISOString() },
+        { onConflict: 'teacher_id,year,month' },
+      )
+      .select()
+      .single()
+    if (error) return { error: error.message }
+    return { data: data as ClassGoal }
+  },
+
+  async listClassGardenUnlocks() {
+    const { data, error } = await supabase
+      .from(CLASS_GARDEN_UNLOCKS_TABLE)
+      .select('*')
+      .order('unlocked_at', { ascending: true })
+    if (error) return { error: error.message }
+    return { data: (data ?? []) as ClassGardenUnlock[] }
+  },
+
+  async upsertClassGardenUnlocks(inputs: NewClassGardenUnlock[]) {
+    if (inputs.length === 0) return { data: [] }
+
+    const { data: userData } = await supabase.auth.getUser()
+    const teacherId = userData.user?.id
+    if (!teacherId) return { error: '로그인이 필요합니다.' }
+
+    const { data: existingData, error: existingError } = await supabase
+      .from(CLASS_GARDEN_UNLOCKS_TABLE)
+      .select('decoration_type, year, month, milestone_point')
+    if (existingError) return { error: existingError.message }
+
+    const existing = (existingData ?? []) as Pick<
+      ClassGardenUnlock,
+      'decoration_type' | 'year' | 'month' | 'milestone_point'
+    >[]
+    const existingTypes = new Set(existing.map((unlock) => unlock.decoration_type))
+    const existingMilestones = new Set(existing.map((unlock) => `${unlock.year}:${unlock.month}:${unlock.milestone_point}`))
+    const requestedTypes = new Set<string>()
+    const requestedMilestones = new Set<string>()
+    const rows = inputs.filter((input) => {
+      const milestone = `${input.year}:${input.month}:${input.milestone_point}`
+      if (requestedTypes.has(input.decoration_type) || requestedMilestones.has(milestone)) return false
+      requestedTypes.add(input.decoration_type)
+      requestedMilestones.add(milestone)
+      if (existingTypes.has(input.decoration_type) || existingMilestones.has(milestone)) return false
+      return true
+    }).map((input) => ({ ...input, teacher_id: teacherId }))
+    if (rows.length === 0) return { data: [] }
+
+    const { data, error } = await supabase
+      .from(CLASS_GARDEN_UNLOCKS_TABLE)
+      .upsert(rows, { onConflict: 'teacher_id,decoration_type', ignoreDuplicates: true })
+      .select()
+    if (error) return { error: error.message }
+    return { data: (data ?? []) as ClassGardenUnlock[] }
   },
 
   async addEntry(input: NewGrowthPointEntry) {
