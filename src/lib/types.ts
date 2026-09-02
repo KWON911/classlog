@@ -235,6 +235,37 @@ export type GrowthPointEntry = {
   created_at: string
 }
 
+export type DecorationType =
+  | 'stone_path' | 'bench' | 'pond' | 'birdhouse'
+  | 'big_tree' | 'bridge' | 'fence' | 'garden_lamp'
+
+export type ClassGoalMilestone = {
+  point: number
+  decorationType: DecorationType
+}
+
+export type ClassGoal = {
+  id: string
+  teacher_id: string
+  year: number
+  month: number
+  target_point: number
+  milestones: ClassGoalMilestone[]
+  created_at: string
+  updated_at: string
+}
+
+export type ClassGardenUnlock = {
+  id: string
+  teacher_id: string
+  decoration_type: DecorationType
+  year: number
+  month: number
+  milestone_point: number
+  unlocked_at: string
+  created_at: string
+}
+
 export type PlantCycle = {
   id: string
   teacher_id: string
