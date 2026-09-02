@@ -44,9 +44,19 @@ describe('classGoalScore', () => {
 describe('validateClassGoalMilestones', () => {
   const valid = goal.milestones
   it('유효한 3~5개 milestone은 통과한다', () => expect(validateClassGoalMilestones(valid, 300)).toBeNull())
+  it('유효한 5개 milestone도 통과한다', () => {
+    const five = [
+      ...valid,
+      { point: 400, decorationType: 'birdhouse' as const },
+      { point: 500, decorationType: 'big_tree' as const },
+    ]
+    expect(validateClassGoalMilestones(five, 500)).toBeNull()
+  })
   it.each([
     ['개수가 2개면 거부한다', valid.slice(0, 2), 300, /3~5개/],
+    ['개수가 6개면 거부한다', [...valid, { point: 400, decorationType: 'birdhouse' as const }, { point: 500, decorationType: 'big_tree' as const }, { point: 600, decorationType: 'bridge' as const }], 600, /3~5개/],
     ['점수가 양의 정수가 아니면 거부한다', [{ point: 0, decorationType: 'stone_path' as const }, ...valid.slice(1)], 300, /양의 정수/],
+    ['점수가 정수가 아니면 거부한다', [{ point: 10.5, decorationType: 'stone_path' as const }, ...valid.slice(1)], 300, /양의 정수/],
     ['점수가 엄격히 오름차순이 아니면 거부한다', [{ point: 100, decorationType: 'stone_path' as const }, { point: 100, decorationType: 'bench' as const }, valid[2]], 300, /오름차순/],
     ['장식이 중복되면 거부한다', [valid[0], { point: 200, decorationType: 'stone_path' as const }, valid[2]], 300, /중복/],
     ['마지막 점수가 목표보다 크면 거부한다', valid, 299, /목표/],

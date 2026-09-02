@@ -30,7 +30,7 @@ export type ClassGoalProgress = {
 /** Returns a Korean UI-ready validation message, or null when valid. */
 export function validateClassGoalMilestones(
   milestones: ClassGoalMilestone[],
-  targetPoint?: number,
+  targetPoint: number,
 ): string | null {
   if (milestones.length < 3 || milestones.length > 5) return '공동 목표 단계는 3~5개로 설정해 주세요.'
 
@@ -47,7 +47,7 @@ export function validateClassGoalMilestones(
     decorations.add(milestone.decorationType)
   }
 
-  if (targetPoint !== undefined && milestones[milestones.length - 1].point > targetPoint) {
+  if (milestones[milestones.length - 1].point > targetPoint) {
     return '마지막 단계 점수는 최종 목표 점수보다 클 수 없습니다.'
   }
   return null
