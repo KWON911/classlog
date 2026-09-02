@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGrowthGarden } from './useGrowthGarden'
+import { CLASS_GARDEN_GOAL_REFRESH_EVENT } from './classGardenGoalRefresh'
 import type { GrowthPointEntry } from '../types'
 import type { NewGrowthPointEntry } from '../growth-garden/services/types'
 
@@ -78,6 +79,23 @@ beforeEach(() => {
 })
 
 describe('선택 학생 일괄 상벌점', () => {
+  it('기록 저장과 일괄 취소 뒤에만 공동 목표를 다시 계산하도록 알린다', async () => {
+    const refreshEvents = vi.fn()
+    window.addEventListener(CLASS_GARDEN_GOAL_REFRESH_EVENT, refreshEvents)
+    const { result } = await setup()
+
+    await act(async () => {
+      await result.current.addPoint('a', 'merit', 3, '발표를 잘했어요')
+    })
+    await act(async () => {
+      const outcome = await result.current.addBulkPoints({ studentIds: ['a', 'b'], type: 'merit', amount: 2, reason: '모둠 활동' })
+      await result.current.deleteBatch(outcome.batchId ?? '')
+    })
+
+    expect(refreshEvents).toHaveBeenCalledTimes(3)
+    window.removeEventListener(CLASS_GARDEN_GOAL_REFRESH_EVENT, refreshEvents)
+  })
+
   it('학생 3명 +1 — 기록 3개, 같은 batchId, source bulk, 각자 +1점', async () => {
     const { result } = await setup()
 

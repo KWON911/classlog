@@ -5,6 +5,7 @@ import { EMPTY_SUMMARY, entriesForStudent, summarizeByStudent, type GardenSummar
 import { backfillPlantCycles, plantCycleForScore } from '../growth-garden/plantCycle'
 import { buildBulkEntries, createBatchId, type BulkPointInput } from '../growth-garden/bulkGrowth'
 import { useGrowthSettings } from '../growth-garden/growthSettingsContext'
+import { dispatchClassGardenGoalRefresh } from './classGardenGoalRefresh'
 import type { GrowthPointEntry, GrowthPointType, PlantCycle } from '../types'
 
 /**
@@ -70,6 +71,7 @@ export function useGrowthGarden() {
           return { error: message }
         }
         setEntries((previous) => [...previous, data])
+        dispatchClassGardenGoalRefresh()
         return { data }
       } finally {
         pendingRef.current.delete(studentId)
@@ -115,6 +117,7 @@ export function useGrowthGarden() {
           return { error: message }
         }
         setEntries((previous) => [...previous, ...data])
+        dispatchClassGardenGoalRefresh()
         return { data, batchId, count: data.length }
       } finally {
         bulkPendingRef.current = false
@@ -132,6 +135,7 @@ export function useGrowthGarden() {
       return { error }
     }
     setEntries((previous) => previous.filter((entry) => entry.batch_id !== batchId))
+    dispatchClassGardenGoalRefresh()
     return {}
   }, [])
 
@@ -142,6 +146,7 @@ export function useGrowthGarden() {
       return { error }
     }
     setEntries((previous) => previous.filter((entry) => entry.id !== id))
+    dispatchClassGardenGoalRefresh()
     return {}
   }, [])
 
@@ -152,6 +157,7 @@ export function useGrowthGarden() {
       return { error }
     }
     setEntries((previous) => previous.filter((entry) => entry.student_id !== studentId))
+    dispatchClassGardenGoalRefresh()
     return {}
   }, [])
 
@@ -163,6 +169,7 @@ export function useGrowthGarden() {
       return { error }
     }
     setEntries([])
+    dispatchClassGardenGoalRefresh()
     return {}
   }, [])
 
