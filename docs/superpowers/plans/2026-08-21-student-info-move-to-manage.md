@@ -4,7 +4,7 @@
 
 **Goal:** 학급기록의 학생 상세 페이지(`/students/:id`, `StudentDetailPage.tsx`)에서 "학생 삭제"와 "상세정보 보기"(읽기 전용 필드 목록)를 제거하고, "상세정보 보기"는 정보관리(`/students/manage`)로 옮긴다. 학급기록 상세 페이지는 출결 요약 + 생활기록/상담(누가기록)만 남는다.
 
-**Architecture:** 정보관리(`StudentListCard`)는 이미 학생별 "학생 정보 수정"/"학생 삭제" 드롭다운 메뉴(`StudentRowMenu`)를 갖고 있으므로, 여기에 "상세정보 보기" 메뉴 항목 하나를 추가하고 새 읽기 전용 모달 컴포넌트(`StudentDetailModal`)를 연결한다. 이 모달의 내용은 `StudentDetailPage`가 지금까지 써온 `StudentDetailCard`의 읽기 전용 `<dl>` 블록을 그대로 옮긴 것이다. 학급기록 상세 페이지의 삭제 기능은 정보관리에 이미 동일한 기능이 있으므로 새로 옮기지 않고 단순 제거한다 — 두 곳에 중복된 삭제 진입점을 둘 이유가 없다. 마지막으로 이제 아무도 쓰지 않게 되는 `StudentDetailCard.tsx`를 삭제하고, `CLAUDE.md`의 "Roster split" 설명을 갱신한다.
+**Architecture:** 정보관리(`StudentListCard`)는 이미 학생별 "학생 정보 수정"/"학생 삭제" 드롭다운 메뉴(`StudentRowMenu`)를 갖고 있으므로, 여기에 "상세정보 보기" 메뉴 항목 하나를 추가하고 새 읽기 전용 모달 컴포넌트(`StudentDetailModal`)를 연결한다. 이 모달의 내용은 `StudentDetailPage`가 지금까지 써온 `StudentDetailCard`의 읽기 전용 `<dl>` 블록을 그대로 옮긴 것이다. 학급기록 상세 페이지의 삭제 기능은 정보관리에 이미 동일한 기능이 있으므로 새로 옮기지 않고 단순 제거한다 — 두 곳에 중복된 삭제 진입점을 둘 이유가 없다. 마지막으로 이제 아무도 쓰지 않게 되는 `StudentDetailCard.tsx`를 삭제하고, `AGENTS.md`의 명단 분리 설명을 갱신한다.
 
 **Tech Stack:** React 19 + TypeScript, React Router 7, Tailwind CSS v4 (신규 의존성 없음)
 
@@ -630,7 +630,7 @@ git commit -m "refactor: remove student delete/detail-view from the class-record
 ### Task 3: 문서 갱신
 
 **Files:**
-- Modify: `CLAUDE.md`
+- Modify: `AGENTS.md`
 
 **Interfaces:**
 - Consumes: 없음
@@ -638,7 +638,7 @@ git commit -m "refactor: remove student delete/detail-view from the class-record
 
 - [ ] **Step 1: "Roster split" 설명을 새 구조에 맞게 갱신**
 
-`CLAUDE.md`에서 "Roster split — 학급기록 vs 정보관리" 문단 현재:
+`AGENTS.md`에서 명단 분리 관련 문단 현재:
 
 ```
 **Roster split — 학급기록 vs 정보관리:** these are two different pages over the same `useStudents()` data, not one page with a mode toggle. `/students` (`StudentListPage`/`StudentListItem`, a dense grid of cards) and `/students/:id` (`StudentDetailPage`) are the read/records-focused pair — both default to showing only 번호/이름, with the other 10 fields hidden until "상세정보 보기" is clicked (a read-only `<dl>` grid); "정보 수정" separately opens the editable `StudentForm`. `/students/manage` (`StudentManagePage`, composed from `components/manage/StudentListCard` + `SchoolSettingsSection`) is the full-CRUD roster admin surface: add/edit/delete one, CSV bulk import/export, bulk delete-all, gender breakdown, and the NEIS school-settings form. When adding a field to `Student`, all three surfaces (`StudentDetailPage`'s read-only block, `StudentForm`, `StudentListCard`) need updating independently — none are derived from one another.
@@ -653,7 +653,7 @@ git commit -m "refactor: remove student delete/detail-view from the class-record
 - [ ] **Step 2: 커밋**
 
 ```bash
-git add CLAUDE.md
+git add AGENTS.md
 git commit -m "docs: update roster split description after moving student detail/delete to 정보관리"
 ```
 
@@ -664,6 +664,6 @@ git commit -m "docs: update roster split description after moving student detail
 - `src/components/manage/StudentListCard.tsx` — 상세정보 모달 상태·연결 추가.
 - `src/routes/StudentDetailPage.tsx` — "상세정보 보기"/"학생 삭제"와 관련 상태·확인 다이얼로그 전부 제거.
 - `src/components/StudentDetailCard.tsx` — 삭제.
-- `CLAUDE.md` — "Roster split" 설명 갱신.
+- `AGENTS.md` — 명단 분리 설명 갱신.
 
 배포에 별도 조치 불필요 — 신규 테이블/컬럼 없음, 스키마 변경 없음.

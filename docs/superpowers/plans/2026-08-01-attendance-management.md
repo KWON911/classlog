@@ -17,7 +17,7 @@
 - Any variable referenced inside a `vi.mock(...)` factory must start with the literal prefix `mock` (e.g. `mockFrom`) — Vitest's hoisting exemption requires this exact prefix, otherwise tests throw `Cannot access before initialization`.
 - Test fixtures for sorting/counting/aggregation logic must use mixed, non-uniform data (not already-sorted, not all-identical) — a fixture that already matches the correct output passes even when the underlying logic is broken or missing.
 - TypeScript `strictNullChecks` is off project-wide — do not assume the compiler will catch a `string | null` passed where a plain `string` is expected.
-- The existing layout-route pattern (a path-less `<Route element={<X/>}>` wrapping child `<Route>`s via `<Outlet/>`, not a wrapper component repeated per route) must be preserved when adding `AppShell` — this avoids the remount/loading-flash bug documented in `CLAUDE.md`.
+- The existing layout-route pattern (a path-less `<Route element={<X/>}>` wrapping child `<Route>`s via `<Outlet/>`, not a wrapper component repeated per route) must be preserved when adding `AppShell` — this avoids the remount/loading-flash bug documented in `AGENTS.md`.
 
 ---
 

@@ -18,7 +18,7 @@
 - TypeScript `strictNullChecks` is off project-wide — do not assume the compiler will catch a `string | null` passed where a plain `string` is expected.
 - There is no modal component anywhere in this codebase; keep all `/seating` UI inline on the page (sections, not a dialog), matching every other page's pattern (e.g. `StudentDetailPage`'s inline "상세정보 보기" toggle).
 - Use Tailwind's built-in `print:` variant (e.g. `print:hidden`, `hidden print:block`) for print-only visibility — no custom `@media print` CSS block.
-- The existing layout-route pattern (`AppShell` as a path-less `<Route element={<AppShell/>}>` wrapping children via `<Outlet/>`) must be preserved when adding the `/seating` route — this avoids the remount/loading-flash bug documented in `CLAUDE.md`.
+- The existing layout-route pattern (`AppShell` as a path-less `<Route element={<AppShell/>}>` wrapping children via `<Outlet/>`) must be preserved when adding the `/seating` route — this avoids the remount/loading-flash bug documented in `AGENTS.md`.
 - `SeatingPage.tsx` is built across Tasks 6, 7, and 8 as **full-file replacements**, not incremental diffs — each task's step gives the complete file contents to copy in, because the component's state is too interdependent to safely patch piecemeal across separately-reviewed tasks.
 
 ---
@@ -2868,4 +2868,3 @@ Run: `npm run dev`, open the app, log in, and confirm the complete feature end t
 git add src/routes/SeatingPage.tsx src/components/AppShell.tsx src/App.tsx
 git commit -m "feat: add print support, sidebar navigation, and routing for classroom seating"
 ```
-

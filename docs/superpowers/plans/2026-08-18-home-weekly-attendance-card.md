@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- 데이터 접근은 훅 전용 — 컴포넌트는 절대 `supabase`를 직접 호출하지 않는다 (`CLAUDE.md` "Data access is hook-only").
+- 데이터 접근은 훅 전용 — 컴포넌트는 절대 `supabase`를 직접 호출하지 않는다 (`AGENTS.md`의 데이터 접근 경계).
 - `vi.mock(...)` 팩토리 안에서 참조하는 변수명은 반드시 `mock`으로 시작해야 한다 (Vitest 호이스팅 규칙, 그렇지 않으면 `Cannot access before initialization`).
 - 정렬을 검증하는 테스트는 픽스처가 이미 정렬된 순서로 주어지면 안 된다 — naive(정렬 안 함) 구현으로도 우연히 통과하지 않도록, 입력 순서와 다른 결과가 나오는 픽스처를 사용한다.
 - 컴포넌트(`WeeklyAttendanceCard`) 자체는 별도 컴포넌트 테스트를 만들지 않는다 — `npm run build` + `npm run lint` + 브라우저 수동 스모크 테스트로 검증 (`src/components/`는 테스트 대상 밖).
@@ -479,7 +479,7 @@ git commit -m "feat: add useWeeklyAttendance hook for the home attendance card"
 - Consumes: `useWeeklyAttendance` (Task 5), `groupAttendanceByDate` (Task 4), `weekdaysOf`/`yyyymmdd` (`src/lib/utils/date-utils.ts`, 기존), `ATTENDANCE_STATUS_COLOR_CLASS` (`src/lib/utils/attendanceStatusColors.ts`, 기존), `LoadingState`/`ErrorState`/`EmptyState` (`src/components/home/HomeCardStates.tsx`, 기존).
 - Produces: `WeeklyAttendanceCard` 컴포넌트, props `{ weekStart: Date; refreshToken: number; isCurrentWeek: boolean; onLoadingChange?: (loading: boolean) => void }` — Task 7(`HomePage`)이 그대로 사용.
 
-CLAUDE.md 컨벤션에 따라 이 컴포넌트는 별도 테스트를 만들지 않는다 (`npm run build` + `npm run lint` + 브라우저 스모크로 검증, Task 8).
+`AGENTS.md` 컨벤션에 따라 이 컴포넌트는 별도 테스트를 만들지 않는다 (`npm run build` + `npm run lint` + 브라우저 스모크로 검증, Task 8).
 
 - [ ] **Step 1: 컴포넌트 작성**
 

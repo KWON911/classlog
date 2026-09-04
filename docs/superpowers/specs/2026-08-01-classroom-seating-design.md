@@ -126,7 +126,7 @@ export type SeatingPlan = {
 - 고정 좌석이 재배치 후에도 유지되는지
 - 분리 규칙(인접/대각선)이 실제로 지켜지는지, 위반하는 배치가 나오지 않는지
 - 성별 지정 좌석에 다른 성별 학생이 배치되지 않는지
-- `derivePastNeighborPairs`가 실제 좌우 인접 쌍만 추출하고 앞뒤/대각선은 제외하는지(이미 정렬된 fixture로는 걸러지지 않는 케이스를 반드시 포함 — CLAUDE.md 컨벤션)
+- `derivePastNeighborPairs`가 실제 좌우 인접 쌍만 추출하고 앞뒤/대각선은 제외하는지(이미 정렬된 fixture로는 걸러지지 않는 케이스를 반드시 포함 — `AGENTS.md` 컨벤션)
 - 학생 수가 사용 가능 좌석 수보다 많을 때 에러를 던지는지
 
 ## 훅 (`src/lib/hooks/useSeatingPlans.ts`)

@@ -154,5 +154,5 @@ export type AttendanceEntry = {
 기존 컨벤션(`src/lib/`, `src/lib/hooks/`만 자동 테스트, 컴포넌트/라우트는 `npm run build` + `npm run lint` + 수동 스모크 테스트)을 그대로 따른다.
 
 - `src/lib/hooks/useAttendance.test.ts` (신규): `createQueryBuilder` 목으로 월 범위 필터(`.gte`/`.lt`), `upsertEntry`의 `onConflict` 호출, `clearEntry`의 delete 호출을 검증. 집계(학급 전체 요약)는 컴포넌트 쪽 로직이므로 여기서는 원본 `entries` 배열만 검증한다.
-- `src/lib/hooks/useAttendanceSummary.test.ts` (신규): 한 학생의 `attendance` 행들을 상태가 섞인 순서의 fixture로 주고, 상태별 카운트가 올바르게 집계되는지 검증한다. (CLAUDE.md에 기록된 "정렬된 fixture는 정렬 로직이 깨져도 통과한다" 문제와 같은 이유로, 카운트 로직도 상태가 섞인/편중되지 않은 fixture로 검증한다.)
+- `src/lib/hooks/useAttendanceSummary.test.ts` (신규): 한 학생의 `attendance` 행들을 상태가 섞인 순서의 fixture로 주고, 상태별 카운트가 올바르게 집계되는지 검증한다. (`AGENTS.md`에 기록된 "정렬된 fixture는 정렬 로직이 깨져도 통과한다" 문제와 같은 이유로, 카운트 로직도 상태가 섞인/편중되지 않은 fixture로 검증한다.)
 - `AppShell`, `StudentManagePage`, `AttendancePage`, `StudentDetailPage`의 요약 UI는 기존 컨벤션대로 자동화 테스트 범위 밖(빌드/린트 + 수동 스모크 테스트로 검증).

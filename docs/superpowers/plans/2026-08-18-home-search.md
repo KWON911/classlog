@@ -494,7 +494,7 @@ git commit -m "feat: add searchAll for home search matching logic"
 - Consumes: `useStudents` (`src/lib/hooks/useStudents.ts`, 기존), `useSearchIndex` (Task 2), `searchAll` (Task 3).
 - Produces: `HomeSearchBar` 컴포넌트(props 없음) — Task 5(`HomePage`)가 그대로 렌더링.
 
-CLAUDE.md 컨벤션에 따라 이 컴포넌트는 별도 테스트를 만들지 않는다(`npm run build` + `npm run lint` + 브라우저 스모크로 검증, Task 6).
+`AGENTS.md` 컨벤션에 따라 이 컴포넌트는 별도 테스트를 만들지 않는다(`npm run build` + `npm run lint` + 브라우저 스모크로 검증, Task 6).
 
 - [ ] **Step 1: 컴포넌트 작성**
 

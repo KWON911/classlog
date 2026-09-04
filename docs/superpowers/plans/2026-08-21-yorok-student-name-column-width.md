@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- 컴포넌트 파일이라 자동화 테스트 대상 아님(CLAUDE.md 컨벤션) — `npm run build` + `npm run lint` + 수동 브라우저 확인으로 검증.
+- 컴포넌트 파일이라 자동화 테스트 대상 아님(`AGENTS.md` 컨벤션) — `npm run build` + `npm run lint` + 수동 브라우저 확인으로 검증.
 - 다른 컬럼(교사가 추가하는 텍스트/체크박스 컬럼, `min-w-[220px]`)의 기존 동작에는 영향을 주지 않는다.
 - sticky 동작(`sticky left-0 z-10`)은 유지한다.
 

@@ -69,8 +69,8 @@
 
 ## 테스트 계획
 
-- `useWeeklyAttendance.test.ts`: 기존 Supabase 훅 테스트 패턴(`src/test/supabaseMock.ts`)을 따라, 날짜 범위 쿼리 파라미터와 조인된 학생 정보 파싱을 검증. `vi.mock` 팩토리 내부 변수는 `mock` 접두사 필수(CLAUDE.md 컨벤션).
-- `weeklyAttendance.test.ts`: `groupAttendanceByDate`의 상태 우선순위 정렬과 번호순 2차 정렬을 검증하는 순수 함수 테스트. 정렬 테스트이므로 "정렬 안 해도 우연히 통과하는" 픽스처를 피하고, 입력 순서와 다른 결과가 나오도록 픽스처를 구성한다(CLAUDE.md의 기존 정렬 테스트 함정 재발 방지 규칙).
+- `useWeeklyAttendance.test.ts`: 기존 Supabase 훅 테스트 패턴(`src/test/supabaseMock.ts`)을 따라, 날짜 범위 쿼리 파라미터와 조인된 학생 정보 파싱을 검증. `vi.mock` 팩토리 내부 변수는 `mock` 접두사 필수(`AGENTS.md` 컨벤션).
+- `weeklyAttendance.test.ts`: `groupAttendanceByDate`의 상태 우선순위 정렬과 번호순 2차 정렬을 검증하는 순수 함수 테스트. 정렬 테스트이므로 "정렬 안 해도 우연히 통과하는" 픽스처를 피하고, 입력 순서와 다른 결과가 나오도록 픽스처를 구성한다(`AGENTS.md`의 기존 정렬 테스트 함정 재발 방지 규칙).
 - 컴포넌트(`WeeklyAttendanceCard`) 자체는 기존 컨벤션대로 별도 테스트를 만들지 않고, `npm run build` + `npm run lint` + 브라우저 수동 스모크 테스트로 검증한다.
 
 ## 범위 밖 (Out of scope)
