@@ -42,7 +42,7 @@ type StudentListCardProps = {
   deleteAllStudents: () => Promise<MutationResult>
 }
 
-const ROW_GRID_CLASS = 'sm:grid-cols-[64px_minmax(160px,1fr)_120px_72px]'
+const ROW_GRID_CLASS = 'sm:grid-cols-[52px_minmax(120px,1fr)_64px_36px]'
 
 export function StudentListCard({
   students,
@@ -144,7 +144,7 @@ export function StudentListCard({
 
   return (
     <div className={`${sectionCardClass} @container`}>
-      <div className="flex flex-col gap-3 border-b border-gray-100 pb-4">
+      <div className="flex flex-col gap-3 border-b border-gray-100 pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className={cardTitleClass}>학생 정보</h2>
@@ -160,8 +160,8 @@ export function StudentListCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 @sm:flex-nowrap @sm:justify-end">
-          <div className="order-2 hidden shrink-0 items-center gap-2 sm:flex @sm:order-1">
+        <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap sm:justify-end">
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
             <button type="button" onClick={() => setShowImport(true)} className={csvButtonClass}>
               <Upload size={16} />
               CSV 가져오기
@@ -176,14 +176,14 @@ export function StudentListCard({
               CSV 내보내기
             </button>
           </div>
-          <button type="button" onClick={() => setShowAdd(true)} className={`order-1 @sm:order-2 ${addButtonClass}`}>
+          <button type="button" onClick={() => setShowAdd(true)} className={addButtonClass}>
             <Plus size={16} />
             개별 추가
           </button>
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="pt-1">
         {loading && (
           <div className="py-2">
             <p className="mb-3 text-sm text-gray-500">학생 명단을 불러오는 중입니다...</p>
@@ -245,7 +245,7 @@ export function StudentListCard({
                 return (
                   <li
                     key={student.id}
-                    className={`grid h-[52px] grid-cols-[36px_1fr_52px_40px] items-center gap-1.5 border-b border-gray-100 px-1 transition-colors last:border-b-0 hover:bg-gray-50/80 sm:h-[54px] sm:gap-2 sm:px-2 ${ROW_GRID_CLASS}`}
+                    className={`grid h-[52px] grid-cols-[36px_1fr_52px_40px] items-center gap-1.5 border-b border-gray-100 px-1 transition-colors last:border-b-0 hover:bg-gray-50/80 sm:h-11 sm:gap-2 sm:px-2 ${ROW_GRID_CLASS}`}
                   >
                     <span className="text-center text-xs text-gray-500 sm:text-sm">{student.number}</span>
                     <span className="truncate text-sm font-medium text-gray-900">{student.name}</span>
