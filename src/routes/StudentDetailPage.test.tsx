@@ -60,4 +60,19 @@ describe('StudentDetailPage', () => {
 
     expect(screen.getByLabelText('카테고리')).toHaveValue('생활지도')
   })
+
+  it('opens the record guide from the help button', () => {
+    render(
+      <MemoryRouter initialEntries={['/students/s1']}>
+        <Routes>
+          <Route path="/students/:id" element={<StudentDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '누가기록 도움말 보기' }))
+
+    expect(screen.getByText('Google Form으로 누가기록 남기기')).toBeInTheDocument()
+    expect(screen.getByText('새 학년도에 학생이 바뀌면')).toBeInTheDocument()
+  })
 })

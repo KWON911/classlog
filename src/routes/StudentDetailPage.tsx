@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronDown, Plus } from 'lucide-react'
+import { ChevronDown, HelpCircle, Plus } from 'lucide-react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useStudentRecords } from '../lib/hooks/useStudentRecords'
 import { useAttendanceSummary } from '../lib/hooks/useAttendanceSummary'
 import { PageContainer } from '../components/PageContainer'
 import { RecordForm, type RecordFormValues } from '../components/RecordForm'
 import { RecordTimeline } from '../components/RecordTimeline'
+import { RecordGuideModal } from '../components/RecordGuideModal'
 import { primaryButtonClass, sectionCardClass } from '../lib/ui/classNames'
 import { ATTENDANCE_STATUS_COLOR_CLASS } from '../lib/utils/attendanceStatusColors'
 import type { AttendanceStatus, RecordCategory, StudentRecord } from '../lib/types'
@@ -21,6 +22,7 @@ export function StudentDetailPage() {
   const { summary: attendanceSummary, error: attendanceError } = useAttendanceSummary(id ?? '')
 
   const [showRecordForm, setShowRecordForm] = useState(false)
+  const [showRecordGuide, setShowRecordGuide] = useState(false)
   const [editingRecord, setEditingRecord] = useState<StudentRecord | null>(null)
   const [selectedRecordCategory, setSelectedRecordCategory] = useState<RecordCategory | 'all'>('all')
 
@@ -118,17 +120,30 @@ export function StudentDetailPage() {
 
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">생활기록 / 상담</h2>
-        <button
-          onClick={() => {
-            setEditingRecord(null)
-            setShowRecordForm((v) => !v)
-          }}
-          className={`inline-flex items-center gap-1.5 ${primaryButtonClass}`}
-        >
-          <Plus size={16} />
-          기록 추가
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowRecordGuide(true)}
+            aria-label="누가기록 도움말 보기"
+            title="누가기록 도움말"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+          >
+            <HelpCircle size={19} aria-hidden="true" />
+          </button>
+          <button
+            onClick={() => {
+              setEditingRecord(null)
+              setShowRecordForm((v) => !v)
+            }}
+            className={`inline-flex items-center gap-1.5 ${primaryButtonClass}`}
+          >
+            <Plus size={16} />
+            기록 추가
+          </button>
+        </div>
       </div>
+
+      {showRecordGuide && <RecordGuideModal onClose={() => setShowRecordGuide(false)} />}
 
       {showRecordForm && (
         <div className={`mb-4 ${sectionCardClass}`}>
