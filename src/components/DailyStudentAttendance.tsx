@@ -76,7 +76,6 @@ export function DailyStudentAttendance({
     }
     setDraft(next)
     setDirtyIds(new Set())
-    setShowChangedOnly(false)
     setConfirmingBulkPresent(false)
     setForceEnableInput(false)
     setStatusMessage(null)
