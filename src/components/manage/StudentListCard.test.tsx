@@ -5,7 +5,7 @@ import { StudentListCard } from './StudentListCard'
 afterEach(cleanup)
 
 describe('StudentListCard', () => {
-  it('renders student actions and a compact desktop row without changing the mobile row height', () => {
+  it('renders student actions in a responsive roster-chip grid', () => {
     const { container } = render(
       <StudentListCard
         students={[{
@@ -27,6 +27,7 @@ describe('StudentListCard', () => {
     expect(screen.getByRole('button', { name: '개별 추가' })).toBeInTheDocument()
     expect(screen.getByText('김민서')).toBeInTheDocument()
     expect(screen.getByLabelText('김민서 학생 관리 메뉴')).toBeInTheDocument()
-    expect(container.querySelector('li')).toHaveClass('h-[52px]', 'sm:h-11')
+    expect(container.querySelector('ul')).toHaveClass('grid', 'grid-cols-1', '@md:grid-cols-2', '@3xl:grid-cols-3')
+    expect(container.querySelector('li')).toHaveClass('flex', 'min-h-[52px]', '@md:h-11')
   })
 })

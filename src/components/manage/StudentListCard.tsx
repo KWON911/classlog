@@ -42,8 +42,6 @@ type StudentListCardProps = {
   deleteAllStudents: () => Promise<MutationResult>
 }
 
-const ROW_GRID_CLASS = 'sm:grid-cols-[52px_minmax(120px,1fr)_64px_36px]'
-
 export function StudentListCard({
   students,
   loading,
@@ -230,39 +228,31 @@ export function StudentListCard({
         )}
 
         {!loading && !error && students.length > 0 && (
-          <div>
-            <div
-              className={`grid grid-cols-[36px_1fr_52px_40px] gap-1.5 px-1 pb-2 text-xs font-medium text-gray-400 sm:gap-2 sm:px-2 ${ROW_GRID_CLASS}`}
-            >
-              <span className="text-center">순번</span>
-              <span>이름</span>
-              <span className="text-center sm:text-left">성별</span>
-              <span className="text-center">관리</span>
-            </div>
-            <ul>
-              {students.map((student) => {
-                const genderLabel = GENDER_LABEL[mapGender(student.gender)]
-                return (
-                  <li
-                    key={student.id}
-                    className={`grid h-[52px] grid-cols-[36px_1fr_52px_40px] items-center gap-1.5 border-b border-gray-100 px-1 transition-colors last:border-b-0 hover:bg-gray-50/80 sm:h-11 sm:gap-2 sm:px-2 ${ROW_GRID_CLASS}`}
-                  >
-                    <span className="text-center text-xs text-gray-500 sm:text-sm">{student.number}</span>
-                    <span className="truncate text-sm font-medium text-gray-900">{student.name}</span>
-                    <span className="text-center text-xs text-gray-600 sm:text-left sm:text-sm">{genderLabel}</span>
-                    <span className="flex justify-center">
-                      <StudentRowMenu
-                        studentName={student.name}
-                        onViewDetails={() => setViewingStudent(student)}
-                        onEdit={() => setEditingStudent(student)}
-                        onDelete={() => setDeleteTarget(student)}
-                      />
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
+          <ul className="grid grid-cols-1 gap-2 @md:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4">
+            {students.map((student) => {
+              const genderLabel = GENDER_LABEL[mapGender(student.gender)]
+              return (
+                <li
+                  key={student.id}
+                  className="flex min-h-[52px] min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 transition-colors hover:border-brand-200 hover:bg-brand-50/30 @md:h-11 @md:min-h-0"
+                >
+                  <span className="w-5 shrink-0 text-center text-xs text-gray-500">{student.number}</span>
+                  <span className="max-w-[10rem] truncate text-sm font-medium text-gray-900">{student.name}</span>
+                  <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                    {genderLabel}
+                  </span>
+                  <span className="shrink-0">
+                    <StudentRowMenu
+                      studentName={student.name}
+                      onViewDetails={() => setViewingStudent(student)}
+                      onEdit={() => setEditingStudent(student)}
+                      onDelete={() => setDeleteTarget(student)}
+                    />
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
         )}
       </div>
 
