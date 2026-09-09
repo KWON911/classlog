@@ -58,11 +58,11 @@ export function WeeklyMealCard({
         <EmptyState message="급식 정보가 없습니다." />
       ) : (
         <div className="min-w-0 overflow-x-auto">
-          <div className="grid min-w-[480px] grid-cols-5 items-start gap-2 lg:min-w-0">
+          <div className="grid min-w-[480px] grid-cols-5 items-stretch gap-2 lg:min-w-0">
             {days.map((day, i) => {
               const isToday = day.date === todayStr
               const cellContent = (
-                <>
+                <div className="flex h-full flex-col">
                   <div className="mb-2 text-center">
                     <div className={`text-xs font-semibold ${isToday ? 'text-brand-700' : 'text-gray-700'}`}>
                       {day.dayLabel}
@@ -83,8 +83,8 @@ export function WeeklyMealCard({
                     </ul>
                   )}
 
-                  {day.calorie && <p className="mt-2 text-center text-[10px] text-gray-400">{day.calorie}</p>}
-                </>
+                  {day.calorie && <p className="mt-auto pt-2 text-center text-[10px] text-gray-400">{day.calorie}</p>}
+                </div>
               )
 
               return day.menus.length > 0 ? (
@@ -93,7 +93,7 @@ export function WeeklyMealCard({
                   type="button"
                   onClick={() => setOpenDayIndex(i)}
                   aria-label={`${day.dayLabel}요일 식단표 크게 보기`}
-                  className={`group relative box-border min-w-0 rounded-lg border p-2.5 text-left transition-colors hover:border-brand-400 hover:bg-brand-50/30 ${
+                  className={`group relative box-border h-full min-w-0 rounded-lg border p-2.5 text-left transition-colors hover:border-brand-400 hover:bg-brand-50/30 ${
                     isToday ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-gray-200'
                   }`}
                 >
@@ -106,7 +106,7 @@ export function WeeklyMealCard({
               ) : (
                 <div
                   key={day.date}
-                  className={`box-border min-w-0 rounded-lg border p-2.5 ${
+                  className={`box-border h-full min-w-0 rounded-lg border p-2.5 ${
                     isToday ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-gray-200'
                   }`}
                 >
