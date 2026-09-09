@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Download, Plus, Upload, UsersRound } from 'lucide-react'
 import { Modal } from '../Modal'
 import { ConfirmDialog } from '../ConfirmDialog'
 import { ImportStudentsPanel } from '../ImportStudentsPanel'
 import { StudentForm, type StudentFormValues } from '../StudentForm'
-import { StudentRowMenu } from './StudentRowMenu'
-import { StudentDetailModal } from './StudentDetailModal'
+import { StudentDetailContent, StudentDetailModal } from './StudentDetailModal'
 import { mapGender } from '../../lib/seating'
 import {
   addButtonClass,
@@ -42,6 +41,23 @@ type StudentListCardProps = {
   deleteAllStudents: () => Promise<MutationResult>
 }
 
+function useDesktopDetails() {
+  const [isDesktop, setIsDesktop] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)').matches
+  ))
+
+  useEffect(() => {
+    const media = window.matchMedia?.('(min-width: 1024px)')
+    if (!media) return
+    const update = () => setIsDesktop(media.matches)
+    update()
+    media.addEventListener?.('change', update)
+    return () => media.removeEventListener?.('change', update)
+  }, [])
+
+  return isDesktop
+}
+
 export function StudentListCard({
   students,
   loading,
@@ -55,12 +71,13 @@ export function StudentListCard({
 }: StudentListCardProps) {
   const [showAdd, setShowAdd] = useState(false)
   const [showImport, setShowImport] = useState(false)
-  const [viewingStudent, setViewingStudent] = useState<Student | null>(null)
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null)
   const [deletingOne, setDeletingOne] = useState(false)
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  const isDesktopDetails = useDesktopDetails()
 
   const existingNumbers = useMemo(() => new Set(students.map((s) => s.number)), [students])
   const suggestedNumber = useMemo(
@@ -74,6 +91,10 @@ export function StudentListCard({
     }
     return counts
   }, [students])
+  const selectedStudent = useMemo(
+    () => students.find((student) => student.id === selectedStudentId) ?? null,
+    [selectedStudentId, students],
+  )
 
   const handleAddSubmit = async (values: StudentFormValues) => {
     const result = await addStudent({
@@ -128,9 +149,19 @@ export function StudentListCard({
   const handleConfirmDeleteOne = async () => {
     if (!deleteTarget) return
     setDeletingOne(true)
-    await deleteStudent(deleteTarget.id)
+    const result = await deleteStudent(deleteTarget.id)
     setDeletingOne(false)
     setDeleteTarget(null)
+    if (!result.error) setSelectedStudentId(null)
+  }
+
+  const handleEditSelectedStudent = () => {
+    if (!selectedStudent) return
+    setEditingStudent(selectedStudent)
+  }
+
+  const handleDeleteSelectedStudent = () => {
+    if (selectedStudent) setDeleteTarget(selectedStudent)
   }
 
   const handleConfirmDeleteAll = async () => {
@@ -181,8 +212,9 @@ export function StudentListCard({
         </div>
       </div>
 
-      <div className="pt-1">
-        {loading && (
+      <div className="pt-3 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-4">
+        <div>
+          {loading && (
           <div className="py-2">
             <p className="mb-3 text-sm text-gray-500">학생 명단을 불러오는 중입니다...</p>
             <div className="flex flex-col gap-2">
@@ -191,18 +223,18 @@ export function StudentListCard({
               ))}
             </div>
           </div>
-        )}
+          )}
 
-        {!loading && error && (
+          {!loading && error && (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <p className="text-sm text-red-600">학생 명단을 불러오지 못했습니다.</p>
             <button type="button" onClick={onRetry} className={secondaryButtonClass}>
               다시 시도
             </button>
           </div>
-        )}
+          )}
 
-        {!loading && !error && students.length === 0 && (
+          {!loading && !error && students.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <UsersRound size={28} className="text-gray-300" />
             <div>
@@ -225,34 +257,61 @@ export function StudentListCard({
               </button>
             </div>
           </div>
-        )}
+          )}
 
-        {!loading && !error && students.length > 0 && (
+          {!loading && !error && students.length > 0 && (
           <ul className="grid grid-cols-1 gap-2 @md:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4">
             {students.map((student) => {
               const genderLabel = GENDER_LABEL[mapGender(student.gender)]
               return (
                 <li
                   key={student.id}
-                  className="flex min-h-[52px] min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 transition-colors hover:border-brand-200 hover:bg-brand-50/30 @md:h-11 @md:min-h-0"
+                  className={`min-w-0 rounded-lg border bg-white transition-colors ${
+                    selectedStudent?.id === student.id
+                      ? 'border-brand-300 bg-brand-50/50'
+                      : 'border-gray-200 hover:border-brand-200 hover:bg-brand-50/30'
+                  }`}
                 >
-                  <span className="w-5 shrink-0 text-center text-xs text-gray-500">{student.number}</span>
-                  <span className="max-w-[10rem] truncate text-sm font-medium text-gray-900">{student.name}</span>
-                  <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                    {genderLabel}
-                  </span>
-                  <span className="shrink-0">
-                    <StudentRowMenu
-                      studentName={student.name}
-                      onViewDetails={() => setViewingStudent(student)}
-                      onEdit={() => setEditingStudent(student)}
-                      onDelete={() => setDeleteTarget(student)}
-                    />
-                  </span>
+                  <button
+                    type="button"
+                    aria-label={`${student.number}번 ${student.name} 상세정보 보기`}
+                    aria-pressed={selectedStudent?.id === student.id}
+                    onClick={() => setSelectedStudentId(student.id)}
+                    className="flex min-h-[52px] w-full min-w-0 items-center gap-2 px-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-inset @md:h-11 @md:min-h-0"
+                  >
+                    <span className="w-5 shrink-0 text-center text-xs text-gray-500">{student.number}</span>
+                    <span className="max-w-[10rem] truncate text-sm font-medium text-gray-900">{student.name}</span>
+                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                      {genderLabel}
+                    </span>
+                  </button>
                 </li>
               )
             })}
           </ul>
+          )}
+        </div>
+
+        {isDesktopDetails && (
+          <aside className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+            {selectedStudent ? (
+              <>
+                <h3 className="text-base font-bold text-gray-900">학생 상세정보</h3>
+                <p className="mt-1 text-sm text-gray-500">{selectedStudent.number}. {selectedStudent.name}</p>
+                <div className="mt-5">
+                  <StudentDetailContent
+                    student={selectedStudent}
+                    onEdit={handleEditSelectedStudent}
+                    onDelete={handleDeleteSelectedStudent}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex min-h-52 items-center justify-center text-center">
+                <p className="text-sm text-gray-500">학생을 선택하면 상세정보가 표시됩니다.</p>
+              </div>
+            )}
+          </aside>
         )}
       </div>
 
@@ -291,8 +350,13 @@ export function StudentListCard({
         </Modal>
       )}
 
-      {viewingStudent && (
-        <StudentDetailModal student={viewingStudent} onClose={() => setViewingStudent(null)} />
+      {selectedStudent && !isDesktopDetails && (
+        <StudentDetailModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudentId(null)}
+          onEdit={handleEditSelectedStudent}
+          onDelete={handleDeleteSelectedStudent}
+        />
       )}
 
       {editingStudent && (

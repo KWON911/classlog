@@ -1,11 +1,11 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StudentListCard } from './StudentListCard'
 
 afterEach(cleanup)
 
 describe('StudentListCard', () => {
-  it('renders student actions in a responsive roster-chip grid', () => {
+  it('shows selected student details and management actions beside the roster', async () => {
     const { container } = render(
       <StudentListCard
         students={[{
@@ -26,8 +26,18 @@ describe('StudentListCard', () => {
 
     expect(screen.getByRole('button', { name: '개별 추가' })).toBeInTheDocument()
     expect(screen.getByText('김민서')).toBeInTheDocument()
-    expect(screen.getByLabelText('김민서 학생 관리 메뉴')).toBeInTheDocument()
     expect(container.querySelector('ul')).toHaveClass('grid', 'grid-cols-1', '@md:grid-cols-2', '@3xl:grid-cols-3')
-    expect(container.querySelector('li')).toHaveClass('flex', 'min-h-[52px]', '@md:h-11')
+    expect(screen.getByRole('button', { name: '1번 김민서 상세정보 보기' })).toHaveClass(
+      'flex',
+      'min-h-[52px]',
+      '@md:h-11',
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '1번 김민서 상세정보 보기' }))
+
+    expect(screen.getByText('학생 상세정보')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '수정' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '학생 삭제' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('김민서 학생 관리 메뉴')).not.toBeInTheDocument()
   })
 })
