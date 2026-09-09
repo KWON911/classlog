@@ -4,6 +4,7 @@ import { useYorokColumns } from '../../lib/hooks/useYorokColumns'
 import { useYorokEntries } from '../../lib/hooks/useYorokEntries'
 import type { Student, YorokColumn, YorokEntry } from '../../lib/types'
 import { fieldClass, textareaClass } from '../../lib/ui/classNames'
+import { getRemainingDirtyIds } from '../../lib/yorokAutosave'
 import { UnsetState } from '../home/HomeCardStates'
 import { ConfirmDialog } from '../ConfirmDialog'
 import { AddYorokColumnControl } from './AddYorokColumnControl'
@@ -64,16 +65,35 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
   const [editingLabel, setEditingLabel] = useState('')
   const [draggedColumnId, setDraggedColumnId] = useState<string | null>(null)
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null)
+  const draftRef = useRef(draft)
+  const dirtyIdsRef = useRef(dirtyIds)
+  const savingRef = useRef(false)
+  const autosaveTimerRef = useRef<number | null>(null)
+  const initializedDraftRef = useRef(false)
+  const saveHandlerRef = useRef<(isAutomatic?: boolean) => Promise<void>>(async () => {})
 
-  // entries/students가 바뀌면(최초 로드, 저장 후 등) draft를 저장된 값으로 재시딩.
+  // 최초 로드에서 저장값으로 draft를 만들고, 이후 저장 결과가 갱신돼도 편집 중인 draft는 보존한다.
   useEffect(() => {
-    const next = new Map<string, Record<string, string | boolean>>()
-    for (const student of students) {
-      next.set(student.id, { ...(entryByStudent.get(student.id)?.values ?? {}) })
+    if (entriesLoading) return
+    setDraft((prev) => {
+      const next = new Map<string, Record<string, string | boolean>>()
+      for (const student of students) {
+        next.set(student.id, prev.get(student.id) ?? { ...(entryByStudent.get(student.id)?.values ?? {}) })
+      }
+      draftRef.current = next
+      return next
+    })
+    if (!initializedDraftRef.current) {
+      initializedDraftRef.current = true
+      const nextDirtyIds = new Set<string>()
+      dirtyIdsRef.current = nextDirtyIds
+      setDirtyIds(nextDirtyIds)
     }
-    setDraft(next)
-    setDirtyIds(new Set())
-  }, [students, entryByStudent])
+  }, [students, entryByStudent, entriesLoading])
+
+  useEffect(() => () => {
+    if (autosaveTimerRef.current !== null) window.clearTimeout(autosaveTimerRef.current)
+  }, [])
 
   const orderedStudents = useMemo(() => [...students].sort((a, b) => a.number - b.number), [students])
 
@@ -81,29 +101,69 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
     setDraft((prev) => {
       const next = new Map(prev)
       next.set(studentId, { ...(next.get(studentId) ?? {}), [columnId]: value })
+      draftRef.current = next
       return next
     })
-    setDirtyIds((prev) => new Set(prev).add(studentId))
+    setDirtyIds((prev) => {
+      const next = new Set(prev).add(studentId)
+      dirtyIdsRef.current = next
+      return next
+    })
   }
 
-  const handleSave = async () => {
-    if (dirtyIds.size === 0) return
+  const handleSave = async (isAutomatic = false) => {
+    if (savingRef.current || dirtyIdsRef.current.size === 0) return
+    if (autosaveTimerRef.current !== null) {
+      window.clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
+    }
+
+    const idsToSave = new Set(dirtyIdsRef.current)
+    const savedDraft = new Map(
+      [...idsToSave].map((studentId) => [studentId, draftRef.current.get(studentId) ?? {}]),
+    )
+    savingRef.current = true
     setSaving(true)
     const results = await Promise.all(
-      [...dirtyIds].map((studentId) => saveEntryValues(studentId, draft.get(studentId) ?? {})),
+      [...idsToSave].map(async (studentId) => ({
+        studentId,
+        result: await saveEntryValues(studentId, savedDraft.get(studentId) ?? {}),
+      })),
     )
+    savingRef.current = false
     setSaving(false)
 
-    const failed = results.filter((r) => r.error)
+    const savedIds = new Set(results.filter(({ result }) => !result.error).map(({ studentId }) => studentId))
+    setDirtyIds((currentDirtyIds) => {
+      const next = getRemainingDirtyIds(currentDirtyIds, savedIds, savedDraft, draftRef.current)
+      dirtyIdsRef.current = next
+      return next
+    })
+
+    const failed = results.filter(({ result }) => result.error)
     if (failed.length > 0) {
       setMessage(`${failed.length}건 저장에 실패했습니다. 다시 시도해 주세요.`)
       setMessageIsError(true)
       return
     }
-    setDirtyIds(new Set())
-    setMessage('변경사항을 저장했습니다.')
+    setMessage(isAutomatic ? '자동 저장됨' : '변경사항을 저장했습니다.')
     setMessageIsError(false)
   }
+  saveHandlerRef.current = handleSave
+
+  useEffect(() => {
+    if (dirtyIds.size === 0 || saving) return
+    autosaveTimerRef.current = window.setTimeout(() => {
+      void saveHandlerRef.current(true)
+    }, 800)
+
+    return () => {
+      if (autosaveTimerRef.current !== null) {
+        window.clearTimeout(autosaveTimerRef.current)
+        autosaveTimerRef.current = null
+      }
+    }
+  }, [draft, dirtyIds, saving])
 
   const startRename = (column: YorokColumn) => {
     setEditingColumnId(column.id)
@@ -174,7 +234,7 @@ export function YorokTable({ students, studentsLoading }: YorokTableProps) {
             {dirtyIds.size > 0 && <span className="text-sm text-gray-500">변경 {dirtyIds.size}명</span>}
             <button
               type="button"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               disabled={saving || dirtyIds.size === 0}
               className="h-9 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
