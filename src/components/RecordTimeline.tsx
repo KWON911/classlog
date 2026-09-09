@@ -10,6 +10,7 @@ type RecordTimelineProps = {
   loading?: boolean
   onEdit: (record: StudentRecord) => void
   onDelete: (id: string) => Promise<unknown> | void
+  onFilterChange?: (filter: RecordCategory | 'all') => void
 }
 
 function filterPillClass(active: boolean) {
@@ -18,7 +19,7 @@ function filterPillClass(active: boolean) {
   }`
 }
 
-export function RecordTimeline({ records, loading = false, onEdit, onDelete }: RecordTimelineProps) {
+export function RecordTimeline({ records, loading = false, onEdit, onDelete, onFilterChange }: RecordTimelineProps) {
   const [filter, setFilter] = useState<RecordCategory | 'all'>('all')
   const [deleteTarget, setDeleteTarget] = useState<StudentRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -44,14 +45,19 @@ export function RecordTimeline({ records, loading = false, onEdit, onDelete }: R
     setDeleteTarget(null)
   }
 
+  const selectFilter = (nextFilter: RecordCategory | 'all') => {
+    setFilter(nextFilter)
+    onFilterChange?.(nextFilter)
+  }
+
   return (
     <div>
       <div className="mb-3 flex flex-wrap gap-2">
-        <button onClick={() => setFilter('all')} className={filterPillClass(filter === 'all')}>
+        <button onClick={() => selectFilter('all')} className={filterPillClass(filter === 'all')}>
           전체
         </button>
         {CATEGORIES.map((c) => (
-          <button key={c} onClick={() => setFilter(c)} className={filterPillClass(filter === c)}>
+          <button key={c} onClick={() => selectFilter(c)} className={filterPillClass(filter === c)}>
             {c}
           </button>
         ))}

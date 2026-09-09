@@ -9,7 +9,7 @@ import { RecordForm, type RecordFormValues } from '../components/RecordForm'
 import { RecordTimeline } from '../components/RecordTimeline'
 import { primaryButtonClass, sectionCardClass } from '../lib/ui/classNames'
 import { ATTENDANCE_STATUS_COLOR_CLASS } from '../lib/utils/attendanceStatusColors'
-import type { AttendanceStatus, StudentRecord } from '../lib/types'
+import type { AttendanceStatus, RecordCategory, StudentRecord } from '../lib/types'
 
 const ATTENDANCE_SUMMARY_LABELS: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 
@@ -22,10 +22,12 @@ export function StudentDetailPage() {
 
   const [showRecordForm, setShowRecordForm] = useState(false)
   const [editingRecord, setEditingRecord] = useState<StudentRecord | null>(null)
+  const [selectedRecordCategory, setSelectedRecordCategory] = useState<RecordCategory | 'all'>('all')
 
   useEffect(() => {
     setShowRecordForm(false)
     setEditingRecord(null)
+    setSelectedRecordCategory('all')
   }, [id])
 
   const student = students.find((s) => s.id === id)
@@ -130,7 +132,12 @@ export function StudentDetailPage() {
 
       {showRecordForm && (
         <div className={`mb-4 ${sectionCardClass}`}>
-          <RecordForm submitLabel="추가" onSubmit={handleAddRecord} onCancel={() => setShowRecordForm(false)} />
+          <RecordForm
+            submitLabel="추가"
+            initialValues={selectedRecordCategory === 'all' ? undefined : { category: selectedRecordCategory }}
+            onSubmit={handleAddRecord}
+            onCancel={() => setShowRecordForm(false)}
+          />
         </div>
       )}
 
@@ -159,6 +166,7 @@ export function StudentDetailPage() {
           setEditingRecord(record)
         }}
         onDelete={deleteRecord}
+        onFilterChange={setSelectedRecordCategory}
       />
     </PageContainer>
   )
