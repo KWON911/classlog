@@ -61,6 +61,23 @@ describe('StudentDetailPage', () => {
     expect(screen.getByLabelText('카테고리')).toHaveValue('생활지도')
   })
 
+  it('shows writing status and the save action while a new record form is open', () => {
+    render(
+      <MemoryRouter initialEntries={['/students/s1']}>
+        <Routes>
+          <Route path="/students/:id" element={<StudentDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '기록 추가' }))
+
+    expect(screen.queryByRole('button', { name: '기록 추가' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('기록 작성 중')
+    expect(screen.getByRole('button', { name: '기록 저장' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '취소' })).toBeInTheDocument()
+  })
+
   it('opens the record guide from the help button', () => {
     render(
       <MemoryRouter initialEntries={['/students/s1']}>

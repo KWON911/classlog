@@ -130,16 +130,25 @@ export function StudentDetailPage() {
           >
             <HelpCircle size={19} aria-hidden="true" />
           </button>
-          <button
-            onClick={() => {
-              setEditingRecord(null)
-              setShowRecordForm((v) => !v)
-            }}
-            className={`inline-flex items-center gap-1.5 ${primaryButtonClass}`}
-          >
-            <Plus size={16} />
-            기록 추가
-          </button>
+          {showRecordForm ? (
+            <span
+              role="status"
+              className="inline-flex h-11 items-center rounded-full bg-brand-50 px-4 text-sm font-semibold text-brand-700"
+            >
+              기록 작성 중
+            </span>
+          ) : (
+            <button
+              onClick={() => {
+                setEditingRecord(null)
+                setShowRecordForm(true)
+              }}
+              className={`inline-flex items-center gap-1.5 ${primaryButtonClass}`}
+            >
+              <Plus size={16} />
+              기록 추가
+            </button>
+          )}
         </div>
       </div>
 
@@ -148,7 +157,7 @@ export function StudentDetailPage() {
       {showRecordForm && (
         <div className={`mb-4 ${sectionCardClass}`}>
           <RecordForm
-            submitLabel="추가"
+            submitLabel="기록 저장"
             initialValues={selectedRecordCategory === 'all' ? undefined : { category: selectedRecordCategory }}
             onSubmit={handleAddRecord}
             onCancel={() => setShowRecordForm(false)}
