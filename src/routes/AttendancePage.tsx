@@ -4,13 +4,17 @@ import { useStudents } from '../lib/hooks/useStudents'
 import { useAttendance } from '../lib/hooks/useAttendance'
 import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
 import { useSchoolEvents } from '../lib/hooks/useSchoolEvents'
+import { useStudentAttendanceHistory } from '../lib/hooks/useStudentAttendanceHistory'
 import { filterEventsByDateForGrade } from '../lib/utils/schoolEvents'
 import { AttendanceCalendar } from '../components/AttendanceCalendar'
 import { DailyStudentAttendance } from '../components/DailyStudentAttendance'
 import { MonthlyAttendanceSummary } from '../components/MonthlyAttendanceSummary'
 import { PageContainer } from '../components/PageContainer'
+import { StudentAttendanceHistory } from '../components/StudentAttendanceHistory'
+import type { AttendanceStatus } from '../lib/types'
 
 type Tab = 'daily' | 'monthly'
+const ATTENDANCE_STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 
 function todayYearMonth() {
   const now = new Date()
@@ -79,12 +83,16 @@ export function AttendancePage() {
   const [searchParams] = useSearchParams()
   const dateFromQuery = parseDateParam(searchParams.get('date'))
   const highlightStudentId = searchParams.get('student') ?? undefined
+  const historyStudentId = searchParams.get('view') === 'history' ? searchParams.get('student') ?? undefined : undefined
+  const statusParam = searchParams.get('status')
+  const historyStatus = ATTENDANCE_STATUSES.find((status) => status === statusParam)
 
   const [activeTab, setActiveTab] = useState<Tab>('daily')
   const [yearMonth, setYearMonth] = useState(dateFromQuery?.yearMonth ?? todayYearMonth())
   const [selectedDate, setSelectedDate] = useState(dateFromQuery?.selectedDate ?? todayDateString())
 
   const { students, error: studentsError } = useStudents()
+  const history = useStudentAttendanceHistory(historyStudentId, historyStatus)
   const { entries, loading, error, upsertEntry, clearEntry, deleteEntry, updateEntryFlags } = useAttendance(yearMonth)
   const { settings: schoolSettings } = useSchoolSettings()
   const { eventsByDate: rawEventsByDate, status: eventsStatus } = useSchoolEvents(schoolSettings, yearMonth)
@@ -94,6 +102,18 @@ export function AttendancePage() {
     [rawEventsByDate, schoolSettings],
   )
   const selectedDateEvents = eventsByDate[selectedDate.replace(/-/g, '')] ?? []
+
+  if (historyStudentId && historyStatus) {
+    return (
+      <PageContainer size="wide">
+        <StudentAttendanceHistory
+          student={students.find((student) => student.id === historyStudentId)}
+          status={historyStatus}
+          {...history}
+        />
+      </PageContainer>
+    )
+  }
 
   const changeMonth = (delta: number) => {
     const next = shiftMonth(yearMonth, delta)

@@ -98,12 +98,24 @@ export function StudentDetailPage() {
 
       <div className="mb-6 flex flex-wrap gap-1.5">
         {ATTENDANCE_SUMMARY_LABELS.map((status) => (
-          <span
-            key={status}
-            className={`inline-flex h-[25px] items-center justify-center rounded-full px-2.5 text-[12px] font-semibold ${ATTENDANCE_STATUS_COLOR_CLASS[status]}`}
-          >
-            {status} {attendanceSummary[status]}
-          </span>
+          attendanceSummary[status] > 0 ? (
+            <button
+              key={status}
+              type="button"
+              onClick={() => navigate(`/attendance?view=history&student=${student.id}&status=${encodeURIComponent(status)}`)}
+              className={`inline-flex h-[25px] items-center justify-center rounded-full px-2.5 text-[12px] font-semibold transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 ${ATTENDANCE_STATUS_COLOR_CLASS[status]}`}
+              aria-label={`${status} ${attendanceSummary[status]}건 이력 보기`}
+            >
+              {status} {attendanceSummary[status]}
+            </button>
+          ) : (
+            <span
+              key={status}
+              className={`inline-flex h-[25px] items-center justify-center rounded-full px-2.5 text-[12px] font-semibold ${ATTENDANCE_STATUS_COLOR_CLASS[status]}`}
+            >
+              {status} {attendanceSummary[status]}
+            </span>
+          )
         ))}
       </div>
 
