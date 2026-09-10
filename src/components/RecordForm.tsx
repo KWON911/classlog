@@ -77,7 +77,7 @@ export function RecordForm({ initialValues, onSubmit, onCancel, submitLabel }: R
         />
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-2">
+      <div className="flex justify-end gap-2">
         <button type="submit" disabled={submitting} className={primaryButtonClass}>
           {submitLabel}
         </button>
