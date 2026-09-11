@@ -4,18 +4,15 @@ import { useStudents } from '../lib/hooks/useStudents'
 import { useAttendance } from '../lib/hooks/useAttendance'
 import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
 import { useSchoolEvents } from '../lib/hooks/useSchoolEvents'
-import { useStudentAttendanceHistory } from '../lib/hooks/useStudentAttendanceHistory'
-import { useAttendanceSummary } from '../lib/hooks/useAttendanceSummary'
+import { useAllAttendance } from '../lib/hooks/useAllAttendance'
 import { filterEventsByDateForGrade } from '../lib/utils/schoolEvents'
 import { AttendanceCalendar } from '../components/AttendanceCalendar'
 import { DailyStudentAttendance } from '../components/DailyStudentAttendance'
 import { MonthlyAttendanceSummary } from '../components/MonthlyAttendanceSummary'
 import { PageContainer } from '../components/PageContainer'
-import { StudentAttendanceHistory } from '../components/StudentAttendanceHistory'
-import type { AttendanceStatus } from '../lib/types'
 
-type Tab = 'daily' | 'monthly' | 'history'
-const ATTENDANCE_STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
+type Tab = 'daily' | 'summary'
+type SummaryPeriod = 'month' | 'all'
 
 function todayYearMonth() {
   const now = new Date()
@@ -84,21 +81,15 @@ export function AttendancePage() {
   const [searchParams] = useSearchParams()
   const dateFromQuery = parseDateParam(searchParams.get('date'))
   const highlightStudentId = searchParams.get('student') ?? undefined
-  const historyStudentId = searchParams.get('view') === 'history' ? searchParams.get('student') ?? undefined : undefined
-  const statusParam = searchParams.get('status')
-  const historyStatus = ATTENDANCE_STATUSES.find((status) => status === statusParam)
 
-  const [activeTab, setActiveTab] = useState<Tab>(historyStudentId ? 'history' : 'daily')
+  const [activeTab, setActiveTab] = useState<Tab>(searchParams.get('view') === 'history' ? 'summary' : 'daily')
+  const [summaryPeriod, setSummaryPeriod] = useState<SummaryPeriod>(searchParams.get('view') === 'history' ? 'all' : 'month')
   const [yearMonth, setYearMonth] = useState(dateFromQuery?.yearMonth ?? todayYearMonth())
   const [selectedDate, setSelectedDate] = useState(dateFromQuery?.selectedDate ?? todayDateString())
-  const [selectedHistoryStudentId, setSelectedHistoryStudentId] = useState(historyStudentId ?? '')
-  const [selectedHistoryStatus, setSelectedHistoryStatus] = useState<AttendanceStatus | undefined>(historyStatus)
 
   const { students, error: studentsError } = useStudents()
-  const historyStudent = students.find((student) => student.id === selectedHistoryStudentId)
-  const history = useStudentAttendanceHistory(selectedHistoryStudentId || undefined, selectedHistoryStatus)
-  const { summary: historySummary } = useAttendanceSummary(selectedHistoryStudentId || undefined)
   const { entries, loading, error, upsertEntry, clearEntry, deleteEntry, updateEntryFlags } = useAttendance(yearMonth)
+  const allAttendance = useAllAttendance(activeTab === 'summary' && summaryPeriod === 'all')
   const { settings: schoolSettings } = useSchoolSettings()
   const { eventsByDate: rawEventsByDate, status: eventsStatus } = useSchoolEvents(schoolSettings, yearMonth)
 
@@ -124,17 +115,10 @@ export function AttendancePage() {
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('monthly')}
-          className={tabButtonClass(activeTab === 'monthly')}
+          onClick={() => setActiveTab('summary')}
+          className={tabButtonClass(activeTab === 'summary')}
         >
-          월간 요약
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('history')}
-          className={tabButtonClass(activeTab === 'history')}
-        >
-          개인별 이력
+          출결 요약
         </button>
       </div>
 
@@ -184,42 +168,20 @@ export function AttendancePage() {
             />
           </div>
         </div>
-      ) : activeTab === 'monthly' ? (
-        <div>
-          <MonthNav yearMonth={yearMonth} onChange={changeMonth} />
-          <MonthlyAttendanceSummary
-            students={students}
-            entries={entries}
-            deleteEntry={deleteEntry}
-            updateEntryFlags={updateEntryFlags}
-          />
-        </div>
       ) : (
-        <div className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <label className="flex w-full max-w-sm flex-col gap-1 text-sm font-medium text-gray-700">
-              학생 선택
-              <select
-                value={selectedHistoryStudentId}
-                onChange={(event) => setSelectedHistoryStudentId(event.target.value)}
-                className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-              >
-                <option value="">학생을 선택하세요</option>
-                {students.map((student) => (
-                  <option key={student.id} value={student.id}>
-                    {student.number}. {student.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="inline-flex rounded-lg border border-gray-300 p-0.5" aria-label="상태 필터">
-              <button type="button" onClick={() => setSelectedHistoryStatus(undefined)} className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${!selectedHistoryStatus ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>전체</button>
-              {ATTENDANCE_STATUSES.map((status) => (
-                <button key={status} type="button" onClick={() => setSelectedHistoryStatus(status)} className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${selectedHistoryStatus === status ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>{status}</button>
-              ))}
-            </div>
+        <div>
+          <div className="mb-3 inline-flex rounded-lg border border-gray-300 p-0.5">
+            <button type="button" onClick={() => setSummaryPeriod('month')} className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${summaryPeriod === 'month' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>선택 월</button>
+            <button type="button" onClick={() => setSummaryPeriod('all')} className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${summaryPeriod === 'all' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>전체 누적</button>
           </div>
-          <StudentAttendanceHistory student={historyStudent} status={selectedHistoryStatus} summary={historySummary} {...history} />
+          {summaryPeriod === 'month' && <MonthNav yearMonth={yearMonth} onChange={changeMonth} />}
+          <MonthlyAttendanceSummary
+            mode={summaryPeriod === 'month' ? 'monthly' : 'cumulative'}
+            students={students}
+            entries={summaryPeriod === 'month' ? entries : allAttendance.entries}
+            deleteEntry={summaryPeriod === 'month' ? deleteEntry : undefined}
+            updateEntryFlags={summaryPeriod === 'month' ? updateEntryFlags : undefined}
+          />
         </div>
       )}
     </PageContainer>

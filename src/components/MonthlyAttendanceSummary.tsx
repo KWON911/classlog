@@ -22,10 +22,11 @@ type DeleteTarget = {
 }
 
 type MonthlyAttendanceSummaryProps = {
+  mode: 'monthly' | 'cumulative'
   students: Student[]
   entries: AttendanceEntry[]
-  deleteEntry: (recordId: string) => Promise<{ error?: string }>
-  updateEntryFlags: (
+  deleteEntry?: (recordId: string) => Promise<{ error?: string }>
+  updateEntryFlags?: (
     recordId: string,
     patch: Partial<{ neis_entered: boolean; document_received: boolean }>,
   ) => Promise<{ error?: string }>
@@ -112,15 +113,17 @@ function StudentSummaryCardHeader({
 type DetailRecordProps = {
   entry: AttendanceEntry
   studentName: string
-  onDeleteClick: () => void
-  onToggleNeisEntered: () => void
-  onToggleDocumentReceived: () => void
+  editable: boolean
+  onDeleteClick?: () => void
+  onToggleNeisEntered?: () => void
+  onToggleDocumentReceived?: () => void
   togglingField: 'neis_entered' | 'document_received' | null
 }
 
 function DetailRecord({
   entry,
   studentName,
+  editable,
   onDeleteClick,
   onToggleNeisEntered,
   onToggleDocumentReceived,
@@ -128,7 +131,7 @@ function DetailRecord({
 }: DetailRecordProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 border-t border-brand-100 py-2 text-sm first:border-t-0">
-      <button
+      {editable && <button
         type="button"
         onClick={onDeleteClick}
         title="출결 기록 삭제"
@@ -136,7 +139,7 @@ function DetailRecord({
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:bg-red-50 focus:text-red-600 focus:outline-none"
       >
         <Trash2 size={14} />
-      </button>
+      </button>}
       <span className="w-12 shrink-0 text-gray-500">{formatMonthDay(entry.date)}</span>
       <span
         className={`inline-flex h-[22px] items-center justify-center rounded-full px-2 text-[11px] font-semibold ${ATTENDANCE_STATUS_COLOR_CLASS[entry.status]}`}
@@ -146,7 +149,7 @@ function DetailRecord({
       <span className="text-gray-700">{entry.reason_category}</span>
       {entry.note && <span className="text-gray-600">· {entry.note}</span>}
 
-      <div className="ml-auto flex items-center gap-1">
+      {editable && <div className="ml-auto flex items-center gap-1">
         <button
           type="button"
           onClick={onToggleNeisEntered}
@@ -182,12 +185,13 @@ function DetailRecord({
             증빙서류
           </button>
         )}
-      </div>
+      </div>}
     </div>
   )
 }
 
 export function MonthlyAttendanceSummary({
+  mode,
   students,
   entries,
   deleteEntry,
@@ -239,10 +243,10 @@ export function MonthlyAttendanceSummary({
       map.set(entry.student_id, list)
     }
     for (const list of map.values()) {
-      list.sort((a, b) => a.date.localeCompare(b.date))
+      list.sort((a, b) => (mode === 'monthly' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)))
     }
     return map
-  }, [entries])
+  }, [entries, mode])
 
   const studentsWithRecordsCount = useMemo(
     () => students.filter((s) => (recordCountByStudent.get(s.id) ?? 0) > 0).length,
@@ -306,7 +310,7 @@ export function MonthlyAttendanceSummary({
   }
 
   const handleConfirmDelete = async () => {
-    if (!deleteTarget) return
+    if (!deleteTarget || !deleteEntry) return
     setDeletingId(deleteTarget.recordId)
     const result = await deleteEntry(deleteTarget.recordId)
     setDeletingId(null)
@@ -326,6 +330,7 @@ export function MonthlyAttendanceSummary({
     field: 'neis_entered' | 'document_received',
     nextValue: boolean,
   ) => {
+    if (!updateEntryFlags) return
     const key = `${recordId}:${field}`
     setTogglingKey(key)
     const result = await updateEntryFlags(recordId, { [field]: nextValue })
@@ -353,7 +358,7 @@ export function MonthlyAttendanceSummary({
         </p>
         <div className="flex items-center gap-2">
           <div className="inline-flex rounded-lg border border-gray-300 p-0.5">
-            <button
+            {mode === 'monthly' && <button
               type="button"
               onClick={() => setFilterMode('all')}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -361,7 +366,7 @@ export function MonthlyAttendanceSummary({
               }`}
             >
               전체 {students.length}
-            </button>
+            </button>}
             <button
               type="button"
               onClick={() => setFilterMode('withRecords')}
@@ -437,6 +442,7 @@ export function MonthlyAttendanceSummary({
                       key={entry.id}
                       entry={entry}
                       studentName={student.name}
+                      editable={mode === 'monthly'}
                       onDeleteClick={() =>
                         setDeleteTarget({
                           recordId: entry.id,
@@ -465,7 +471,7 @@ export function MonthlyAttendanceSummary({
         })}
       </div>
 
-      {deleteTarget && (
+      {mode === 'monthly' && deleteTarget && (
         <AttendanceDeleteConfirmModal
           studentName={deleteTarget.studentName}
           date={deleteTarget.date}

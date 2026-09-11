@@ -22,13 +22,6 @@ vi.mock('../lib/hooks/useStudentRecords', () => ({
   }),
 }))
 
-vi.mock('../lib/hooks/useAttendanceSummary', () => ({
-  useAttendanceSummary: () => ({
-    summary: { 결석: 0, 지각: 0, 조퇴: 0, 결과: 0 },
-    error: null,
-  }),
-}))
-
 afterEach(cleanup)
 
 describe('StudentDetailPage', () => {
