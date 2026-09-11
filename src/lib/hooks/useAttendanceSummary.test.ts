@@ -42,6 +42,15 @@ describe('useAttendanceSummary', () => {
     expect(result.current.summary).toEqual({ 결석: 0, 지각: 0, 조퇴: 0, 결과: 0 })
   })
 
+  it('does not query attendance until a student is selected', async () => {
+    const { result } = renderHook(() => useAttendanceSummary(undefined))
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(mockFrom).not.toHaveBeenCalled()
+    expect(result.current.summary).toEqual({ 결석: 0, 지각: 0, 조퇴: 0, 결과: 0 })
+  })
+
   it('surfaces the error message when fetch fails', async () => {
     mockFrom.mockReturnValue(createQueryBuilder({ data: null, error: { message: '네트워크 오류' } }))
 

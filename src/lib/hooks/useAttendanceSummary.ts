@@ -6,13 +6,20 @@ export type AttendanceSummary = Record<AttendanceStatus, number>
 
 const EMPTY_SUMMARY: AttendanceSummary = { 결석: 0, 지각: 0, 조퇴: 0, 결과: 0 }
 
-export function useAttendanceSummary(studentId: string) {
+export function useAttendanceSummary(studentId: string | undefined) {
   const [summary, setSummary] = useState<AttendanceSummary>(EMPTY_SUMMARY)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const requestIdRef = useRef(0)
 
   const fetchSummary = useCallback(async () => {
+    if (!studentId) {
+      setSummary(EMPTY_SUMMARY)
+      setLoading(false)
+      setError(null)
+      return
+    }
+
     const requestId = ++requestIdRef.current
     setLoading(true)
     setError(null)

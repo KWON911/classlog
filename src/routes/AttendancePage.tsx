@@ -5,6 +5,7 @@ import { useAttendance } from '../lib/hooks/useAttendance'
 import { useSchoolSettings } from '../lib/hooks/useSchoolSettings'
 import { useSchoolEvents } from '../lib/hooks/useSchoolEvents'
 import { useStudentAttendanceHistory } from '../lib/hooks/useStudentAttendanceHistory'
+import { useAttendanceSummary } from '../lib/hooks/useAttendanceSummary'
 import { filterEventsByDateForGrade } from '../lib/utils/schoolEvents'
 import { AttendanceCalendar } from '../components/AttendanceCalendar'
 import { DailyStudentAttendance } from '../components/DailyStudentAttendance'
@@ -96,6 +97,7 @@ export function AttendancePage() {
   const { students, error: studentsError } = useStudents()
   const historyStudent = students.find((student) => student.id === selectedHistoryStudentId)
   const history = useStudentAttendanceHistory(selectedHistoryStudentId || undefined, selectedHistoryStatus)
+  const { summary: historySummary } = useAttendanceSummary(selectedHistoryStudentId || undefined)
   const { entries, loading, error, upsertEntry, clearEntry, deleteEntry, updateEntryFlags } = useAttendance(yearMonth)
   const { settings: schoolSettings } = useSchoolSettings()
   const { eventsByDate: rawEventsByDate, status: eventsStatus } = useSchoolEvents(schoolSettings, yearMonth)
@@ -194,8 +196,8 @@ export function AttendancePage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-gray-700">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <label className="flex w-full max-w-sm flex-col gap-1 text-sm font-medium text-gray-700">
               학생 선택
               <select
                 value={selectedHistoryStudentId}
@@ -210,23 +212,14 @@ export function AttendancePage() {
                 ))}
               </select>
             </label>
-            <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-gray-700">
-              상태 필터
-              <select
-                value={selectedHistoryStatus ?? ''}
-                onChange={(event) => setSelectedHistoryStatus((event.target.value || undefined) as AttendanceStatus | undefined)}
-                className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-              >
-                <option value="">전체</option>
-                {ATTENDANCE_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="inline-flex rounded-lg border border-gray-300 p-0.5" aria-label="상태 필터">
+              <button type="button" onClick={() => setSelectedHistoryStatus(undefined)} className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${!selectedHistoryStatus ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>전체</button>
+              {ATTENDANCE_STATUSES.map((status) => (
+                <button key={status} type="button" onClick={() => setSelectedHistoryStatus(status)} className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${selectedHistoryStatus === status ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>{status}</button>
+              ))}
+            </div>
           </div>
-          <StudentAttendanceHistory student={historyStudent} status={selectedHistoryStatus} {...history} />
+          <StudentAttendanceHistory student={historyStudent} status={selectedHistoryStatus} summary={historySummary} {...history} />
         </div>
       )}
     </PageContainer>

@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AttendancePage } from './AttendancePage'
 
 vi.mock('../lib/hooks/useStudents', () => ({
@@ -31,6 +31,11 @@ vi.mock('../lib/hooks/useStudentAttendanceHistory', () => ({
     error: null,
   }),
 }))
+vi.mock('../lib/hooks/useAttendanceSummary', () => ({
+  useAttendanceSummary: () => ({ summary: { 결석: 2, 지각: 1, 조퇴: 0, 결과: 0 } }),
+}))
+
+afterEach(cleanup)
 
 describe('AttendancePage', () => {
   it('shows a selected student’s cumulative attendance history in the personal-history tab', () => {
@@ -47,7 +52,24 @@ describe('AttendancePage', () => {
     fireEvent.change(screen.getByLabelText('학생 선택'), { target: { value: 's1' } })
 
     expect(screen.getByRole('heading', { name: '김학생 · 출결 이력' })).toBeInTheDocument()
-    expect(screen.getByText('2026-09-01 · 질병결석')).toBeInTheDocument()
-    expect(screen.getByText('진료')).toBeInTheDocument()
+    expect(screen.getByText('09/01')).toBeInTheDocument()
+    expect(screen.getByText('질병')).toBeInTheDocument()
+    expect(screen.getByText('· 진료')).toBeInTheDocument()
+  })
+
+  it('uses monthly-summary-style status buttons and badges for the selected student', () => {
+    render(
+      <MemoryRouter>
+        <AttendancePage />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '개인별 이력' }))
+    fireEvent.change(screen.getByLabelText('학생 선택'), { target: { value: 's1' } })
+
+    expect(screen.getByRole('button', { name: '전체' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '결석' })).toBeInTheDocument()
+    expect(screen.getByLabelText('결석 2건')).toBeInTheDocument()
+    expect(screen.getByLabelText('지각 1건')).toBeInTheDocument()
   })
 })

@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { CheckSquare, ChevronDown, ChevronRight, Square, Trash2 } from 'lucide-react'
 import type { AttendanceEntry, AttendanceStatus, Student } from '../lib/types'
 import { AttendanceDeleteConfirmModal } from './AttendanceDeleteConfirmModal'
-import { ATTENDANCE_STATUS_COLOR_CLASS, ATTENDANCE_ZERO_COUNT_BADGE_CLASS } from '../lib/utils/attendanceStatusColors'
+import { AttendanceBadgeGroup } from './AttendanceBadgeGroup'
+import { ATTENDANCE_STATUS_COLOR_CLASS } from '../lib/utils/attendanceStatusColors'
 
 const STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 
@@ -46,28 +47,6 @@ function ClassTotalsCards({ totals }: { totals: CountRow }) {
     <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
       {STATUSES.map((status) => (
         <ClassTotalCard key={status} status={status} count={totals[status]} />
-      ))}
-    </div>
-  )
-}
-
-function AttendanceBadge({ status, count }: { status: AttendanceStatus; count: number }) {
-  const colorClass = count > 0 ? ATTENDANCE_STATUS_COLOR_CLASS[status] : ATTENDANCE_ZERO_COUNT_BADGE_CLASS
-  return (
-    <span
-      aria-label={`${status} ${count}건`}
-      className={`inline-flex h-6 items-center justify-center whitespace-nowrap rounded-full px-2.5 text-xs font-semibold ${colorClass}`}
-    >
-      {status} {count}
-    </span>
-  )
-}
-
-function AttendanceBadgeGroup({ counts }: { counts: CountRow }) {
-  return (
-    <div className="flex flex-wrap justify-end gap-1.5">
-      {STATUSES.map((status) => (
-        <AttendanceBadge key={status} status={status} count={counts[status]} />
       ))}
     </div>
   )
