@@ -23,7 +23,7 @@ const tabButtonClass = (active: boolean) =>
 export function StudentListPage() {
   const { students, loading, error, refetch } = useStudents()
   const location = useLocation()
-  const initialTab: Tab = (location.state as { tab?: Tab } | null)?.tab === 'roster' ? 'roster' : 'yorok'
+  const initialTab: Tab = (location.state as { tab?: Tab } | null)?.tab === 'yorok' ? 'yorok' : 'roster'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const { fetchAllRecords, loading: exportingRecords } = useAllRecords()
   const [exportError, setExportError] = useState<string | null>(null)
