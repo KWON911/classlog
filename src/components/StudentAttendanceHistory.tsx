@@ -1,27 +1,27 @@
-import { Link } from 'react-router-dom'
 import type { AttendanceEntry, AttendanceStatus, Student } from '../lib/types'
 
 type Props = {
   student: Student | undefined
-  status: AttendanceStatus
+  status: AttendanceStatus | undefined
   entries: AttendanceEntry[]
   loading: boolean
   error: string | null
 }
 
 export function StudentAttendanceHistory({ student, status, entries, loading, error }: Props) {
-  const studentName = student?.name ?? '학생'
+  if (!student) {
+    return (
+      <section className="rounded-[14px] border border-gray-200 bg-white p-5 text-center shadow-sm sm:p-6">
+        <p className="text-sm text-gray-500">학생을 선택해 출결 이력을 확인하세요.</p>
+      </section>
+    )
+  }
 
   return (
     <section className="mx-auto max-w-3xl rounded-[14px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-      {student && (
-        <Link to={`/students/${student.id}`} className="text-sm font-medium text-brand-600 hover:text-brand-700">
-          ← {student.name} 누가기록으로 돌아가기
-        </Link>
-      )}
-      <h1 className="mt-4 text-2xl font-semibold text-gray-900">
-        {studentName} · {status} 이력
-      </h1>
+      <h2 className="text-xl font-semibold text-gray-900">
+        {student.name} · {status ? `${status} 이력` : '출결 이력'}
+      </h2>
       <p className="mt-1 text-sm text-gray-500">전체 누적 {entries.length}건</p>
 
       {loading ? (
@@ -34,7 +34,9 @@ export function StudentAttendanceHistory({ student, status, entries, loading, er
         <ul className="mt-5 divide-y divide-gray-100 border-y border-gray-100">
           {entries.map((entry) => (
             <li key={entry.id} className="py-3">
-              <p className="font-medium text-gray-900">{entry.date} · {entry.reason_category}</p>
+              <p className="font-medium text-gray-900">
+                {entry.date} · {entry.reason_category}{entry.status}
+              </p>
               {entry.note && <p className="mt-1 text-sm text-gray-600">{entry.note}</p>}
             </li>
           ))}

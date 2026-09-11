@@ -8,7 +8,7 @@ export function useStudentAttendanceHistory(studentId: string | undefined, statu
   const [error, setError] = useState<string | null>(null)
 
   const fetchHistory = useCallback(async () => {
-    if (!studentId || !status) {
+    if (!studentId) {
       setEntries([])
       setLoading(false)
       return
@@ -16,12 +16,15 @@ export function useStudentAttendanceHistory(studentId: string | undefined, statu
 
     setLoading(true)
     setError(null)
-    const { data, error } = await supabase
+    let query = supabase
       .from('attendance')
       .select('*')
       .eq('student_id', studentId)
-      .eq('status', status)
       .order('date', { ascending: false })
+
+    if (status) query = query.eq('status', status)
+
+    const { data, error } = await query
 
     if (error) setError(error.message)
     else setEntries((data ?? []) as AttendanceEntry[])

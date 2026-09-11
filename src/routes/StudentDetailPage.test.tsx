@@ -92,4 +92,17 @@ describe('StudentDetailPage', () => {
     expect(screen.getByText('Google Form으로 누가기록 남기기')).toBeInTheDocument()
     expect(screen.getByText('새 학년도에 학생이 바뀌면')).toBeInTheDocument()
   })
+
+  it('does not show attendance summaries in the cumulative record page', () => {
+    render(
+      <MemoryRouter initialEntries={['/students/s1']}>
+        <Routes>
+          <Route path="/students/:id" element={<StudentDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByText('결석 0')).not.toBeInTheDocument()
+    expect(screen.queryByText('지각 0')).not.toBeInTheDocument()
+  })
 })

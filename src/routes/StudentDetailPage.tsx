@@ -3,23 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ChevronDown, HelpCircle, Plus } from 'lucide-react'
 import { useStudents } from '../lib/hooks/useStudents'
 import { useStudentRecords } from '../lib/hooks/useStudentRecords'
-import { useAttendanceSummary } from '../lib/hooks/useAttendanceSummary'
 import { PageContainer } from '../components/PageContainer'
 import { RecordForm, type RecordFormValues } from '../components/RecordForm'
 import { RecordTimeline } from '../components/RecordTimeline'
 import { RecordGuideModal } from '../components/RecordGuideModal'
 import { primaryButtonClass, sectionCardClass } from '../lib/ui/classNames'
-import { ATTENDANCE_STATUS_COLOR_CLASS } from '../lib/utils/attendanceStatusColors'
-import type { AttendanceStatus, RecordCategory, StudentRecord } from '../lib/types'
-
-const ATTENDANCE_SUMMARY_LABELS: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
+import type { RecordCategory, StudentRecord } from '../lib/types'
 
 export function StudentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { students, loading: studentsLoading, error: studentsError } = useStudents()
   const { records, loading, error, addRecord, updateRecord, deleteRecord } = useStudentRecords(id ?? '')
-  const { summary: attendanceSummary, error: attendanceError } = useAttendanceSummary(id ?? '')
 
   const [showRecordForm, setShowRecordForm] = useState(false)
   const [showRecordGuide, setShowRecordGuide] = useState(false)
@@ -96,40 +91,11 @@ export function StudentDetailPage() {
         </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-1.5">
-        {ATTENDANCE_SUMMARY_LABELS.map((status) => (
-          attendanceSummary[status] > 0 ? (
-            <button
-              key={status}
-              type="button"
-              onClick={() => navigate(`/attendance?view=history&student=${student.id}&status=${encodeURIComponent(status)}`)}
-              className={`inline-flex h-[25px] items-center justify-center rounded-full px-2.5 text-[12px] font-semibold transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 ${ATTENDANCE_STATUS_COLOR_CLASS[status]}`}
-              aria-label={`${status} ${attendanceSummary[status]}건 이력 보기`}
-            >
-              {status} {attendanceSummary[status]}
-            </button>
-          ) : (
-            <span
-              key={status}
-              className={`inline-flex h-[25px] items-center justify-center rounded-full px-2.5 text-[12px] font-semibold ${ATTENDANCE_STATUS_COLOR_CLASS[status]}`}
-            >
-              {status} {attendanceSummary[status]}
-            </span>
-          )
-        ))}
-      </div>
-
       {studentsError && (
         <p className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
           {studentsError}
         </p>
       )}
-      {attendanceError && (
-        <p className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {attendanceError}
-        </p>
-      )}
-
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">생활기록 / 상담</h2>
         <div className="flex items-center gap-2">

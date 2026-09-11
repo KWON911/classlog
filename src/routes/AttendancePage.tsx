@@ -13,7 +13,7 @@ import { PageContainer } from '../components/PageContainer'
 import { StudentAttendanceHistory } from '../components/StudentAttendanceHistory'
 import type { AttendanceStatus } from '../lib/types'
 
-type Tab = 'daily' | 'monthly'
+type Tab = 'daily' | 'monthly' | 'history'
 const ATTENDANCE_STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 
 function todayYearMonth() {
@@ -87,12 +87,15 @@ export function AttendancePage() {
   const statusParam = searchParams.get('status')
   const historyStatus = ATTENDANCE_STATUSES.find((status) => status === statusParam)
 
-  const [activeTab, setActiveTab] = useState<Tab>('daily')
+  const [activeTab, setActiveTab] = useState<Tab>(historyStudentId ? 'history' : 'daily')
   const [yearMonth, setYearMonth] = useState(dateFromQuery?.yearMonth ?? todayYearMonth())
   const [selectedDate, setSelectedDate] = useState(dateFromQuery?.selectedDate ?? todayDateString())
+  const [selectedHistoryStudentId, setSelectedHistoryStudentId] = useState(historyStudentId ?? '')
+  const [selectedHistoryStatus, setSelectedHistoryStatus] = useState<AttendanceStatus | undefined>(historyStatus)
 
   const { students, error: studentsError } = useStudents()
-  const history = useStudentAttendanceHistory(historyStudentId, historyStatus)
+  const historyStudent = students.find((student) => student.id === selectedHistoryStudentId)
+  const history = useStudentAttendanceHistory(selectedHistoryStudentId || undefined, selectedHistoryStatus)
   const { entries, loading, error, upsertEntry, clearEntry, deleteEntry, updateEntryFlags } = useAttendance(yearMonth)
   const { settings: schoolSettings } = useSchoolSettings()
   const { eventsByDate: rawEventsByDate, status: eventsStatus } = useSchoolEvents(schoolSettings, yearMonth)
@@ -102,18 +105,6 @@ export function AttendancePage() {
     [rawEventsByDate, schoolSettings],
   )
   const selectedDateEvents = eventsByDate[selectedDate.replace(/-/g, '')] ?? []
-
-  if (historyStudentId && historyStatus) {
-    return (
-      <PageContainer size="wide">
-        <StudentAttendanceHistory
-          student={students.find((student) => student.id === historyStudentId)}
-          status={historyStatus}
-          {...history}
-        />
-      </PageContainer>
-    )
-  }
 
   const changeMonth = (delta: number) => {
     const next = shiftMonth(yearMonth, delta)
@@ -135,6 +126,13 @@ export function AttendancePage() {
           className={tabButtonClass(activeTab === 'monthly')}
         >
           월간 요약
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('history')}
+          className={tabButtonClass(activeTab === 'history')}
+        >
+          개인별 이력
         </button>
       </div>
 
@@ -184,7 +182,7 @@ export function AttendancePage() {
             />
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'monthly' ? (
         <div>
           <MonthNav yearMonth={yearMonth} onChange={changeMonth} />
           <MonthlyAttendanceSummary
@@ -193,6 +191,42 @@ export function AttendancePage() {
             deleteEntry={deleteEntry}
             updateEntryFlags={updateEntryFlags}
           />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-gray-700">
+              학생 선택
+              <select
+                value={selectedHistoryStudentId}
+                onChange={(event) => setSelectedHistoryStudentId(event.target.value)}
+                className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              >
+                <option value="">학생을 선택하세요</option>
+                {students.map((student) => (
+                  <option key={student.id} value={student.id}>
+                    {student.number}. {student.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-gray-700">
+              상태 필터
+              <select
+                value={selectedHistoryStatus ?? ''}
+                onChange={(event) => setSelectedHistoryStatus((event.target.value || undefined) as AttendanceStatus | undefined)}
+                className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              >
+                <option value="">전체</option>
+                {ATTENDANCE_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <StudentAttendanceHistory student={historyStudent} status={selectedHistoryStatus} {...history} />
         </div>
       )}
     </PageContainer>
