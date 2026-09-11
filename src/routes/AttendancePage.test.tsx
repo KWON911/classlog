@@ -12,7 +12,7 @@ vi.mock('../lib/hooks/useStudents', () => ({
 
 vi.mock('../lib/hooks/useAttendance', () => ({
   useAttendance: () => ({
-    entries: [],
+    entries: [{ id: 'a1', student_id: 's1', status: '결석', reason_category: '질병', date: '2026-09-01' }],
     loading: false,
     error: null,
     upsertEntry: vi.fn(),
@@ -43,5 +43,18 @@ describe('AttendancePage', () => {
     expect(screen.getByRole('button', { name: '선택 월' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '전체 누적' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '개인별 이력' })).not.toBeInTheDocument()
+  })
+
+  it('provides an explicit all-students control after filtering to students with records', () => {
+    render(
+      <MemoryRouter>
+        <AttendancePage />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '출결 요약' }))
+    fireEvent.click(screen.getByRole('button', { name: '기록 있음 1' }))
+
+    expect(screen.getByRole('button', { name: '전체 보기 1' })).toBeInTheDocument()
   })
 })

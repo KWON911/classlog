@@ -365,7 +365,7 @@ export function MonthlyAttendanceSummary({
                 filterMode === 'all' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
-              전체 {students.length}
+              전체 보기 {students.length}
             </button>}
             <button
               type="button"
