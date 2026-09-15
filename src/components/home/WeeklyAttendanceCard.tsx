@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useWeeklyAttendance } from '../../lib/hooks/useWeeklyAttendance'
-import { groupAttendanceByDate } from '../../lib/utils/weeklyAttendance'
+import { attendanceDatePath, groupAttendanceByDate } from '../../lib/utils/weeklyAttendance'
 import { weekdaysOf, yyyymmdd } from '../../lib/utils/date-utils'
 import { ATTENDANCE_STATUS_COLOR_CLASS } from '../../lib/utils/attendanceStatusColors'
 import { EmptyState, ErrorState, LoadingState } from './HomeCardStates'
@@ -57,11 +57,17 @@ export function WeeklyAttendanceCard({
               return (
                 <div
                   key={day.date}
-                  className={`box-border min-w-0 rounded-lg border p-2.5 ${
+                  className={`relative box-border min-w-0 rounded-lg border p-2.5 ${
                     isToday ? 'border-2 border-brand-500 bg-brand-50/40' : 'border border-gray-200'
                   }`}
                 >
-                  <div className="mb-2 text-center">
+                  <Link
+                    to={attendanceDatePath(day.date)}
+                    aria-label={`${day.dayLabel} ${formatDayDate(day.date)} 출결 수정`}
+                    className="absolute inset-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  />
+
+                  <div className="pointer-events-none mb-2 text-center">
                     <div className={`text-xs font-semibold ${isToday ? 'text-brand-700' : 'text-gray-700'}`}>
                       {day.dayLabel}
                     </div>
@@ -70,9 +76,9 @@ export function WeeklyAttendanceCard({
                   </div>
 
                   {day.entries.length === 0 ? (
-                    <p className="text-center text-xs text-gray-400">—</p>
+                    <p className="pointer-events-none text-center text-xs text-gray-400">—</p>
                   ) : (
-                    <ul className="flex flex-col gap-1">
+                    <ul className="relative z-10 flex flex-col gap-1">
                       {day.entries.map((entry) => (
                         <li key={entry.student_id}>
                           <Link

@@ -3,6 +3,10 @@ import type { AttendanceEntryWithStudent, AttendanceStatus, WeeklyAttendanceDay 
 
 const STATUS_ORDER: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 
+export function attendanceDatePath(date: string) {
+  return `/attendance?date=${date}`
+}
+
 export function groupAttendanceByDate(
   days: Date[],
   entries: AttendanceEntryWithStudent[],
