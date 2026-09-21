@@ -1,4 +1,4 @@
-import { BookOpen, MessageCircle, MessagesSquare, Music, School, Shuffle, Timer } from 'lucide-react'
+import { BookOpen, Camera, MessageCircle, MessagesSquare, Music, School, Shuffle, Timer } from 'lucide-react'
 import type { NavIcon } from './navItems'
 
 export type MyApp = {
@@ -13,6 +13,7 @@ export const MY_APPS: MyApp[] = [
   { name: '타이머', url: 'https://k-timer-one.vercel.app/', icon: Timer },
   { name: '크로매틱 튜너', url: 'https://k-tuner.vercel.app/', icon: Music },
   { name: '칼림바', url: 'https://k-kalimba.vercel.app/', icon: Music },
+  { name: '포토스튜디오', url: 'https://k-photostudio.vercel.app/', icon: Camera },
   { name: '클래스챗', url: 'https://kwon-classroom-chat.vercel.app/', icon: MessageCircle },
   { name: 'AI 토론방', url: 'https://ai-debate-room-zeta.vercel.app/', icon: MessagesSquare },
   {
