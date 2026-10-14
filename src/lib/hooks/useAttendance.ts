@@ -75,6 +75,38 @@ export function useAttendance(yearMonth: string) {
     return { data }
   }, [])
 
+  const addConsecutiveAbsences = useCallback(async (
+    studentId: string,
+    dates: string[],
+    input: Pick<EntryInput, 'reason_category' | 'note'>,
+  ) => {
+    if (dates.length < 2 || new Set(dates).size !== dates.length) {
+      return { error: '서로 다른 수업일을 2일 이상 선택해 주세요.' }
+    }
+    const { data: userData } = await supabase.auth.getUser()
+    const teacherId = userData.user?.id
+    if (!teacherId) return { error: '로그인이 필요합니다.' }
+
+    // One INSERT keeps the operation atomic. The student/date unique constraint
+    // rejects the whole request if any date already has an attendance record.
+    const rows = dates.map((date) => ({
+      student_id: studentId,
+      teacher_id: teacherId,
+      date,
+      status: '결석' as const,
+      ...input,
+    }))
+    const { data, error } = await supabase.from('attendance').insert(rows).select()
+    if (error) {
+      const message = error.code === '23505'
+        ? '선택한 날짜 중 이미 출결 기록이 있습니다. 기존 기록을 확인한 뒤 다시 선택해 주세요.'
+        : error.message
+      return { error: message }
+    }
+    setEntries((prev) => [...prev, ...(data ?? []).filter((entry) => entry.date.startsWith(yearMonth))])
+    return { data: data ?? [] }
+  }, [yearMonth])
+
   const clearEntry = useCallback(async (studentId: string, date: string) => {
     const { error } = await supabase
       .from('attendance')
@@ -142,5 +174,5 @@ export function useAttendance(yearMonth: string) {
     [],
   )
 
-  return { entries, loading, error, upsertEntry, clearEntry, deleteEntry, updateEntryFlags, refetch: fetchEntries }
+  return { entries, loading, error, upsertEntry, addConsecutiveAbsences, clearEntry, deleteEntry, updateEntryFlags, refetch: fetchEntries }
 }

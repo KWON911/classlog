@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 
-type QueryResult<T> = { data: T; error: { message: string } | null }
+type QueryResult<T> = { data: T; error: { message: string; code?: string } | null }
 
 const CHAIN_METHODS = ['select', 'order', 'eq', 'gte', 'lt', 'lte', 'insert', 'update', 'upsert', 'delete', 'range'] as const
 

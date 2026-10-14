@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { AttendanceEntry, SchoolEvent, Student } from '../lib/types'
+import type { AttendanceEntry, AttendanceReasonCategory, SchoolEvent, SchoolEventByDate, Student } from '../lib/types'
 import { gradeScopeLabel, isNonInstructionalDay } from '../lib/utils/schoolEvents'
 import { AttendanceStudentRow, type AttendanceDraftEntry } from './AttendanceStudentRow'
+import { ConsecutiveAbsenceForm } from './ConsecutiveAbsenceForm'
 
 type UpsertResult = { error?: string }
 
@@ -12,12 +13,14 @@ type DailyStudentAttendanceProps = {
   loading: boolean
   /** Already grade-filtered by the caller, scoped to selectedDate. */
   events: SchoolEvent[]
+  eventsByDate?: SchoolEventByDate
   upsertEntry: (
     studentId: string,
     date: string,
     input: { status: NonNullable<AttendanceEntry['status']>; reason_category: AttendanceEntry['reason_category']; note: string | null },
   ) => Promise<UpsertResult>
   clearEntry: (studentId: string, date: string) => Promise<UpsertResult>
+  addConsecutiveAbsences?: (studentId: string, dates: string[], input: { reason_category: AttendanceReasonCategory; note: string | null }) => Promise<UpsertResult>
   highlightStudentId?: string
 }
 
@@ -38,8 +41,10 @@ export function DailyStudentAttendance({
   entries,
   loading,
   events,
+  eventsByDate = {},
   upsertEntry,
   clearEntry,
+  addConsecutiveAbsences,
   highlightStudentId,
 }: DailyStudentAttendanceProps) {
   const entryByStudent = useMemo(() => {
@@ -58,6 +63,7 @@ export function DailyStudentAttendance({
   const [confirmingBulkPresent, setConfirmingBulkPresent] = useState(false)
   const [forceEnableInput, setForceEnableInput] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [showConsecutiveForm, setShowConsecutiveForm] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [statusIsError, setStatusIsError] = useState(false)
 
@@ -92,6 +98,7 @@ export function DailyStudentAttendance({
   }, [highlightStudentId, loading, students])
 
   const updateDraft = (studentId: string, patch: Partial<AttendanceDraftEntry>) => {
+    setShowConsecutiveForm(false)
     setDraft((prev) => {
       const next = new Map(prev)
       const current = next.get(studentId) ?? defaultDraft()
@@ -211,6 +218,11 @@ export function DailyStudentAttendance({
             ))}
           </div>
           <div className="sticky top-0 z-10 mt-3 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-[#f5f3ef]/95 py-3 backdrop-blur-sm">
+            {addConsecutiveAbsences && (
+              <button type="button" onClick={() => setShowConsecutiveForm((value) => !value)} disabled={dirtyIds.size > 0} title={dirtyIds.size > 0 ? '먼저 현재 날짜의 변경사항을 저장해 주세요.' : undefined} className="h-9 rounded-lg border border-brand-300 bg-white px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">
+                연속 결석 입력
+              </button>
+            )}
             <button
               type="button"
               onClick={handleBulkPresentClick}
@@ -239,6 +251,18 @@ export function DailyStudentAttendance({
               {saving ? '저장 중...' : `출결 저장${dirtyIds.size > 0 ? ` (${dirtyIds.size}명 변경)` : ''}`}
             </button>
           </div>
+
+          {showConsecutiveForm && addConsecutiveAbsences && (
+            <ConsecutiveAbsenceForm
+              key={selectedDate}
+              selectedDate={selectedDate}
+              students={students}
+              entries={entries}
+              eventsByDate={eventsByDate}
+              onClose={() => setShowConsecutiveForm(false)}
+              onSave={addConsecutiveAbsences}
+            />
+          )}
 
           {confirmingBulkPresent && (
             <p

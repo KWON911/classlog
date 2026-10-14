@@ -134,6 +134,46 @@ describe('useAttendance', () => {
     ])
   })
 
+  it('inserts consecutive absences in one request without overwriting existing records', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
+    const newEntries = [
+      { ...entryA, date: '2026-08-06' },
+      { ...entryA, id: 'a2', date: '2026-09-01' },
+    ]
+    const insertBuilder = createQueryBuilder({ data: newEntries, error: null })
+    mockFrom.mockReturnValueOnce(insertBuilder)
+
+    const response = await act(async () => result.current.addConsecutiveAbsences(
+      's1', ['2026-08-06', '2026-09-01'], { reason_category: '질병', note: '입원' },
+    ))
+
+    expect(insertBuilder.insert).toHaveBeenCalledWith([
+      { student_id: 's1', teacher_id: 't1', date: '2026-08-06', status: '결석', reason_category: '질병', note: '입원' },
+      { student_id: 's1', teacher_id: 't1', date: '2026-09-01', status: '결석', reason_category: '질병', note: '입원' },
+    ])
+    expect(response).toEqual({ data: newEntries })
+    expect(result.current.entries).toEqual([newEntries[0]])
+  })
+
+  it('keeps the list unchanged when a consecutive absence conflicts with an existing date', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [entryA], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: null, error: { code: '23505', message: 'duplicate key' } }))
+
+    const response = await act(async () => result.current.addConsecutiveAbsences(
+      's1', ['2026-08-05', '2026-08-06'], { reason_category: '질병', note: null },
+    ))
+
+    expect(response.error).toContain('이미 출결 기록')
+    expect(result.current.entries).toEqual([entryA])
+  })
+
   it('clears an entry by student and date', async () => {
     mockFrom.mockReturnValueOnce(
       createQueryBuilder({
