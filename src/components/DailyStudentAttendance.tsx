@@ -157,9 +157,15 @@ export function DailyStudentAttendance({
     setStatusIsError(false)
   }
 
-  const visibleStudents = showChangedOnly
-    ? students.filter((s) => draft.get(s.id)?.status !== '출석')
-    : students
+  const exceptionStudents = students.filter((s) => (draft.get(s.id)?.status ?? '출석') !== '출석')
+  const presentStudents = students.filter((s) => (draft.get(s.id)?.status ?? '출석') === '출석')
+  const statusCounts = {
+    출석: presentStudents.length,
+    결석: exceptionStudents.filter((s) => draft.get(s.id)?.status === '결석').length,
+    지각: exceptionStudents.filter((s) => draft.get(s.id)?.status === '지각').length,
+    조퇴: exceptionStudents.filter((s) => draft.get(s.id)?.status === '조퇴').length,
+    결과: exceptionStudents.filter((s) => draft.get(s.id)?.status === '결과').length,
+  }
 
   const showAttendanceInput = !isNonInstructional || forceEnableInput
 
@@ -196,7 +202,15 @@ export function DailyStudentAttendance({
         </div>
       ) : (
         <>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-4 flex flex-wrap gap-2" aria-label="선택한 날짜의 출결 현황">
+            <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-800">전체 {students.length}명</span>
+            {Object.entries(statusCounts).map(([status, count]) => (
+              <span key={status} className={`rounded-lg border px-3 py-2 text-sm font-medium ${status === '출석' ? 'border-brand-200 bg-brand-50 text-brand-800' : count > 0 ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-gray-200 bg-white text-gray-500'}`}>
+                {status} <strong className="ml-1">{count}</strong>
+              </span>
+            ))}
+          </div>
+          <div className="sticky top-0 z-10 mt-3 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-[#f5f3ef]/95 py-3 backdrop-blur-sm">
             <button
               type="button"
               onClick={handleBulkPresentClick}
@@ -211,9 +225,11 @@ export function DailyStudentAttendance({
                 onChange={(e) => setShowChangedOnly(e.target.checked)}
                 className="accent-brand-600"
               />
-              변경 학생만 보기
+              예외 학생만 보기
             </label>
-            {dirtyIds.size > 0 && <span className="text-sm text-gray-500">변경 {dirtyIds.size}명</span>}
+            <span className={`text-sm font-medium ${dirtyIds.size > 0 ? 'text-amber-800' : 'text-gray-500'}`} aria-live="polite">
+              {saving ? '저장 중' : dirtyIds.size > 0 ? `저장 전 · ${dirtyIds.size}명 변경` : '변경사항 없음'}
+            </span>
             <button
               type="button"
               onClick={handleSave}
@@ -260,18 +276,29 @@ export function DailyStudentAttendance({
           {loading ? (
             <p className="mt-4 text-sm text-gray-500">불러오는 중...</p>
           ) : (
-            <div className="mt-4 grid grid-cols-1 gap-2.5 @md:grid-cols-2 @2xl:grid-cols-3">
-              {visibleStudents.map((student) => (
-                <AttendanceStudentRow
-                  key={student.id}
-                  studentId={student.id}
-                  number={student.number}
-                  name={student.name}
-                  draft={draft.get(student.id) ?? defaultDraft()}
-                  onChange={(patch) => updateDraft(student.id, patch)}
-                  highlighted={student.id === highlightStudentId}
-                />
-              ))}
+            <div className="mt-5 space-y-6">
+              <section aria-labelledby="attendance-exceptions-title">
+                <h3 id="attendance-exceptions-title" className="mb-2 text-sm font-semibold text-gray-900">확인 필요 · {exceptionStudents.length}명</h3>
+                {exceptionStudents.length === 0 ? (
+                  <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">지각·결석 등 예외 출결이 없습니다.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {exceptionStudents.map((student) => (
+                      <AttendanceStudentRow key={student.id} studentId={student.id} number={student.number} name={student.name} draft={draft.get(student.id) ?? defaultDraft()} onChange={(patch) => updateDraft(student.id, patch)} highlighted={student.id === highlightStudentId} />
+                    ))}
+                  </div>
+                )}
+              </section>
+              {!showChangedOnly && (
+                <section aria-labelledby="attendance-present-title">
+                  <h3 id="attendance-present-title" className="mb-2 text-sm font-semibold text-gray-900">출석 · {presentStudents.length}명</h3>
+                  <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                    {presentStudents.map((student) => (
+                      <AttendanceStudentRow key={student.id} studentId={student.id} number={student.number} name={student.name} draft={draft.get(student.id) ?? defaultDraft()} onChange={(patch) => updateDraft(student.id, patch)} highlighted={student.id === highlightStudentId} />
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
           )}
         </>

@@ -97,18 +97,11 @@ export function AttendanceCalendar({
             const nonInstructional = isNonInstructionalDay(events)
             const eventBadgeText = summarizeEventBadge(events)
 
-            // Four distinct states: default, today, selected, and today+selected
-            // together — border carries the "today" signal, background carries
-            // the "selected" signal, so the combined state simply layers both.
-            const cellStateClass = isToday
-              ? isSelected
-                ? 'border-2 border-brand-700 bg-brand-50'
-                : 'border-2 border-brand-700 bg-white hover:bg-gray-50'
-              : isSelected
-                ? 'border border-brand-300 bg-brand-50'
-                : 'border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+            const cellStateClass = isSelected
+              ? 'border-2 border-brand-700 bg-brand-50 shadow-sm'
+              : 'border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
 
-            const dayNumberClass = isToday || isSelected ? 'text-brand-800' : 'text-gray-500'
+            const dayNumberClass = isSelected ? 'text-brand-800' : 'text-gray-600'
 
             return (
               <button
@@ -117,7 +110,10 @@ export function AttendanceCalendar({
                 onClick={() => onSelectDate(cell.date)}
                 className={`flex min-h-20 flex-col rounded-[10px] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-1 ${cellStateClass}`}
               >
-                <span className={`text-sm font-medium ${dayNumberClass}`}>{cell.day}</span>
+                <span className={`flex items-center gap-1 text-sm font-semibold ${dayNumberClass}`}>
+                  {cell.day}
+                  {isToday && <span className="rounded bg-brand-100 px-1 text-[10px] font-medium text-brand-800">오늘</span>}
+                </span>
 
                 <div className="mt-1.5 flex flex-col gap-1">
                   {nonInstructional ? (

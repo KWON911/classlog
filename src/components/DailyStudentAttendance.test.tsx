@@ -20,11 +20,11 @@ const props = {
 describe('DailyStudentAttendance', () => {
   it('keeps the changed-students filter enabled when selecting a different date', () => {
     const { rerender } = render(<DailyStudentAttendance {...props} selectedDate="2026-09-09" />)
-    const checkbox = screen.getByLabelText('변경 학생만 보기')
+    const checkbox = screen.getByLabelText('예외 학생만 보기')
 
     fireEvent.click(checkbox)
     rerender(<DailyStudentAttendance {...props} selectedDate="2026-09-10" />)
 
-    expect(screen.getByLabelText('변경 학생만 보기')).toBeChecked()
+    expect(screen.getByLabelText('예외 학생만 보기')).toBeChecked()
   })
 })
