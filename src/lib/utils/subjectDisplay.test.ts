@@ -15,6 +15,7 @@ describe('classifySubjectDisplay', () => {
     const result = classifySubjectDisplay('동아리활동')
     expect(result.tier).toBe(1)
     expect(result.lines).toEqual(['동아리활동'])
+    expect(result.fontSizeClass).toBe(classifySubjectDisplay('국어').fontSizeClass)
   })
 
   it('splits a 7-character subject at a delimiter closest to the middle (tier 2)', () => {
@@ -22,6 +23,7 @@ describe('classifySubjectDisplay', () => {
     const result = classifySubjectDisplay('자율·자치활동')
     expect(result.tier).toBe(2)
     expect(result.lines).toEqual(['자율·', '자치활동'])
+    expect(result.fontSizeClass).toBe(classifySubjectDisplay('국어').fontSizeClass)
   })
 
   it('splits a 7-character subject with no delimiter roughly in half (tier 2)', () => {

@@ -55,7 +55,7 @@ export function classifySubjectDisplay(subject: string): SubjectDisplay {
     return { tier: 1, lines: [subject], fontSizeClass: 'text-[13px]' }
   }
   if (displayLength <= 7) {
-    return { tier: 2, lines: splitAtBestBreak(subject), fontSizeClass: 'text-[14px]' }
+    return { tier: 2, lines: splitAtBestBreak(subject), fontSizeClass: 'text-[13px]' }
   }
   return { tier: 3, lines: splitAtBestBreak(subject), fontSizeClass: 'text-[13px]' }
 }

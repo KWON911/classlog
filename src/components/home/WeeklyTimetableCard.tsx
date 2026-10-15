@@ -20,11 +20,24 @@ function formatDayDate(dateStr: string) {
 function SubjectCell({ subject }: { subject: string }) {
   const display = classifySubjectDisplay(subject)
 
+  if (/^자율[· ]자치활동$/.test(subject)) {
+    return (
+      <>
+        <span className="block text-[13px] leading-tight tracking-[-0.02em] sm:hidden" aria-label={subject}>
+          <span className="block">{subject.slice(0, 3)}</span>
+          <span className="block">{subject.slice(3, 5)}</span>
+          <span className="block">{subject.slice(5)}</span>
+        </span>
+        <span className={`hidden sm:inline ${display.fontSizeClass}`}>{display.lines[0]}<wbr />{display.lines[1]}</span>
+      </>
+    )
+  }
+
   if (display.tier === 1) {
     if (subject.replace(/\s+/g, '').length === 5 && !/\s/.test(subject)) {
       return (
         <>
-          <span className="block text-xs leading-tight sm:hidden" aria-label={subject}>
+          <span className="block text-[13px] leading-tight tracking-[-0.02em] sm:hidden" aria-label={subject}>
             <span className="block">{subject.slice(0, 3)}</span>
             <span className="block">{subject.slice(3)}</span>
           </span>
