@@ -24,8 +24,9 @@ function SubjectCell({ subject }: { subject: string }) {
     return (
       <>
         <span className="block text-[13px] leading-tight tracking-[-0.02em] sm:hidden" aria-label={subject}>
-          <span className="block whitespace-nowrap">{subject.slice(0, 3)}</span>
-          <span className="block whitespace-nowrap">{subject.slice(3)}</span>
+          <span className="block">{subject.slice(0, 3)}</span>
+          <span className="block">{subject.slice(3, 5)}</span>
+          <span className="block">{subject.slice(5)}</span>
         </span>
         <span className={`hidden sm:inline ${display.fontSizeClass}`}>{display.lines[0]}<wbr />{display.lines[1]}</span>
       </>
@@ -97,36 +98,10 @@ export function WeeklyTimetableCard({
       ) : isEmpty ? (
         <EmptyState message="시간표 정보가 없습니다." />
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-2 sm:hidden">
-            {days.map((day) => {
-              const isToday = day.date === todayStr
-              return (
-                <section key={day.date} className={`min-w-0 overflow-hidden rounded-lg border ${isToday ? 'border-brand-300 bg-brand-50/40' : 'border-gray-200 bg-white'}`} aria-label={`${day.dayLabel}요일 ${formatDayDate(day.date)} 시간표`}>
-                  <div className={`border-b px-3 py-2 text-sm font-semibold ${isToday ? 'border-brand-200 text-brand-700' : 'border-gray-200 text-gray-700'}`}>
-                    {day.dayLabel} {formatDayDate(day.date)}{isToday ? ' · 오늘' : ''}
-                  </div>
-                  <div className="divide-y divide-gray-100">
-                    {Array.from({ length: maxPeriod }, (_, i) => i + 1).map((period) => {
-                      const item = day.periods.find((p) => p.period === period)
-                      return (
-                        <div key={period} className="flex min-h-9 items-center gap-2 px-2 py-1 text-[13px]">
-                          <span className="w-4 shrink-0 text-center text-xs text-gray-500">{period}</span>
-                          <span className="min-w-0 flex-1 text-center text-gray-900">
-                            {item ? <SubjectCell subject={item.subject} /> : <span className="text-gray-300">—</span>}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </section>
-              )
-            })}
-          </div>
-          <div className="hidden min-w-0 sm:block">
+        <div className="min-w-0 overflow-x-hidden">
           <table className="w-full table-fixed border-collapse text-sm">
             <colgroup>
-              <col className="w-16" />
+              <col className="w-12 sm:w-16" />
               {days.map((day) => (
                 <col key={day.date} />
               ))}
@@ -179,8 +154,7 @@ export function WeeklyTimetableCard({
               ))}
             </tbody>
           </table>
-          </div>
-        </>
+        </div>
       )}
     </section>
   )
