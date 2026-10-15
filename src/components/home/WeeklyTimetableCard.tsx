@@ -36,7 +36,7 @@ function SubjectCell({ subject }: { subject: string }) {
     if (subject.replace(/\s+/g, '').length === 5 && !/\s/.test(subject)) {
       return (
         <>
-          <span className="block text-[13px] leading-tight tracking-[-0.02em] sm:hidden" aria-label={subject}>
+          <span className={`block leading-tight sm:hidden ${subject === '동아리활동' ? 'text-[10px] tracking-[-0.04em]' : 'text-[13px] tracking-[-0.02em]'}`} aria-label={subject}>
             <span className="block">{subject.slice(0, 3)}</span>
             <span className="block">{subject.slice(3)}</span>
           </span>
