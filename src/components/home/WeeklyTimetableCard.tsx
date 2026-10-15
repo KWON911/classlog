@@ -23,10 +23,9 @@ function SubjectCell({ subject }: { subject: string }) {
   if (/^자율[· ]자치활동$/.test(subject)) {
     return (
       <>
-        <span className="block text-[13px] leading-tight tracking-[-0.02em] sm:hidden" aria-label={subject}>
-          <span className="block">{subject.slice(0, 3)}</span>
-          <span className="block">{subject.slice(3, 5)}</span>
-          <span className="block">{subject.slice(5)}</span>
+        <span className="block text-[10px] leading-tight tracking-[-0.04em] sm:hidden" aria-label={subject}>
+          <span className="block whitespace-nowrap">{subject.slice(0, 3)}</span>
+          <span className="block whitespace-nowrap">{subject.slice(3)}</span>
         </span>
         <span className={`hidden sm:inline ${display.fontSizeClass}`}>{display.lines[0]}<wbr />{display.lines[1]}</span>
       </>
@@ -101,7 +100,7 @@ export function WeeklyTimetableCard({
         <div className="min-w-0 overflow-x-hidden">
           <table className="w-full table-fixed border-collapse text-sm">
             <colgroup>
-              <col className="w-12 sm:w-16" />
+              <col className="w-10 sm:w-16" />
               {days.map((day) => (
                 <col key={day.date} />
               ))}
