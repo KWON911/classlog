@@ -13,8 +13,6 @@ type WeeklyTimetableCardProps = {
   onLoadingChange?: (loading: boolean) => void
 }
 
-const PERIOD_COL_WIDTH = 64
-
 function formatDayDate(dateStr: string) {
   return `${Number(dateStr.slice(4, 6))}/${Number(dateStr.slice(6, 8))}`
 }
@@ -23,6 +21,17 @@ function SubjectCell({ subject }: { subject: string }) {
   const display = classifySubjectDisplay(subject)
 
   if (display.tier === 1) {
+    if (subject.replace(/\s+/g, '').length === 5 && !/\s/.test(subject)) {
+      return (
+        <>
+          <span className="block text-xs leading-tight sm:hidden" aria-label={subject}>
+            <span className="block">{subject.slice(0, 3)}</span>
+            <span className="block">{subject.slice(3)}</span>
+          </span>
+          <span className={`hidden whitespace-nowrap tracking-[-0.02em] sm:inline ${display.fontSizeClass}`}>{subject}</span>
+        </>
+      )
+    }
     return <span className={`whitespace-nowrap tracking-[-0.02em] ${display.fontSizeClass}`}>{display.lines[0]}</span>
   }
 
@@ -79,9 +88,9 @@ export function WeeklyTimetableCard({
         <div className="min-w-0 overflow-x-auto">
           <table className="w-full table-fixed border-collapse text-sm">
             <colgroup>
-              <col style={{ width: `${PERIOD_COL_WIDTH}px` }} />
+              <col className="w-12 sm:w-16" />
               {days.map((day) => (
-                <col key={day.date} style={{ width: `calc((100% - ${PERIOD_COL_WIDTH}px) / 5)` }} />
+                <col key={day.date} />
               ))}
             </colgroup>
             <thead>
@@ -120,7 +129,7 @@ export function WeeklyTimetableCard({
                     return (
                       <td
                         key={day.date}
-                        className={`h-14 min-w-0 border border-[#E2E8F0] px-1 text-center align-middle ${
+                        className={`h-14 min-w-0 border border-[#E2E8F0] px-0.5 text-center align-middle sm:px-1 ${
                           isToday ? 'bg-brand-50/40' : ''
                         }`}
                       >
