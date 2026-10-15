@@ -7,7 +7,7 @@ import { ATTENDANCE_STATUS_COLOR_CLASS } from '../lib/utils/attendanceStatusColo
 
 const STATUSES: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 
-type FilterMode = 'all' | 'withRecords' | 'neisNotEntered'
+type FilterMode = 'withRecords' | 'neisNotEntered'
 
 function formatMonthDay(date: string) {
   const [, month, day] = date.split('-')
@@ -197,7 +197,7 @@ export function MonthlyAttendanceSummary({
   deleteEntry,
   updateEntryFlags,
 }: MonthlyAttendanceSummaryProps) {
-  const [filterMode, setFilterMode] = useState<FilterMode>('all')
+  const [filterMode, setFilterMode] = useState<FilterMode>('withRecords')
   const [expandedStudentIds, setExpandedStudentIds] = useState<Set<string>>(new Set())
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -269,13 +269,10 @@ export function MonthlyAttendanceSummary({
   )
 
   const visibleStudents = useMemo(() => {
-    if (filterMode === 'withRecords') {
-      return students.filter((s) => (recordCountByStudent.get(s.id) ?? 0) > 0)
-    }
     if (filterMode === 'neisNotEntered') {
       return students.filter((s) => (neisNotEnteredCountByStudent.get(s.id) ?? 0) > 0)
     }
-    return students
+    return students.filter((s) => (recordCountByStudent.get(s.id) ?? 0) > 0)
   }, [students, filterMode, recordCountByStudent, neisNotEnteredCountByStudent])
 
   const expandableVisibleIds = useMemo(
@@ -358,15 +355,6 @@ export function MonthlyAttendanceSummary({
         </p>
         <div className="flex items-center gap-2">
           <div className="inline-flex rounded-lg border border-gray-300 p-0.5">
-            {mode === 'monthly' && <button
-              type="button"
-              onClick={() => setFilterMode('all')}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                filterMode === 'all' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              전체 보기 {students.length}
-            </button>}
             <button
               type="button"
               onClick={() => setFilterMode('withRecords')}

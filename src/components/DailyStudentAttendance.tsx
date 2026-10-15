@@ -60,7 +60,6 @@ export function DailyStudentAttendance({
   const [draft, setDraft] = useState<Map<string, AttendanceDraftEntry>>(new Map())
   const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set())
   const [showChangedOnly, setShowChangedOnly] = useState(false)
-  const [confirmingBulkPresent, setConfirmingBulkPresent] = useState(false)
   const [forceEnableInput, setForceEnableInput] = useState(false)
   const [saving, setSaving] = useState(false)
   const [showConsecutiveForm, setShowConsecutiveForm] = useState(false)
@@ -82,7 +81,6 @@ export function DailyStudentAttendance({
     }
     setDraft(next)
     setDirtyIds(new Set())
-    setConfirmingBulkPresent(false)
     setForceEnableInput(false)
     setStatusMessage(null)
   }, [selectedDate, entryByStudent, students])
@@ -106,26 +104,6 @@ export function DailyStudentAttendance({
       return next
     })
     setDirtyIds((prev) => new Set(prev).add(studentId))
-  }
-
-  const existingExceptionCount = entryByStudent.size
-
-  const handleBulkPresentClick = () => {
-    if (existingExceptionCount > 0 && !confirmingBulkPresent) {
-      setConfirmingBulkPresent(true)
-      return
-    }
-    setDraft((prev) => {
-      const next = new Map(prev)
-      for (const student of students) {
-        next.set(student.id, defaultDraft())
-      }
-      return next
-    })
-    setDirtyIds(new Set(students.map((s) => s.id)))
-    setConfirmingBulkPresent(false)
-    setStatusMessage('모든 학생을 출석으로 표시했습니다. 저장을 눌러야 실제로 반영됩니다.')
-    setStatusIsError(false)
   }
 
   const handleSave = async () => {
@@ -223,13 +201,6 @@ export function DailyStudentAttendance({
                 연속 결석 입력
               </button>
             )}
-            <button
-              type="button"
-              onClick={handleBulkPresentClick}
-              className="h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              전체 출석 처리
-            </button>
             <label className="flex h-9 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700">
               <input
                 type="checkbox"
@@ -262,26 +233,6 @@ export function DailyStudentAttendance({
               onClose={() => setShowConsecutiveForm(false)}
               onSave={addConsecutiveAbsences}
             />
-          )}
-
-          {confirmingBulkPresent && (
-            <p
-              className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
-              aria-live="polite"
-            >
-              이 날짜에는 이미 저장된 예외 기록이 {existingExceptionCount}건 있습니다. 전체 출석으로 바꾸면 저장 시
-              해당 기록이 모두 사라집니다.{' '}
-              <button type="button" onClick={handleBulkPresentClick} className="font-semibold underline">
-                그래도 전체 출석으로 변경
-              </button>{' '}
-              <button
-                type="button"
-                onClick={() => setConfirmingBulkPresent(false)}
-                className="font-semibold underline"
-              >
-                취소
-              </button>
-            </p>
           )}
 
           {statusMessage && (

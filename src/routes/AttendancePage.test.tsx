@@ -5,7 +5,7 @@ import { AttendancePage } from './AttendancePage'
 
 vi.mock('../lib/hooks/useStudents', () => ({
   useStudents: () => ({
-    students: [{ id: 's1', number: 1, name: '김학생' }],
+    students: [{ id: 's1', number: 1, name: '김학생' }, { id: 's2', number: 2, name: '이학생' }],
     error: null,
   }),
 }))
@@ -45,7 +45,7 @@ describe('AttendancePage', () => {
     expect(screen.queryByRole('button', { name: '개인별 이력' })).not.toBeInTheDocument()
   })
 
-  it('provides an explicit all-students control after filtering to students with records', () => {
+  it('shows only students with records by default and omits the all-students control', () => {
     render(
       <MemoryRouter>
         <AttendancePage />
@@ -53,8 +53,9 @@ describe('AttendancePage', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: '출결 요약' }))
-    fireEvent.click(screen.getByRole('button', { name: '기록 있음 1' }))
-
-    expect(screen.getByRole('button', { name: '전체 보기 1' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '기록 있음 1' })).toHaveClass('bg-brand-600')
+    expect(screen.getByText('김학생')).toBeInTheDocument()
+    expect(screen.queryByText('이학생')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /전체 보기/ })).not.toBeInTheDocument()
   })
 })
