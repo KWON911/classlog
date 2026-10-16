@@ -63,6 +63,59 @@ beforeEach(() => {
 })
 
 describe('useAttendance', () => {
+  it('saves one day and multiple statuses through one bulk request', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [], error: null }))
+    const saved = { ...entryA, status: '조퇴' as const }
+    const writer = createQueryBuilder({ data: [saved], error: null })
+    mockFrom.mockReturnValueOnce(writer)
+    const response = await act(async () => result.current.saveAttendanceRange('s1', ['2026-08-05'], { status: '조퇴', reason_category: '질병', note: null }))
+    expect(response).toEqual({})
+    expect(writer.insert).toHaveBeenCalledTimes(1)
+    expect(writer.insert).toHaveBeenCalledWith([{ student_id: 's1', teacher_id: 't1', date: '2026-08-05', status: '조퇴', reason_category: '질병', note: null, neis_entered: false, document_received: false }])
+    expect(result.current.entries).toEqual([saved])
+  })
+
+  it('checks conflicts across months before writing and preserves flags on confirmed edits', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [entryA], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
+    const existing = { ...entryA, id: 'sept', date: '2026-09-01', neis_entered: true }
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [existing], error: null }))
+    const dates = ['2026-08-31', '2026-09-01']
+    const input = { status: '지각' as const, reason_category: '기타' as const, note: '통원' }
+    expect(await act(async () => result.current.saveAttendanceRange('s1', dates, input))).toEqual({ conflicts: ['2026-09-01'] })
+    expect(mockFrom).toHaveBeenCalledTimes(2)
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [existing], error: null }))
+    const august = { ...entryA, id: 'august', date: '2026-08-31', ...input }
+    const writer = createQueryBuilder({ data: [august, { ...existing, ...input }], error: null })
+    mockFrom.mockReturnValueOnce(writer)
+    await act(async () => result.current.saveAttendanceRange('s1', dates, input, true))
+    expect(writer.upsert).toHaveBeenCalledWith([
+      { student_id: 's1', teacher_id: 't1', date: '2026-08-31', ...input, neis_entered: false, document_received: false },
+      { student_id: 's1', teacher_id: 't1', date: '2026-09-01', ...input, neis_entered: true, document_received: false },
+    ], { onConflict: 'student_id,date' })
+    expect(result.current.entries).toEqual([entryA, august])
+  })
+
+  it('rejects invalid ranges and leaves data intact when a bulk write fails', async () => {
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [entryA], error: null }))
+    const { result } = renderHook(() => useAttendance('2026-08'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const input = { status: '결석' as const, reason_category: '질병' as const, note: null }
+    expect((await result.current.saveAttendanceRange('s1', ['2026-08-08'], input)).error).toBeTruthy()
+    expect((await result.current.saveAttendanceRange('s1', ['2026-08-05', '2026-08-05'], input)).error).toBeTruthy()
+    mockGetUser.mockResolvedValue({ data: { user: { id: 't1' } } })
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: [], error: null }))
+    mockFrom.mockReturnValueOnce(createQueryBuilder({ data: null, error: { message: '저장 실패' } }))
+    expect(await act(async () => result.current.saveAttendanceRange('s1', ['2026-08-06'], input))).toEqual({ error: '저장 실패' })
+    expect(result.current.entries).toEqual([entryA])
+  })
+
   it('fetches entries within the given month range', async () => {
     const builder = createQueryBuilder({ data: [entryA], error: null })
     mockFrom.mockReturnValue(builder)

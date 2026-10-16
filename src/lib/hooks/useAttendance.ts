@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import type { AttendanceEntry, AttendanceReasonCategory, AttendanceStatus } from '../types'
+import { weekdayDatesInRange } from '../utils/attendanceDateRange'
 
-type EntryInput = {
+export type AttendanceInput = {
   status: AttendanceStatus
   reason_category: AttendanceReasonCategory
   note: string | null
 }
+type EntryInput = AttendanceInput
+export type AttendanceSaveResult = { error?: string; conflicts?: string[] }
 
 function monthRange(yearMonth: string) {
   const [yearStr, monthStr] = yearMonth.split('-')
@@ -107,6 +110,53 @@ export function useAttendance(yearMonth: string) {
     return { data: data ?? [] }
   }, [yearMonth])
 
+  const saveAttendanceRange = useCallback(async (
+    studentId: string,
+    dates: string[],
+    input: AttendanceInput,
+    overwrite = false,
+  ): Promise<AttendanceSaveResult> => {
+    const sorted = [...dates].sort()
+    if (!studentId || !sorted.length || sorted.length > 31 || new Set(sorted).size !== sorted.length ||
+      weekdayDatesInRange(sorted[0], sorted[sorted.length - 1]).length === 0 ||
+      sorted.some((date) => weekdayDatesInRange(date, date).length !== 1)) {
+      return { error: '유효한 수업일을 1일 이상 선택해 주세요. 기간은 최대 31일입니다.' }
+    }
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      const teacherId = userData.user?.id
+      if (!teacherId) return { error: '로그인이 필요합니다.' }
+
+      // Check the entire range, including dates outside the displayed month.
+      const { data: existing, error: readError } = await supabase.from('attendance').select('*')
+        .eq('student_id', studentId).gte('date', sorted[0]).lte('date', sorted[sorted.length - 1])
+      if (readError) return { error: readError.message }
+      const existingByDate = new Map<string, AttendanceEntry>((existing ?? []).map((entry) => [entry.date, entry]))
+      const conflicts = sorted.filter((date) => existingByDate.has(date))
+      if (conflicts.length && !overwrite) return { conflicts }
+
+      const rows = sorted.map((date) => ({
+        student_id: studentId, teacher_id: teacherId, date, ...input,
+        neis_entered: existingByDate.get(date)?.neis_entered ?? false,
+        document_received: existingByDate.get(date)?.document_received ?? false,
+      }))
+      // A single statement avoids partial saves; INSERT protects new records
+      // against conflicts appearing after the preflight check.
+      const query = overwrite
+        ? supabase.from('attendance').upsert(rows, { onConflict: 'student_id,date' })
+        : supabase.from('attendance').insert(rows)
+      const { data, error: writeError } = await query.select()
+      if (writeError) return { error: writeError.code === '23505' ? '출결 기록이 변경되었습니다. 다시 저장하여 기존 기록을 확인해 주세요.' : writeError.message }
+      setEntries((prev) => [
+        ...prev.filter((entry) => !(entry.student_id === studentId && sorted.includes(entry.date))),
+        ...(data ?? []).filter((entry) => entry.date.startsWith(yearMonth)),
+      ])
+      return {}
+    } catch {
+      return { error: '출결을 저장하지 못했습니다. 연결 상태를 확인하고 다시 시도해 주세요.' }
+    }
+  }, [yearMonth])
+
   const clearEntry = useCallback(async (studentId: string, date: string) => {
     const { error } = await supabase
       .from('attendance')
@@ -174,5 +224,5 @@ export function useAttendance(yearMonth: string) {
     [],
   )
 
-  return { entries, loading, error, upsertEntry, addConsecutiveAbsences, clearEntry, deleteEntry, updateEntryFlags, refetch: fetchEntries }
+  return { entries, loading, error, upsertEntry, addConsecutiveAbsences, saveAttendanceRange, clearEntry, deleteEntry, updateEntryFlags, refetch: fetchEntries }
 }

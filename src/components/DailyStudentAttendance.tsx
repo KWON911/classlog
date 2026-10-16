@@ -1,283 +1,122 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { AttendanceEntry, AttendanceReasonCategory, SchoolEvent, SchoolEventByDate, Student } from '../lib/types'
+import { useEffect, useRef, useState } from 'react'
+import type { AttendanceEntry, SchoolEvent, SchoolEventByDate, Student } from '../lib/types'
+import type { AttendanceInput, AttendanceSaveResult } from '../lib/hooks/useAttendance'
 import { gradeScopeLabel, isNonInstructionalDay } from '../lib/utils/schoolEvents'
-import { AttendanceStudentRow, type AttendanceDraftEntry } from './AttendanceStudentRow'
-import { ConsecutiveAbsenceForm } from './ConsecutiveAbsenceForm'
+import { AttendanceInputForm } from './AttendanceInputForm'
+import { AttendanceDeleteConfirmModal } from './AttendanceDeleteConfirmModal'
 
-type UpsertResult = { error?: string }
-
-type DailyStudentAttendanceProps = {
+type Props = {
   selectedDate: string
   students: Student[]
   entries: AttendanceEntry[]
   loading: boolean
-  /** Already grade-filtered by the caller, scoped to selectedDate. */
   events: SchoolEvent[]
   eventsByDate?: SchoolEventByDate
-  upsertEntry: (
-    studentId: string,
-    date: string,
-    input: { status: NonNullable<AttendanceEntry['status']>; reason_category: AttendanceEntry['reason_category']; note: string | null },
-  ) => Promise<UpsertResult>
-  clearEntry: (studentId: string, date: string) => Promise<UpsertResult>
-  addConsecutiveAbsences?: (studentId: string, dates: string[], input: { reason_category: AttendanceReasonCategory; note: string | null }) => Promise<UpsertResult>
+  saveAttendanceRange: (studentId: string, dates: string[], input: AttendanceInput, overwrite?: boolean) => Promise<AttendanceSaveResult>
+  clearEntry: (studentId: string, date: string) => Promise<{ error?: string }>
   highlightStudentId?: string
 }
 
 function formatSelectedDateTitle(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number)
-  const date = new Date(y, m - 1, d)
-  const weekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'long' }).format(date)
+  const weekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'long' }).format(new Date(y, m - 1, d))
   return `${y}년 ${m}월 ${d}일 ${weekday} 출결`
 }
 
-function defaultDraft(): AttendanceDraftEntry {
-  return { status: '출석', reasonCategory: '질병', note: '' }
-}
-
-export function DailyStudentAttendance({
-  selectedDate,
-  students,
-  entries,
-  loading,
-  events,
-  eventsByDate = {},
-  upsertEntry,
-  clearEntry,
-  addConsecutiveAbsences,
-  highlightStudentId,
-}: DailyStudentAttendanceProps) {
-  const entryByStudent = useMemo(() => {
-    const map = new Map<string, AttendanceEntry>()
-    for (const entry of entries) {
-      if (entry.date === selectedDate) {
-        map.set(entry.student_id, entry)
-      }
-    }
-    return map
-  }, [entries, selectedDate])
-
-  const [draft, setDraft] = useState<Map<string, AttendanceDraftEntry>>(new Map())
-  const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set())
-  const [showChangedOnly, setShowChangedOnly] = useState(false)
+export function DailyStudentAttendance({ selectedDate, students, entries, loading, events, eventsByDate = {}, saveAttendanceRange, clearEntry, highlightStudentId }: Props) {
+  const [formOpen, setFormOpen] = useState(false)
+  const [editingEntry, setEditingEntry] = useState<AttendanceEntry | undefined>()
+  const [formKey, setFormKey] = useState(0)
   const [forceEnableInput, setForceEnableInput] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [showConsecutiveForm, setShowConsecutiveForm] = useState(false)
-  const [statusMessage, setStatusMessage] = useState<string | null>(null)
-  const [statusIsError, setStatusIsError] = useState(false)
-
+  const [deletingEntry, setDeletingEntry] = useState<AttendanceEntry | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+  const deleteRef = useRef(false)
   const isNonInstructional = isNonInstructionalDay(events)
+  const showInput = !isNonInstructional || forceEnableInput
+  const dayEntries = students.flatMap((student) => {
+    const entry = entries.find((item) => item.student_id === student.id && item.date === selectedDate)
+    return entry ? [{ student, entry }] : []
+  })
 
   useEffect(() => {
-    const next = new Map<string, AttendanceDraftEntry>()
-    for (const student of students) {
-      const entry = entryByStudent.get(student.id)
-      next.set(
-        student.id,
-        entry
-          ? { status: entry.status, reasonCategory: entry.reason_category, note: entry.note ?? '' }
-          : defaultDraft(),
-      )
-    }
-    setDraft(next)
-    setDirtyIds(new Set())
     setForceEnableInput(false)
-    setStatusMessage(null)
-  }, [selectedDate, entryByStudent, students])
+    setFormOpen(false)
+    setEditingEntry(undefined)
+    setDeletingEntry(null)
+    setDeleteError('')
+  }, [selectedDate])
 
-  const scrolledForRef = useRef<string | null>(null)
   useEffect(() => {
     if (!highlightStudentId || loading) return
-    if (scrolledForRef.current === highlightStudentId) return
-    const el = document.getElementById(`student-row-${highlightStudentId}`)
-    if (!el) return
-    scrolledForRef.current = highlightStudentId
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [highlightStudentId, loading, students])
+    document.getElementById(`student-row-${highlightStudentId}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+  }, [highlightStudentId, selectedDate, loading])
 
-  const updateDraft = (studentId: string, patch: Partial<AttendanceDraftEntry>) => {
-    setShowConsecutiveForm(false)
-    setDraft((prev) => {
-      const next = new Map(prev)
-      const current = next.get(studentId) ?? defaultDraft()
-      next.set(studentId, { ...current, ...patch })
-      return next
-    })
-    setDirtyIds((prev) => new Set(prev).add(studentId))
+  const openForm = (entry?: AttendanceEntry) => {
+    setEditingEntry(entry)
+    setFormKey((value) => value + 1)
+    setFormOpen(true)
   }
-
-  const handleSave = async () => {
-    if (dirtyIds.size === 0) {
-      setStatusMessage('변경된 내용이 없습니다.')
-      setStatusIsError(false)
-      return
+  const deleteRecord = async () => {
+    if (!deletingEntry || deleteRef.current) return
+    deleteRef.current = true
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      const result = await clearEntry(deletingEntry.student_id, deletingEntry.date)
+      if (result.error) { setDeleteError(result.error); return }
+      setDeletingEntry(null)
+    } catch {
+      setDeleteError('기록을 삭제하지 못했습니다. 다시 시도해 주세요.')
+    } finally {
+      deleteRef.current = false
+      setDeleting(false)
     }
-
-    setSaving(true)
-    const results = await Promise.all(
-      [...dirtyIds].map(async (studentId) => {
-        const entry = draft.get(studentId)
-        if (!entry) return { error: undefined }
-        if (entry.status === '출석') {
-          return clearEntry(studentId, selectedDate)
-        }
-        return upsertEntry(studentId, selectedDate, {
-          status: entry.status,
-          reason_category: entry.reasonCategory,
-          note: entry.note || null,
-        })
-      }),
-    )
-    setSaving(false)
-
-    const failed = results.filter((r) => r.error)
-    if (failed.length > 0) {
-      setStatusMessage(`${failed.length}건 저장에 실패했습니다: ${failed[0].error}`)
-      setStatusIsError(true)
-      return
-    }
-
-    setDirtyIds(new Set())
-    setStatusMessage(`${formatSelectedDateTitle(selectedDate)} 내용을 저장했습니다.`)
-    setStatusIsError(false)
   }
-
-  const exceptionStudents = students.filter((s) => (draft.get(s.id)?.status ?? '출석') !== '출석')
-  const presentStudents = students.filter((s) => (draft.get(s.id)?.status ?? '출석') === '출석')
-  const statusCounts = {
-    출석: presentStudents.length,
-    결석: exceptionStudents.filter((s) => draft.get(s.id)?.status === '결석').length,
-    지각: exceptionStudents.filter((s) => draft.get(s.id)?.status === '지각').length,
-    조퇴: exceptionStudents.filter((s) => draft.get(s.id)?.status === '조퇴').length,
-    결과: exceptionStudents.filter((s) => draft.get(s.id)?.status === '결과').length,
-  }
-
-  const showAttendanceInput = !isNonInstructional || forceEnableInput
 
   return (
     <div className="@container flex flex-col">
       <h2 className="text-lg font-semibold text-gray-900">{formatSelectedDateTitle(selectedDate)}</h2>
-
-      {events.length > 0 && (
-        <div className="mt-3 rounded-lg border border-brand-100 bg-brand-50/60 px-3 py-2">
-          <p className="text-xs font-semibold text-brand-700">오늘의 학사일정</p>
-          <ul className="mt-1 flex flex-col gap-0.5">
-            {events.map((event, i) => (
-              <li key={i} className="text-sm text-brand-800">
-                · {event.name} · {gradeScopeLabel(event)}
-              </li>
-            ))}
-          </ul>
+      {events.length > 0 && <div className="mt-3 rounded-lg border border-brand-100 bg-brand-50/60 px-3 py-2">
+        <p className="text-xs font-semibold text-brand-700">오늘의 학사일정</p>
+        <ul className="mt-1 flex flex-col gap-0.5">{events.map((event, index) => <li key={index} className="text-sm text-brand-800">· {event.name} · {gradeScopeLabel(event)}</li>)}</ul>
+      </div>}
+      <div className="mt-4 flex flex-wrap gap-2" aria-label="선택한 날짜의 출결 현황">
+        <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-800">전체 {students.length}명</span>
+        {(['출석', '결석', '지각', '조퇴', '결과'] as const).map((status) => {
+          const count = status === '출석' ? students.length - dayEntries.length : dayEntries.filter(({ entry }) => entry.status === status).length
+          return <span key={status} className={`rounded-lg border px-3 py-2 text-sm ${status === '출석' ? 'border-brand-200 bg-brand-50 text-brand-800' : count ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-gray-200 bg-white text-gray-500'}`}>{status} <strong className="ml-1">{count}</strong></span>
+        })}
+      </div>
+      {!showInput ? <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center">
+        <p className="text-sm text-gray-600">이 날짜는 학사일정상 수업일이 아닌 것으로 보입니다. 필요하면 출결을 입력할 수 있습니다.</p>
+        <button type="button" onClick={() => { setForceEnableInput(true); openForm() }} className="mt-3 min-h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm">이 날짜에도 출결 입력</button>
+      </div> : <>
+        <div className="mt-3">
+          <button type="button" disabled={loading || !students.length} onClick={() => openForm()} className="min-h-11 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50" aria-expanded={formOpen}>출결 입력</button>
         </div>
-      )}
-
-      {!showAttendanceInput ? (
-        <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center">
-          <p className="text-sm text-gray-600">
-            이 날짜는 학사일정상 수업일이 아닌 것으로 보입니다 (방학·휴업일 등). 필요하면 아래 버튼을 눌러 출결을
-            입력할 수 있습니다.
-          </p>
-          <button
-            type="button"
-            onClick={() => setForceEnableInput(true)}
-            className="mt-3 h-9 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            이 날짜에도 출결 입력
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="mt-4 flex flex-wrap gap-2" aria-label="선택한 날짜의 출결 현황">
-            <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-800">전체 {students.length}명</span>
-            {Object.entries(statusCounts).map(([status, count]) => (
-              <span key={status} className={`rounded-lg border px-3 py-2 text-sm font-medium ${status === '출석' ? 'border-brand-200 bg-brand-50 text-brand-800' : count > 0 ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-gray-200 bg-white text-gray-500'}`}>
-                {status} <strong className="ml-1">{count}</strong>
-              </span>
-            ))}
-          </div>
-          <div className="sticky top-0 z-10 mt-3 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-[#f5f3ef]/95 py-3 backdrop-blur-sm">
-            {addConsecutiveAbsences && (
-              <button type="button" onClick={() => setShowConsecutiveForm((value) => !value)} disabled={dirtyIds.size > 0} title={dirtyIds.size > 0 ? '먼저 현재 날짜의 변경사항을 저장해 주세요.' : undefined} className="h-9 rounded-lg border border-brand-300 bg-white px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">
-                연속 결석 입력
-              </button>
-            )}
-            <label className="flex h-9 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={showChangedOnly}
-                onChange={(e) => setShowChangedOnly(e.target.checked)}
-                className="accent-brand-600"
-              />
-              예외 학생만 보기
-            </label>
-            <span className={`text-sm font-medium ${dirtyIds.size > 0 ? 'text-amber-800' : 'text-gray-500'}`} aria-live="polite">
-              {saving ? '저장 중' : dirtyIds.size > 0 ? `저장 전 · ${dirtyIds.size}명 변경` : '변경사항 없음'}
-            </span>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="ml-auto h-9 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
-            >
-              {saving ? '저장 중...' : `출결 저장${dirtyIds.size > 0 ? ` (${dirtyIds.size}명 변경)` : ''}`}
-            </button>
-          </div>
-
-          {showConsecutiveForm && addConsecutiveAbsences && (
-            <ConsecutiveAbsenceForm
-              key={selectedDate}
-              selectedDate={selectedDate}
-              students={students}
-              entries={entries}
-              eventsByDate={eventsByDate}
-              onClose={() => setShowConsecutiveForm(false)}
-              onSave={addConsecutiveAbsences}
-            />
-          )}
-
-          {statusMessage && (
-            <p
-              className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
-                statusIsError
-                  ? 'border-red-100 bg-red-50 text-red-700'
-                  : 'border-brand-100 bg-brand-50 text-brand-700'
-              }`}
-              aria-live="polite"
-            >
-              {statusMessage}
-            </p>
-          )}
-
-          {loading ? (
-            <p className="mt-4 text-sm text-gray-500">불러오는 중...</p>
-          ) : (
-            <div className="mt-5 space-y-6">
-              <section aria-labelledby="attendance-exceptions-title">
-                <h3 id="attendance-exceptions-title" className="mb-2 text-sm font-semibold text-gray-900">확인 필요 · {exceptionStudents.length}명</h3>
-                {exceptionStudents.length === 0 ? (
-                  <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">지각·결석 등 예외 출결이 없습니다.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {exceptionStudents.map((student) => (
-                      <AttendanceStudentRow key={student.id} studentId={student.id} number={student.number} name={student.name} draft={draft.get(student.id) ?? defaultDraft()} onChange={(patch) => updateDraft(student.id, patch)} highlighted={student.id === highlightStudentId} />
-                    ))}
-                  </div>
-                )}
-              </section>
-              {!showChangedOnly && (
-                <section aria-labelledby="attendance-present-title">
-                  <h3 id="attendance-present-title" className="mb-2 text-sm font-semibold text-gray-900">출석 · {presentStudents.length}명</h3>
-                  <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-                    {presentStudents.map((student) => (
-                      <AttendanceStudentRow key={student.id} studentId={student.id} number={student.number} name={student.name} draft={draft.get(student.id) ?? defaultDraft()} onChange={(patch) => updateDraft(student.id, patch)} highlighted={student.id === highlightStudentId} />
-                    ))}
-                  </div>
-                </section>
-              )}
+        {formOpen && <AttendanceInputForm key={`${selectedDate}-${formKey}`} selectedDate={selectedDate} students={students} entries={entries} eventsByDate={eventsByDate} initialEntry={editingEntry} allowSelectedDate={forceEnableInput} onClose={() => setFormOpen(false)} onSave={saveAttendanceRange} />}
+      </>}
+      {loading ? <p className="mt-4 text-sm text-gray-500">불러오는 중...</p> : <section className="mt-5" aria-labelledby="attendance-records-title">
+        <h3 id="attendance-records-title" className="mb-2 text-sm font-semibold text-gray-900">당일 출결 기록 · {dayEntries.length}명</h3>
+        {!dayEntries.length ? <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">등록된 출결 변동이 없습니다.</p> : <div className="space-y-2">
+          {dayEntries.map(({ student, entry }) => <div key={entry.id} id={`student-row-${student.id}`} className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-gray-200 bg-white px-3 py-2 ${student.id === highlightStudentId ? 'ring-2 ring-brand-500' : ''}`}>
+            <span className="text-sm text-gray-600">{student.number}번</span>
+            <span className="text-sm font-semibold text-gray-900">{student.name}</span>
+            <span className="rounded-md bg-brand-50 px-2 py-1 text-sm font-medium text-brand-800">{entry.status}</span>
+            <span className="text-sm text-gray-600">{entry.reason_category}</span>
+            {entry.note && <span className="min-w-0 basis-full break-words text-sm text-gray-600 @xl:basis-auto @xl:flex-1">{entry.note}</span>}
+            <div className="ml-auto flex gap-1">
+              <button type="button" disabled={!showInput} onClick={() => openForm(entry)} aria-label={`${student.name} 출결 수정`} className="min-h-11 rounded-lg px-3 text-sm text-brand-700 hover:bg-brand-50 disabled:opacity-50">수정</button>
+              <button type="button" onClick={() => { setDeleteError(''); setDeletingEntry(entry) }} aria-label={`${student.name} 출결 삭제`} className="min-h-11 rounded-lg px-3 text-sm text-red-700 hover:bg-red-50">삭제</button>
             </div>
-          )}
-        </>
-      )}
+          </div>)}
+        </div>}
+      </section>}
+      {deletingEntry && <>
+        <AttendanceDeleteConfirmModal studentName={students.find((student) => student.id === deletingEntry.student_id)?.name ?? '선택한 학생'} date={deletingEntry.date} status={deletingEntry.status} deleting={deleting} onCancel={() => setDeletingEntry(null)} onConfirm={deleteRecord} />
+        {deleteError && <p role="alert" className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-lg bg-red-50 p-3 text-sm text-red-700">{deleteError}</p>}
+      </>}
     </div>
   )
 }

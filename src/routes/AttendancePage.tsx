@@ -88,7 +88,7 @@ export function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(dateFromQuery?.selectedDate ?? todayDateString())
 
   const { students, error: studentsError } = useStudents()
-  const { entries, loading, error, upsertEntry, addConsecutiveAbsences, clearEntry, deleteEntry, updateEntryFlags } = useAttendance(yearMonth)
+  const { entries, loading, error, saveAttendanceRange, clearEntry, deleteEntry, updateEntryFlags } = useAttendance(yearMonth)
   const allAttendance = useAllAttendance(activeTab === 'summary' && summaryPeriod === 'all')
   const { settings: schoolSettings } = useSchoolSettings()
   const { eventsByDate: rawEventsByDate, status: eventsStatus } = useSchoolEvents(schoolSettings, yearMonth)
@@ -163,8 +163,7 @@ export function AttendancePage() {
               loading={loading}
               events={selectedDateEvents}
               eventsByDate={eventsByDate}
-              upsertEntry={upsertEntry}
-              addConsecutiveAbsences={addConsecutiveAbsences}
+              saveAttendanceRange={saveAttendanceRange}
               clearEntry={clearEntry}
               highlightStudentId={highlightStudentId}
             />

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { AttendanceStatus } from '../lib/types'
 
 type AttendanceDeleteConfirmModalProps = {
@@ -24,16 +24,33 @@ export function AttendanceDeleteConfirmModal({
   onCancel,
   onConfirm,
 }: AttendanceDeleteConfirmModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  const deletingRef = useRef(deleting)
+  const cancelCallback = useRef(onCancel)
+  deletingRef.current = deleting
+  cancelCallback.current = onCancel
   useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null
+    cancelRef.current?.focus()
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !deleting) onCancel()
+      if (e.key === 'Escape' && !deletingRef.current) cancelCallback.current()
+      if (e.key === 'Tab') {
+        const buttons = dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')
+        if (!buttons?.length) { e.preventDefault(); return }
+        const first = buttons[0]
+        const last = buttons[buttons.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
     }
     document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onCancel, deleting])
+    return () => { document.removeEventListener('keydown', handleKeyDown); previousFocus?.focus() }
+  }, [])
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/30 p-4"
       role="dialog"
       aria-modal="true"
@@ -60,10 +77,11 @@ export function AttendanceDeleteConfirmModal({
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button
+            ref={cancelRef}
             type="button"
             onClick={onCancel}
             disabled={deleting}
-            className="h-9 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             취소
           </button>
@@ -71,7 +89,7 @@ export function AttendanceDeleteConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={deleting}
-            className="h-9 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {deleting ? '삭제 중...' : '기록 삭제'}
           </button>
