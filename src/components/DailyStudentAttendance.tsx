@@ -81,7 +81,8 @@ export function DailyStudentAttendance({ selectedDate, students, entries, loadin
         <p className="text-xs font-semibold text-brand-700">오늘의 학사일정</p>
         <ul className="mt-1 flex flex-col gap-0.5">{events.map((event, index) => <li key={index} className="text-sm text-brand-800">· {event.name} · {gradeScopeLabel(event)}</li>)}</ul>
       </div>}
-      <div className="mt-4 flex flex-wrap gap-2" aria-label="선택한 날짜의 출결 현황">
+      <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="선택한 날짜의 출결 현황">
+        {showInput && <button type="button" disabled={loading || !students.length} onClick={() => openForm()} className="min-h-11 shrink-0 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50" aria-expanded={formOpen}>출결 입력</button>}
         <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-800">전체 {students.length}명</span>
         {(['출석', '결석', '지각', '조퇴', '결과'] as const).map((status) => {
           const count = status === '출석' ? students.length - dayEntries.length : dayEntries.filter(({ entry }) => entry.status === status).length
@@ -92,9 +93,6 @@ export function DailyStudentAttendance({ selectedDate, students, entries, loadin
         <p className="text-sm text-gray-600">이 날짜는 학사일정상 수업일이 아닌 것으로 보입니다. 필요하면 출결을 입력할 수 있습니다.</p>
         <button type="button" onClick={() => { setForceEnableInput(true); openForm() }} className="mt-3 min-h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm">이 날짜에도 출결 입력</button>
       </div> : <>
-        <div className="mt-3">
-          <button type="button" disabled={loading || !students.length} onClick={() => openForm()} className="min-h-11 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50" aria-expanded={formOpen}>출결 입력</button>
-        </div>
         {formOpen && <AttendanceInputForm key={`${selectedDate}-${formKey}`} selectedDate={selectedDate} students={students} entries={entries} eventsByDate={eventsByDate} initialEntry={editingEntry} allowSelectedDate={forceEnableInput} onClose={() => setFormOpen(false)} onSave={saveAttendanceRange} />}
       </>}
       {loading ? <p className="mt-4 text-sm text-gray-500">불러오는 중...</p> : <section className="mt-5" aria-labelledby="attendance-records-title">

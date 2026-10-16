@@ -17,11 +17,10 @@ type Props = {
 
 const statuses: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 const reasons: AttendanceReasonCategory[] = ['질병', '미인정', '인정', '기타']
-const fieldClass = 'mt-1 block min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100'
+const fieldClass = 'mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100'
 
 export function AttendanceInputForm({ selectedDate, students, entries, eventsByDate, initialEntry, allowSelectedDate, onClose, onSave }: Props) {
   const [studentId, setStudentId] = useState(initialEntry?.student_id ?? '')
-  const [search, setSearch] = useState('')
   const [startDate, setStartDate] = useState(selectedDate)
   const [endDate, setEndDate] = useState(selectedDate)
   const [status, setStatus] = useState<AttendanceStatus>(initialEntry?.status ?? '결석')
@@ -39,7 +38,6 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
   const isClosed = (date: string) => !(allowSelectedDate && date === selectedDate) && isNonInstructionalDay(eventsByDate[date.replace(/-/g, '')] ?? [])
   const dates = weekdays.filter((date) => !excludedDates.has(date) && !isClosed(date))
   const existingDates = new Set(entries.filter((entry) => entry.student_id === studentId).map((entry) => entry.date))
-  const filteredStudents = students.filter((student) => student.id === studentId || `${student.number} ${student.name}`.includes(search.trim()))
 
   const resetFeedback = () => { setMessage(''); setSuccess(false); setConflicts([]) }
   const changeRange = (kind: 'start' | 'end', value: string) => {
@@ -65,7 +63,6 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
       setSuccess(true)
       setConflicts([])
       setStudentId('')
-      setSearch('')
       setNote('')
       setExcludedDates(new Set())
       studentSelect.current?.focus()
@@ -85,27 +82,24 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
       </div>
       <p className="mt-1 text-sm text-gray-600">하루는 같은 날짜로, 여러 날은 기간으로 입력하세요. 주말과 확인된 휴업일은 제외됩니다.</p>
       <fieldset disabled={saving} className="mt-4 space-y-4 disabled:opacity-60">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm font-medium text-gray-700">학생 검색
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="이름 또는 번호" className={fieldClass} />
-          </label>
-          <label className="text-sm font-medium text-gray-700">학생
+        <div className="grid grid-cols-2 gap-3">
+          <label className="min-w-0 text-sm font-medium text-gray-700">학생
             <select ref={studentSelect} value={studentId} onChange={(e) => { setStudentId(e.target.value); resetFeedback() }} className={fieldClass}>
               <option value="">학생 선택</option>
-              {filteredStudents.map((student) => <option key={student.id} value={student.id}>{student.number}번 {student.name}</option>)}
+              {students.map((student) => <option key={student.id} value={student.id}>{student.number}번 {student.name}</option>)}
             </select>
           </label>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <label className="text-sm font-medium text-gray-700">출결 상태
+          <label className="min-w-0 text-sm font-medium text-gray-700">출결 상태
             <select value={status} onChange={(e) => { setStatus(e.target.value as AttendanceStatus); resetFeedback() }} className={fieldClass}>
               {statuses.map((value) => <option key={value}>{value}</option>)}
             </select>
           </label>
-          <label className="text-sm font-medium text-gray-700">시작일
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="min-w-0 text-sm font-medium text-gray-700">시작일
             <input type="date" value={startDate} onChange={(e) => changeRange('start', e.target.value)} className={fieldClass} />
           </label>
-          <label className="text-sm font-medium text-gray-700">종료일
+          <label className="min-w-0 text-sm font-medium text-gray-700">종료일
             <input type="date" value={endDate} min={startDate} onChange={(e) => changeRange('end', e.target.value)} className={fieldClass} />
           </label>
         </div>
