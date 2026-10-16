@@ -17,7 +17,7 @@ type Props = {
 
 const statuses: AttendanceStatus[] = ['결석', '지각', '조퇴', '결과']
 const reasons: AttendanceReasonCategory[] = ['질병', '미인정', '인정', '기타']
-const fieldClass = 'mt-1 block min-h-11 min-w-0 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100'
+const fieldClass = 'attendance-input-control mt-1 block h-11 min-h-11 min-w-0 w-full max-w-full rounded-lg border border-gray-300 bg-white px-3 text-base sm:text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100'
 
 export function AttendanceInputForm({ selectedDate, students, entries, eventsByDate, initialEntry, allowSelectedDate, onClose, onSave }: Props) {
   const [studentId, setStudentId] = useState(initialEntry?.student_id ?? '')
@@ -81,7 +81,7 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
         <button type="button" disabled={saving} onClick={onClose} className="min-h-11 rounded-lg px-3 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50">닫기</button>
       </div>
       <p className="mt-1 text-sm text-gray-600">하루는 같은 날짜로, 여러 날은 기간으로 입력하세요. 주말과 확인된 휴업일은 제외됩니다.</p>
-      <fieldset disabled={saving} className="mt-4 space-y-4 disabled:opacity-60">
+      <fieldset disabled={saving} className="mt-4 min-w-0 space-y-4 disabled:opacity-60">
         <div className="grid grid-cols-2 gap-3">
           <label className="min-w-0 text-sm font-medium text-gray-700">학생
             <select ref={studentSelect} value={studentId} onChange={(e) => { setStudentId(e.target.value); resetFeedback() }} className={fieldClass}>
@@ -121,12 +121,12 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
           </div>
         )}
         <div className="grid gap-3 sm:grid-cols-[140px_minmax(0,1fr)]">
-          <label className="text-sm font-medium text-gray-700">{status} 구분
+          <label className="min-w-0 text-sm font-medium text-gray-700">{status} 구분
             <select value={reason} onChange={(e) => { setReason(e.target.value as AttendanceReasonCategory); resetFeedback() }} className={fieldClass}>
               {reasons.map((value) => <option key={value}>{value}</option>)}
             </select>
           </label>
-          <label className="text-sm font-medium text-gray-700">공통 메모
+          <label className="min-w-0 text-sm font-medium text-gray-700">공통 메모
             <input value={note} onChange={(e) => { setNote(e.target.value); resetFeedback() }} placeholder="선택한 날짜에 같은 메모가 기록됩니다" className={fieldClass} />
           </label>
         </div>

@@ -34,6 +34,41 @@ body {
   min-width: 0;
 }
 
+/* Scope native-control resets to the attendance form. Safari's date editor
+   otherwise keeps its intrinsic width and can spill into the adjacent column. */
+.attendance-input-control {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  height: 44px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+select.attendance-input-control {
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 10px center;
+  background-repeat: no-repeat;
+}
+
+input[type='date'].attendance-input-control {
+  width: 100%;
+  overflow: hidden;
+  padding-inline: 8px;
+  text-align: left;
+}
+
+input[type='date'].attendance-input-control::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+
+input[type='date'].attendance-input-control::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
+}
+
 .seat-layout-grid {
   --seat-min-width: 104px;
 }

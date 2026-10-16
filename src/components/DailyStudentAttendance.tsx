@@ -100,13 +100,16 @@ export function DailyStudentAttendance({ selectedDate, students, entries, loadin
       {loading ? <p className="mt-4 text-sm text-gray-500">불러오는 중...</p> : <section className="mt-5" aria-labelledby="attendance-records-title">
         <h3 id="attendance-records-title" className="mb-2 text-sm font-semibold text-gray-900">당일 출결 기록 · {dayEntries.length}명</h3>
         {!dayEntries.length ? <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">등록된 출결 변동이 없습니다.</p> : <div className="space-y-2">
-          {dayEntries.map(({ student, entry }) => <div key={entry.id} id={`student-row-${student.id}`} className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-gray-200 bg-white px-3 py-2 ${student.id === highlightStudentId ? 'ring-2 ring-brand-500' : ''}`}>
-            <span className="text-sm text-gray-600">{student.number}번</span>
-            <span className="text-sm font-semibold text-gray-900">{student.name}</span>
-            <span className="rounded-md bg-brand-50 px-2 py-1 text-sm font-medium text-brand-800">{entry.status}</span>
-            <span className="text-sm text-gray-600">{entry.reason_category}</span>
-            {entry.note && <span className="min-w-0 basis-full break-words text-sm text-gray-600 @xl:basis-auto @xl:flex-1">{entry.note}</span>}
-            <div className="ml-auto flex gap-1">
+          {dayEntries.map(({ student, entry }) => <div key={entry.id} id={`student-row-${student.id}`} className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg border border-gray-200 bg-white px-3 py-2 @3xl:grid-cols-[auto_minmax(0,1fr)_auto] @3xl:gap-x-5 ${student.id === highlightStudentId ? 'ring-2 ring-brand-500' : ''}`}>
+            <div className="order-1 flex min-w-0 items-center gap-2">
+              <span className="shrink-0 text-sm tabular-nums text-gray-600">{student.number}번</span>
+              <span className="min-w-0 truncate text-sm font-semibold text-gray-900" title={student.name}>{student.name}</span>
+            </div>
+            <div className="order-3 col-span-2 flex min-w-0 items-start gap-2 @3xl:order-2 @3xl:col-span-1 @3xl:items-center">
+              <span className="shrink-0 whitespace-nowrap rounded-md bg-brand-50 px-2 py-1 text-sm font-medium text-brand-800">{entry.reason_category} {entry.status}</span>
+              {entry.note && <span className="min-w-0 flex-1 whitespace-pre-wrap py-1 text-sm text-gray-600 [overflow-wrap:anywhere]">{entry.note}</span>}
+            </div>
+            <div className="order-2 flex shrink-0 justify-self-end gap-1 @3xl:order-3">
               <button type="button" disabled={!showInput} onClick={() => openForm(entry)} aria-label={`${student.name} 출결 수정`} className="min-h-11 rounded-lg px-3 text-sm text-brand-700 hover:bg-brand-50 disabled:opacity-50">수정</button>
               <button type="button" onClick={() => { setDeleteError(''); setDeletingEntry(entry) }} aria-label={`${student.name} 출결 삭제`} className="min-h-11 rounded-lg px-3 text-sm text-red-700 hover:bg-red-50">삭제</button>
             </div>
