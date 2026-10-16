@@ -56,17 +56,25 @@ input[type='date'].attendance-input-control {
   width: 100%;
   overflow: hidden;
   padding-inline: 8px;
+  /* 44px control = 2px border + 20px padding + 22px date text.
+     Explicit vertical spacing also centers iOS Safari's native value box. */
+  padding-block: 10px;
+  line-height: 22px;
   text-align: left;
 }
 
 input[type='date'].attendance-input-control::-webkit-date-and-time-value {
   min-width: 0;
+  height: 22px;
+  line-height: 22px;
+  margin: 0;
   text-align: left;
 }
 
 input[type='date'].attendance-input-control::-webkit-datetime-edit {
   min-width: 0;
   padding: 0;
+  line-height: 22px;
 }
 
 .seat-layout-grid {

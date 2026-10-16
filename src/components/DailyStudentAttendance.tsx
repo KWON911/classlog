@@ -82,11 +82,17 @@ export function DailyStudentAttendance({ selectedDate, students, entries, loadin
         <ul className="mt-1 flex flex-col gap-0.5">{events.map((event, index) => <li key={index} className="text-sm text-brand-800">· {event.name} · {gradeScopeLabel(event)}</li>)}</ul>
       </div>}
       <div className="mt-4 flex flex-col gap-3 @3xl:flex-row @3xl:items-center @3xl:gap-6">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2" aria-label="선택한 날짜의 출결 현황">
-        <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-800">전체 {students.length}명</span>
+        <div className="grid min-w-0 flex-1 grid-cols-6 gap-1 @3xl:flex @3xl:flex-wrap @3xl:items-center @3xl:gap-2" aria-label="선택한 날짜의 출결 현황">
+        <span className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-transparent bg-white px-1 py-2 text-gray-800 @3xl:flex-row @3xl:gap-0 @3xl:border-gray-200 @3xl:px-3">
+          <span className="whitespace-nowrap text-xs font-medium @3xl:text-sm @3xl:font-semibold">전체</span>
+          <strong className="text-xl leading-tight tabular-nums @3xl:ml-1 @3xl:text-sm">{students.length}<span className="hidden @3xl:inline">명</span></strong>
+        </span>
         {(['출석', '결석', '지각', '조퇴', '결과'] as const).map((status) => {
           const count = status === '출석' ? students.length - dayEntries.length : dayEntries.filter(({ entry }) => entry.status === status).length
-          return <span key={status} className={`rounded-lg border px-3 py-2 text-sm ${status === '출석' ? 'border-brand-200 bg-brand-50 text-brand-800' : count ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-gray-200 bg-white text-gray-500'}`}>{status} <strong className="ml-1">{count}</strong></span>
+          return <span key={status} className={`flex min-w-0 flex-col items-center gap-1 rounded-lg border border-transparent px-1 py-2 @3xl:flex-row @3xl:gap-0 @3xl:px-3 ${status === '출석' ? 'bg-brand-50 text-brand-800 @3xl:border-brand-200' : count ? 'bg-amber-50 text-amber-900 @3xl:border-amber-200' : 'bg-white text-gray-500 @3xl:border-gray-200'}`}>
+            <span className="whitespace-nowrap text-xs font-medium @3xl:text-sm">{status}</span>
+            <strong className="text-xl leading-tight tabular-nums @3xl:ml-1 @3xl:text-sm">{count}</strong>
+          </span>
         })}
         </div>
         {showInput && <button type="button" disabled={loading || !students.length} onClick={() => openForm()} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 self-end rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 @3xl:self-auto" aria-expanded={formOpen}><span aria-hidden="true" className="text-lg leading-none">＋</span>출결 입력</button>}
