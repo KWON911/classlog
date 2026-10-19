@@ -95,6 +95,16 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
             </select>
           </label>
         </div>
+        <div className="grid gap-3 sm:grid-cols-[140px_minmax(0,1fr)]">
+          <label className="min-w-0 text-sm font-medium text-gray-700">{status} 구분
+            <select value={reason} onChange={(e) => { setReason(e.target.value as AttendanceReasonCategory); resetFeedback() }} className={fieldClass}>
+              {reasons.map((value) => <option key={value}>{value}</option>)}
+            </select>
+          </label>
+          <label className="min-w-0 text-sm font-medium text-gray-700">공통 메모
+            <input value={note} onChange={(e) => { setNote(e.target.value); resetFeedback() }} placeholder="선택한 날짜에 같은 메모가 기록됩니다" className={fieldClass} />
+          </label>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="min-w-0 text-sm font-medium text-gray-700">시작일
             <input type="date" value={startDate} onChange={(e) => changeRange('start', e.target.value)} className={fieldClass} />
@@ -120,16 +130,6 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
             {!weekdays.length && <p className="mt-2 text-sm text-gray-500">선택한 기간에 평일이 없습니다. 시작일과 종료일을 확인해 주세요.</p>}
           </div>
         )}
-        <div className="grid gap-3 sm:grid-cols-[140px_minmax(0,1fr)]">
-          <label className="min-w-0 text-sm font-medium text-gray-700">{status} 구분
-            <select value={reason} onChange={(e) => { setReason(e.target.value as AttendanceReasonCategory); resetFeedback() }} className={fieldClass}>
-              {reasons.map((value) => <option key={value}>{value}</option>)}
-            </select>
-          </label>
-          <label className="min-w-0 text-sm font-medium text-gray-700">공통 메모
-            <input value={note} onChange={(e) => { setNote(e.target.value); resetFeedback() }} placeholder="선택한 날짜에 같은 메모가 기록됩니다" className={fieldClass} />
-          </label>
-        </div>
       </fieldset>
       {conflicts.length > 0 && (
         <div role="alert" className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
