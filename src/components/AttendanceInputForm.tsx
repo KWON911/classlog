@@ -82,8 +82,8 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
       </div>
       <p className="mt-1 text-sm text-gray-600">하루는 같은 날짜로, 여러 날은 기간으로 입력하세요. 주말과 확인된 휴업일은 제외됩니다.</p>
       <fieldset disabled={saving} className="mt-4 min-w-0 space-y-4 disabled:opacity-60">
-        <div className="grid grid-cols-2 gap-3">
-          <label className="min-w-0 text-sm font-medium text-gray-700">학생
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <label className="col-span-2 min-w-0 text-sm font-medium text-gray-700 sm:col-span-1">학생
             <select ref={studentSelect} value={studentId} onChange={(e) => { setStudentId(e.target.value); resetFeedback() }} className={fieldClass}>
               <option value="">학생 선택</option>
               {students.map((student) => <option key={student.id} value={student.id}>{student.number}번 {student.name}</option>)}
@@ -94,17 +94,15 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
               {statuses.map((value) => <option key={value}>{value}</option>)}
             </select>
           </label>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-[140px_minmax(0,1fr)]">
           <label className="min-w-0 text-sm font-medium text-gray-700">{status} 구분
             <select value={reason} onChange={(e) => { setReason(e.target.value as AttendanceReasonCategory); resetFeedback() }} className={fieldClass}>
               {reasons.map((value) => <option key={value}>{value}</option>)}
             </select>
           </label>
-          <label className="min-w-0 text-sm font-medium text-gray-700">공통 메모
-            <input value={note} onChange={(e) => { setNote(e.target.value); resetFeedback() }} placeholder="선택한 날짜에 같은 메모가 기록됩니다" className={fieldClass} />
-          </label>
         </div>
+        <label className="block min-w-0 text-sm font-medium text-gray-700">사유
+          <input value={note} onChange={(e) => { setNote(e.target.value); resetFeedback() }} placeholder="선택한 날짜에 같은 사유가 기록됩니다" className={fieldClass} />
+        </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="min-w-0 text-sm font-medium text-gray-700">시작일
             <input type="date" value={startDate} onChange={(e) => changeRange('start', e.target.value)} className={fieldClass} />
@@ -133,7 +131,7 @@ export function AttendanceInputForm({ selectedDate, students, entries, eventsByD
       </fieldset>
       {conflicts.length > 0 && (
         <div role="alert" className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <p>기존 기록 {conflicts.length}건이 변경됩니다: {conflicts.join(', ')}. 선택한 상태·구분·메모로 저장할까요?</p>
+          <p>기존 기록 {conflicts.length}건이 변경됩니다: {conflicts.join(', ')}. 선택한 상태·구분·사유로 저장할까요?</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" disabled={saving} onClick={() => save(true)} className="min-h-11 rounded-lg bg-brand-600 px-4 font-semibold text-white disabled:opacity-50">{saving ? '저장 중...' : '기존 기록 변경 후 저장'}</button>
             <button type="button" disabled={saving} onClick={() => setConflicts([])} className="min-h-11 rounded-lg border border-gray-300 bg-white px-4">취소</button>
