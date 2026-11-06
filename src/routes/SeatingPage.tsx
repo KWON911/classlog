@@ -723,17 +723,27 @@ export function SeatingPage() {
       <div className="mb-4 flex flex-col gap-3 rounded-[14px] border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between print:hidden">
         <div className="flex items-center justify-between gap-3 sm:contents">
           <h1 className="shrink-0 text-2xl font-semibold text-brand-700">우리 반 자리 배치</h1>
-          <button onClick={generate} className={`${toolbarPrimaryButtonClass} sm:hidden`}>
-            {placementButtonLabel}
-          </button>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
           <button onClick={() => setShowSettings(true)} className={toolbarSecondaryButtonClass}>
             설정
           </button>
-          <button onClick={generate} className={`${toolbarPrimaryButtonClass} hidden sm:block`}>
+          <button onClick={generate} className={toolbarPrimaryButtonClass}>
             {placementButtonLabel}
           </button>
+          {assignments.size > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setSeatEditMode(null)
+                setActiveTool(activeTool?.type === 'manual' ? null : { type: 'manual', studentId: '' })
+              }}
+              className={activeTool?.type === 'manual' ? toolbarSecondaryActiveClass : toolbarSecondaryButtonClass}
+              aria-pressed={activeTool?.type === 'manual'}
+            >
+              수동 배치
+            </button>
+          )}
           <div className="hidden h-6 w-px bg-gray-200 sm:block" aria-hidden="true" />
           <button onClick={clearAssignments} className={toolbarSecondaryButtonClass}>
             배치 비우기
@@ -774,43 +784,28 @@ export function SeatingPage() {
         </div>
       )}
 
-      {assignments.size > 0 && (
+      {activeTool?.type === 'manual' && (
         <div className="mb-4 rounded-lg border border-gray-200 bg-white p-3 print:hidden">
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setSeatEditMode(null)
-                setActiveTool(activeTool?.type === 'manual' ? null : { type: 'manual', studentId: '' })
-              }}
-              className={activeTool?.type === 'manual' ? toolbarSecondaryActiveClass : toolbarSecondaryButtonClass}
-              aria-pressed={activeTool?.type === 'manual'}
-            >
-              수동 배치
-            </button>
-            {activeTool?.type === 'manual' && (
-              <label className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
-                미배정 학생
-                <select
-                  value={activeTool.studentId}
-                  onChange={(event) => setActiveTool({ type: 'manual', studentId: event.target.value })}
-                  className={fieldClass}
-                >
-                  <option value="">학생 선택</option>
-                  {unassignedStudents.map((student) => (
-                    <option key={student.id} value={student.id}>{student.number}. {student.name}</option>
-                  ))}
-                </select>
-              </label>
-            )}
+            <label className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+              미배정 학생
+              <select
+                value={activeTool.studentId}
+                onChange={(event) => setActiveTool({ type: 'manual', studentId: event.target.value })}
+                className={fieldClass}
+              >
+                <option value="">학생 선택</option>
+                {unassignedStudents.map((student) => (
+                  <option key={student.id} value={student.id}>{student.number}. {student.name}</option>
+                ))}
+              </select>
+            </label>
           </div>
-          {activeTool?.type === 'manual' && (
-            <p className="mt-2 text-sm text-gray-600">
-              {unassignedStudents.length
-                ? '미배정 학생을 선택한 뒤, 학생이 없는 사용 가능한 좌석을 클릭하세요.'
-                : '미배정 학생이 없습니다.'}
-            </p>
-          )}
+          <p className="mt-2 text-sm text-gray-600">
+            {unassignedStudents.length
+              ? '미배정 학생을 선택한 뒤, 학생이 없는 사용 가능한 좌석을 클릭하세요.'
+              : '미배정 학생이 없습니다.'}
+          </p>
         </div>
       )}
 
