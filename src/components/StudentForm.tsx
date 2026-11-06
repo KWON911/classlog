@@ -38,6 +38,10 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
   const [note, setNote] = useState(initialValues?.note ?? '')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const legacyGender = initialValues?.gender && !['남', '여'].includes(initialValues.gender) ? initialValues.gender : null
+  const calendarDate = /^\d{6}$/.test(birthdate)
+    ? `20${birthdate.slice(0, 2)}-${birthdate.slice(2, 4)}-${birthdate.slice(4, 6)}`
+    : /^\d{4}-\d{2}-\d{2}$/.test(birthdate) ? birthdate : ''
 
   const isEditingExisting = initialValues !== undefined
 
@@ -122,18 +126,38 @@ export function StudentForm({ initialValues, onSubmit, onCancel, submitLabel }: 
         </label>
         <label className={labelClass}>
           성별
-          <input type="text" value={gender} onChange={(e) => setGender(e.target.value)} className={fieldClass} />
+          <select value={gender} onChange={(e) => setGender(e.target.value)} className={fieldClass}>
+            <option value="">선택</option>
+            <option value="남">남</option>
+            <option value="여">여</option>
+            {legacyGender && <option value={legacyGender}>{legacyGender}</option>}
+          </select>
         </label>
-        <label className={labelClass}>
-          생년월일
-          <input
-            type="text"
-            placeholder="예: 240304"
-            value={birthdate}
-            onChange={(e) => setBirthdate(e.target.value)}
-            className={fieldClass}
-          />
-        </label>
+        <div className={labelClass}>
+          <label htmlFor="student-birthdate-text">생년월일</label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              id="student-birthdate-text"
+              type="text"
+              inputMode="numeric"
+              placeholder="직접 입력: 240304"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+              className={`${fieldClass} min-w-0 flex-1`}
+            />
+            <input
+              type="date"
+              aria-label="생년월일 달력에서 선택"
+              title="달력에서 선택"
+              value={calendarDate}
+              onChange={(e) => {
+                const selected = e.target.value
+                setBirthdate(selected ? selected.slice(2).replaceAll('-', '') : '')
+              }}
+              className={`${fieldClass} w-full min-w-0 sm:w-36`}
+            />
+          </div>
+        </div>
         <label className={labelClass}>
           학생 전화
           <input
