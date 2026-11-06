@@ -39,6 +39,7 @@ const PREVIOUS_SEAT_SCOPE_LABELS: Record<PreviousSeatHistoryScope, string> = {
 
 type ActiveTool =
   | { type: 'swap'; firstStudentId: string | null }
+  | { type: 'manual'; studentId: string }
   | { type: 'fixed'; studentId: string }
   | { type: 'gender'; gender: SeatGender }
 
@@ -160,6 +161,7 @@ export function SeatingPage() {
     [students],
   )
   const studentNameById = useMemo(() => new Map(students.map((s) => [s.id, s.name])), [students])
+  const unassignedStudents = useMemo(() => students.filter((student) => !assignments.has(student.id)), [students, assignments])
   const hasGenderInfo = useMemo(() => students.some((s) => mapGender(s.gender) !== 'unspecified'), [students])
 
   function getSeat(seatId: string): Seat | undefined {
@@ -283,6 +285,31 @@ export function SeatingPage() {
   function handleSeatClick(seatId: string) {
     const seat = getSeat(seatId)
     if (!seat) return
+
+    if (activeTool?.type === 'manual') {
+      const student = unassignedStudents.find((item) => item.id === activeTool.studentId)
+      if (!student) {
+        setMessage('배치할 미배정 학생을 먼저 선택해 주세요.')
+        return
+      }
+      if (seat.status !== 'available' || studentIdAtSeat(seatId)) {
+        setMessage('학생이 없는 사용 가능한 좌석을 선택해 주세요.')
+        return
+      }
+      if ([...fixed.entries()].some(([studentId, fixedSeatId]) => fixedSeatId === seatId && studentId !== student.id)) {
+        setMessage('다른 학생이 고정된 좌석에는 배치할 수 없습니다.')
+        return
+      }
+      if (seat.genderSeat && mapGender(student.gender) !== seat.genderSeat) {
+        setMessage('성별 지정 좌석 조건과 맞지 않아 배치할 수 없습니다.')
+        return
+      }
+      setAssignments((prev) => new Map(prev).set(student.id, seatId))
+      setManuallyMoved((prev) => new Set(prev).add(student.id))
+      setActiveTool(null)
+      setMessage(`${student.name}을(를) ${seat.row}행 ${seat.column}열에 배치했습니다. 기존 학생의 자리는 유지됩니다.`)
+      return
+    }
 
     if (activeTool?.type === 'swap') {
       const studentId = studentIdAtSeat(seatId)
@@ -744,6 +771,46 @@ export function SeatingPage() {
           >
             모드 끄기
           </button>
+        </div>
+      )}
+
+      {assignments.size > 0 && (
+        <div className="mb-4 rounded-lg border border-gray-200 bg-white p-3 print:hidden">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setSeatEditMode(null)
+                setActiveTool(activeTool?.type === 'manual' ? null : { type: 'manual', studentId: '' })
+              }}
+              className={activeTool?.type === 'manual' ? toolbarSecondaryActiveClass : toolbarSecondaryButtonClass}
+              aria-pressed={activeTool?.type === 'manual'}
+            >
+              수동 배치
+            </button>
+            {activeTool?.type === 'manual' && (
+              <label className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                미배정 학생
+                <select
+                  value={activeTool.studentId}
+                  onChange={(event) => setActiveTool({ type: 'manual', studentId: event.target.value })}
+                  className={fieldClass}
+                >
+                  <option value="">학생 선택</option>
+                  {unassignedStudents.map((student) => (
+                    <option key={student.id} value={student.id}>{student.number}. {student.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+          {activeTool?.type === 'manual' && (
+            <p className="mt-2 text-sm text-gray-600">
+              {unassignedStudents.length
+                ? '미배정 학생을 선택한 뒤, 학생이 없는 사용 가능한 좌석을 클릭하세요.'
+                : '미배정 학생이 없습니다.'}
+            </p>
+          )}
         </div>
       )}
 
