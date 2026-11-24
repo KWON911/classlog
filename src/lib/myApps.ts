@@ -1,4 +1,4 @@
-import { BookOpen, Camera, Dices, MessageCircle, MessagesSquare, Music, School, Shuffle, Timer } from 'lucide-react'
+import { BookOpen, Camera, Dices, Gift, MessageCircle, MessagesSquare, Music, School, Shuffle, Timer } from 'lucide-react'
 import type { NavIcon } from './navItems'
 
 export type MyApp = {
@@ -24,4 +24,5 @@ export const MY_APPS: MyApp[] = [
   },
   { name: '주사위 굴리기', url: 'https://k-dice-roller.vercel.app/', icon: Dices },
   { name: '독서록', url: 'https://k-book-report.vercel.app/', icon: BookOpen },
+  { name: '캡슐 랜덤뽑기', url: 'https://capsule-coupon.vercel.app/', icon: Gift },
 ]
